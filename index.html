@@ -227,8 +227,14 @@ select option{background:var(--surface2)}
 </head>
 <body>
 
+   <div id="loading-screen" style="position:fixed;inset:0;background:#0a0e1a;display:flex;align-items:center;justify-content:center;z-index:9999;flex-direction:column;gap:16px">
+  <div style="font-family:'Bebas Neue',sans-serif;font-size:36px;letter-spacing:2px;color:#e2e8f0">R<span style="color:#f97316">A</span>LCA</div>
+  <div style="width:36px;height:36px;border:3px solid rgba(249,115,22,.2);border-top-color:#f97316;border-radius:50%;animation:spin .7s linear infinite"></div>
+  <div style="font-size:12px;color:#64748b;font-family:'JetBrains Mono',monospace;letter-spacing:1px">VERIFYING SESSION…</div>
+</div>
+
 <!-- ═══════════ LOGIN SCREEN ═══════════ -->
-<div id="login-screen">
+<div id="login-screen" style="display:none">
   <div class="left">
     <div class="bg-grid"></div>
     <div class="bg-glow"></div>
