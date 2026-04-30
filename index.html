@@ -728,7 +728,11 @@ const ADMIN_EMAIL = 'admin@gmail.com';
 const OFFICER_EMAIL = 'fieldofficer@gmail.com';
 
 auth.onAuthStateChanged(user => {
-  if(user) {
+  // Hide the loading screen regardless of outcome
+  const loader = document.getElementById('loading-screen');
+  if (loader) loader.style.display = 'none';
+
+  if (user) {
     const role = user.email === ADMIN_EMAIL ? 'admin'
                : user.email === OFFICER_EMAIL ? 'officer'
                : 'user';
@@ -737,8 +741,6 @@ auth.onAuthStateChanged(user => {
                       : (user.displayName || user.email.split('@')[0]);
     launchApp({ email: user.email, role, name: displayName, uid: user.uid });
   } else {
-    // No authenticated user — show login
-    document.getElementById('app-screen').style.display = 'none';
     document.getElementById('login-screen').style.display = 'flex';
   }
 });
