@@ -28,9 +28,22 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-body);min-hei
 a{text-decoration:none;color:inherit}
 
 /* ══════════════════════════════════════
+   LOADING SCREEN  ← NEW
+══════════════════════════════════════ */
+#loading-screen{
+  position:fixed;inset:0;background:var(--bg);
+  display:flex;align-items:center;justify-content:center;
+  z-index:9999;flex-direction:column;gap:16px;
+}
+#loading-screen .load-title{font-family:var(--font-head);font-size:40px;letter-spacing:2px;color:var(--text)}
+#loading-screen .load-title span{color:var(--accent)}
+#loading-screen .load-ring{width:38px;height:38px;border:3px solid rgba(249,115,22,.2);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite}
+#loading-screen .load-sub{font-size:12px;color:var(--text-muted);font-family:var(--font-mono);letter-spacing:1px}
+
+/* ══════════════════════════════════════
    LOGIN SCREEN
 ══════════════════════════════════════ */
-#login-screen{display:flex;min-height:100vh}
+#login-screen{display:none;min-height:100vh}   /* ← starts hidden */
 .left{width:55%;position:relative;background:#060b14;overflow:hidden;display:flex;flex-direction:column;justify-content:flex-end;padding:48px}
 .bg-grid{position:absolute;inset:0;background-image:linear-gradient(rgba(30,45,71,.35) 1px,transparent 1px),linear-gradient(90deg,rgba(30,45,71,.35) 1px,transparent 1px);background-size:50px 50px}
 .bg-glow{position:absolute;top:-20%;left:-10%;width:600px;height:600px;background:radial-gradient(circle,rgba(249,115,22,.12) 0%,transparent 70%);animation:glow 6s ease-in-out infinite}
@@ -227,14 +240,15 @@ select option{background:var(--surface2)}
 </head>
 <body>
 
-   <div id="loading-screen" style="position:fixed;inset:0;background:#0a0e1a;display:flex;align-items:center;justify-content:center;z-index:9999;flex-direction:column;gap:16px">
-  <div style="font-family:'Bebas Neue',sans-serif;font-size:36px;letter-spacing:2px;color:#e2e8f0">R<span style="color:#f97316">A</span>LCA</div>
-  <div style="width:36px;height:36px;border:3px solid rgba(249,115,22,.2);border-top-color:#f97316;border-radius:50%;animation:spin .7s linear infinite"></div>
-  <div style="font-size:12px;color:#64748b;font-family:'JetBrains Mono',monospace;letter-spacing:1px">VERIFYING SESSION…</div>
+<!-- ═══════════ LOADING SCREEN (shown first, hidden once Firebase resolves) ═══════════ -->
+<div id="loading-screen">
+  <div class="load-title">R<span>A</span>LCA</div>
+  <div class="load-ring"></div>
+  <div class="load-sub">VERIFYING SESSION…</div>
 </div>
 
 <!-- ═══════════ LOGIN SCREEN ═══════════ -->
-<div id="login-screen" style="display:none">
+<div id="login-screen" style="display:none;min-height:100vh">
   <div class="left">
     <div class="bg-grid"></div>
     <div class="bg-glow"></div>
@@ -721,26 +735,32 @@ db.ref('.info/connected').on('value', snap => {
 });
 
 /* ══════════════════════════════════════
-   AUTH STATE
+   AUTH STATE  ← FIXED
+   - Loading screen is shown by default in HTML
+   - onAuthStateChanged hides it and shows
+     either the app (existing session) or
+     the login screen (no session / signed out)
 ══════════════════════════════════════ */
 let currentUser = null;
-const ADMIN_EMAIL = 'admin@gmail.com';
+const ADMIN_EMAIL   = 'admin@gmail.com';
 const OFFICER_EMAIL = 'fieldofficer@gmail.com';
 
 auth.onAuthStateChanged(user => {
-  // Hide the loading screen regardless of outcome
+  // Always hide the loading screen first
   const loader = document.getElementById('loading-screen');
   if (loader) loader.style.display = 'none';
 
   if (user) {
-    const role = user.email === ADMIN_EMAIL ? 'admin'
+    // Existing or just-logged-in Firebase session → go straight to app
+    const role = user.email === ADMIN_EMAIL   ? 'admin'
                : user.email === OFFICER_EMAIL ? 'officer'
                : 'user';
-    const displayName = user.email === ADMIN_EMAIL ? 'Gokul R (Admin)'
+    const displayName = user.email === ADMIN_EMAIL   ? 'Gokul R (Admin)'
                       : user.email === OFFICER_EMAIL ? 'Field Officer'
                       : (user.displayName || user.email.split('@')[0]);
     launchApp({ email: user.email, role, name: displayName, uid: user.uid });
   } else {
+    // No session → show login
     document.getElementById('login-screen').style.display = 'flex';
   }
 });
@@ -785,7 +805,6 @@ async function registerWithFirebase() {
 
   try {
     const cred = await auth.createUserWithEmailAndPassword(email, pass);
-    // Save user profile to Realtime DB
     await db.ref(`users/${cred.user.uid}`).set({
       email,
       role: 'user',
@@ -803,8 +822,9 @@ async function registerWithFirebase() {
 }
 
 function loginAsGuest() {
-  currentUser = { email: 'guest', role: 'guest', name: 'Guest User' };
+  // Hide login, show app directly (no Firebase session for guests)
   document.getElementById('login-screen').style.display = 'none';
+  currentUser = { email: 'guest', role: 'guest', name: 'Guest User' };
   document.getElementById('app-screen').style.display = 'block';
   setupAppUI(currentUser);
   initAll();
@@ -849,11 +869,11 @@ function setupAppUI(user) {
   const isAdmin = user.role === 'admin';
   const isGuest = user.role === 'guest';
 
-  document.getElementById('admin-nav-group').style.display  = isAdmin ? 'block' : 'none';
-  document.getElementById('nav-register').style.display     = isAdmin ? 'flex' : 'none';
-  document.getElementById('admin-panel-badge').style.display = isAdmin ? 'flex' : 'none';
-  document.getElementById('guest-banner').style.display     = isGuest ? 'block' : 'none';
-  document.getElementById('sosBtn').style.display           = isGuest ? 'none' : '';
+  document.getElementById('admin-nav-group').style.display   = isAdmin ? 'block' : 'none';
+  document.getElementById('nav-register').style.display      = isAdmin ? 'flex'  : 'none';
+  document.getElementById('admin-panel-badge').style.display = isAdmin ? 'flex'  : 'none';
+  document.getElementById('guest-banner').style.display      = isGuest ? 'block' : 'none';
+  document.getElementById('sosBtn').style.display            = isGuest ? 'none'  : '';
 
   document.querySelectorAll('.admin-feature').forEach(el => {
     el.style.display = isGuest ? 'none' : '';
@@ -868,26 +888,28 @@ function setupAppUI(user) {
 async function doLogout() {
   if(currentUser?.role === 'guest') {
     currentUser = null;
-    document.getElementById('app-screen').style.display = 'none';
+    document.getElementById('app-screen').style.display  = 'none';
     document.getElementById('login-screen').style.display = 'flex';
     return;
   }
   addSystemLog(`Logout: ${currentUser?.email}`);
   await auth.signOut();
+  // onAuthStateChanged will fire with null → shows login screen automatically
   currentUser = null;
-  miniLeafMap = null; fullLeafMap = null;
+  miniLeafMap = null;
+  fullLeafMap = null;
+  document.getElementById('app-screen').style.display = 'none';
 }
 
 /* ══════════════════════════════════════
    FIREBASE DATA LISTENERS
 ══════════════════════════════════════ */
-let allAgencies = [];
-let allAlerts   = [];
+let allAgencies  = [];
+let allAlerts    = [];
 let allIncidents = [];
 let allMessages  = [];
 let currentChannel = 'emergency-chennai-flood';
 
-// Seed default data if DB is empty
 async function seedDefaultData() {
   const agSnap = await db.ref('agencies').once('value');
   if(!agSnap.exists()) {
@@ -933,21 +955,18 @@ async function seedDefaultData() {
 }
 
 function setupFirebaseListeners() {
-  // Agencies
   db.ref('agencies').on('value', snap => {
     allAgencies = [];
     snap.forEach(child => allAgencies.push({...child.val(), _key: child.key}));
     renderAgencies();
     renderDashboardAgencies();
     renderMapAgencies();
-    // Update stats
     const el = document.getElementById('stat-agencies');
     if(el) el.textContent = allAgencies.length;
     const el2 = document.getElementById('fb-agency-count');
     if(el2) el2.textContent = allAgencies.length;
   });
 
-  // Alerts
   db.ref('alerts').orderByChild('time').limitToLast(50).on('value', snap => {
     allAlerts = [];
     snap.forEach(child => allAlerts.push({...child.val(), _key: child.key}));
@@ -960,7 +979,6 @@ function setupFirebaseListeners() {
     if(badge) badge.textContent = allAlerts.filter(a=>a.type==='critical').length;
   });
 
-  // Incidents
   db.ref('incidents').orderByChild('time').limitToLast(20).on('value', snap => {
     allIncidents = [];
     snap.forEach(child => allIncidents.push({...child.val(), _key: child.key}));
@@ -972,7 +990,6 @@ function setupFirebaseListeners() {
     if(el2) el2.textContent = allIncidents.length;
   });
 
-  // Messages - live listener
   db.ref(`messages/${currentChannel}`).orderByChild('time').limitToLast(50).on('value', snap => {
     allMessages = [];
     snap.forEach(child => allMessages.push({...child.val(), _key: child.key}));
@@ -981,7 +998,6 @@ function setupFirebaseListeners() {
     if(el) el.textContent = allMessages.length;
   });
 
-  // System logs (admin only)
   db.ref('system_logs').orderByChild('time').limitToLast(50).on('value', snap => {
     const logs = [];
     snap.forEach(child => logs.push(child.val()));
@@ -994,7 +1010,6 @@ function setupFirebaseListeners() {
     }
   });
 
-  // User management
   db.ref('users').on('value', snap => {
     renderUserMgmt(snap);
   });
@@ -1031,7 +1046,7 @@ function initMiniMap(){
   incidentZones.forEach(z=>{
     L.circle([z.lat,z.lng],{color:z.color,fillColor:z.color,fillOpacity:0.12,radius:30000,weight:2,dashArray:'6,4'}).addTo(miniLeafMap);
   });
-  renderMapAgencies(); // place markers from Firebase data
+  renderMapAgencies();
 }
 
 function initFullMap(){
@@ -1053,12 +1068,11 @@ function initFullMap(){
     const el=document.getElementById('mapCoords');
     if(el)el.textContent=`📍 ${e.latlng.lat.toFixed(4)}° N, ${e.latlng.lng.toFixed(4)}° E`;
   });
-  renderMapAgencies(); // place markers from Firebase data
+  renderMapAgencies();
 }
 
 function renderMapAgencies() {
   if(miniLeafMap) {
-    // Remove existing agency markers (track them)
     if(miniLeafMap._ralcaMarkers) miniLeafMap._ralcaMarkers.forEach(m=>m.remove());
     miniLeafMap._ralcaMarkers = [];
     allAgencies.forEach(a=>{
@@ -1183,7 +1197,7 @@ function renderChannels() {
 
 function switchChannel(channelId, channelName) {
   currentChannel = channelId;
-  db.ref(`messages/${currentChannel}`).off(); // remove old listener
+  db.ref(`messages/${currentChannel}`).off();
   document.getElementById('activeChanTitle').textContent = channelName;
   db.ref(`messages/${currentChannel}`).orderByChild('time').limitToLast(50).on('value', snap => {
     allMessages = [];
@@ -1253,7 +1267,6 @@ async function submitIncident() {
     time: Date.now()
   };
   await db.ref('incidents').push(incident);
-  // Also push as an alert
   await db.ref('alerts').push({
     type: 'critical',
     icon: '🆘',
@@ -1264,7 +1277,6 @@ async function submitIncident() {
   addSystemLog(`Incident reported: ${type} at ${location} by ${currentUser?.email}`);
   closeModal('incident');
   showNotif('🆘 Incident sent to Firebase! All agencies alerted.');
-  // clear
   document.getElementById('inc-location').value='';
   document.getElementById('inc-desc').value='';
 }
@@ -1289,8 +1301,8 @@ async function createAlert() {
 
 async function sendBroadcast() {
   if(currentUser?.role !== 'admin') { showNotif('🔒 Admin only.'); return; }
-  const msg = document.getElementById('bcMessage').value.trim();
-  const target = document.getElementById('bcTarget').value;
+  const msg      = document.getElementById('bcMessage').value.trim();
+  const target   = document.getElementById('bcTarget').value;
   const priority = document.getElementById('bcPriority').value;
   if(!msg) { showNotif('Please enter a message.'); return; }
   await db.ref('alerts').push({
@@ -1312,25 +1324,24 @@ async function submitRegistration() {
   if(!name || type === '-- Select Type --') { showNotif('Agency name and type are required.'); return; }
   const agency = {
     id: 'AGY' + Date.now(),
-    name,
-    type,
-    regno: document.getElementById('reg-regno').value,
-    year: document.getElementById('reg-year').value,
-    address: document.getElementById('reg-addr').value,
-    contact: document.getElementById('reg-contact').value,
-    phone: document.getElementById('reg-phone').value,
-    email: document.getElementById('reg-email').value,
-    district: document.getElementById('reg-district').value,
-    lat: parseFloat(document.getElementById('gpsLat').value)||null,
-    lng: parseFloat(document.getElementById('gpsLng').value)||null,
+    name, type,
+    regno:     document.getElementById('reg-regno').value,
+    year:      document.getElementById('reg-year').value,
+    address:   document.getElementById('reg-addr').value,
+    contact:   document.getElementById('reg-contact').value,
+    phone:     document.getElementById('reg-phone').value,
+    email:     document.getElementById('reg-email').value,
+    district:  document.getElementById('reg-district').value,
+    lat:       parseFloat(document.getElementById('gpsLat').value)||null,
+    lng:       parseFloat(document.getElementById('gpsLng').value)||null,
     personnel: parseInt(document.getElementById('reg-personnel').value)||0,
-    vehicles: parseInt(document.getElementById('reg-vehicles').value)||0,
+    vehicles:  parseInt(document.getElementById('reg-vehicles').value)||0,
     resources: parseInt(document.getElementById('reg-personnel').value)||0,
-    location: document.getElementById('reg-addr').value,
-    spec: document.getElementById('reg-spec').value,
-    resp: document.getElementById('reg-resp').value,
-    notes: document.getElementById('reg-notes').value,
-    status: 'active',
+    location:  document.getElementById('reg-addr').value,
+    spec:      document.getElementById('reg-spec').value,
+    resp:      document.getElementById('reg-resp').value,
+    notes:     document.getElementById('reg-notes').value,
+    status:    'active',
     createdBy: currentUser.email,
     createdAt: Date.now()
   };
@@ -1355,10 +1366,10 @@ async function sendMsg() {
   if(!txt) return;
   await db.ref(`messages/${currentChannel}`).push({
     sender: currentUser.name || currentUser.email,
-    role: (currentUser.role||'user').toUpperCase(),
-    msg: txt,
-    time: Date.now(),
-    uid: currentUser.uid || 'guest'
+    role:   (currentUser.role||'user').toUpperCase(),
+    msg:    txt,
+    time:   Date.now(),
+    uid:    currentUser.uid || 'guest'
   });
   inp.value = '';
 }
@@ -1377,7 +1388,7 @@ async function addDemoPin(){
   if(currentUser?.role !== 'admin'){ showNotif('🔒 Admin only feature.'); return; }
   const types=Object.keys(typeColors);
   const t=types[Math.floor(Math.random()*types.length)];
-  const lat=8+Math.random()*28,lng=68+Math.random()*22;
+  const lat=8+Math.random()*28, lng=68+Math.random()*22;
   const a={id:'SIM'+Date.now(),name:'Demo Unit '+Math.floor(Math.random()*99),type:t,location:'Field',resources:5,status:'active',lat,lng,simulated:true,createdAt:Date.now()};
   await db.ref(`agencies/${a.id}`).set(a);
   addSystemLog(`Simulated agency added: ${a.name}`);
