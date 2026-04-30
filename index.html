@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>RALCA – Rescue Agency Locator & Coordination</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<style>
+/* ══════════════════════════════════════
+   GLOBAL TOKENS & STYLES
+══════════════════════════════════════ */
+:root{
+  --bg:#0a0e1a;--surface:#111827;--surface2:#1a2335;--border:#1e2d47;
+  --accent:#f97316;--accent2:#ef4444;--accent3:#22d3ee;--green:#10b981;--yellow:#fbbf24;
+  --text:#e2e8f0;--text-muted:#64748b;--text-dim:#94a3b8;
+  --font-head:'Bebas Neue',sans-serif;--font-body:'DM Sans',sans-serif;--font-mono:'JetBrains Mono',monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:var(--font-body);min-height:100vh;overflow-x:hidden}
+a{text-decoration:none;color:inherit}
+
+/* ══════════════════════════════════════
+   LOGIN SCREEN
+══════════════════════════════════════ */
+#login-screen{display:flex;min-height:100vh}
+.left{width:55%;position:relative;background:#060b14;overflow:hidden;display:flex;flex-direction:column;justify-content:flex-end;padding:48px}
+.bg-grid{position:absolute;inset:0;background-image:linear-gradient(rgba(30,45,71,.35) 1px,transparent 1px),linear-gradient(90deg,rgba(30,45,71,.35) 1px,transparent 1px);background-size:50px 50px}
+.bg-glow{position:absolute;top:-20%;left:-10%;width:600px;height:600px;background:radial-gradient(circle,rgba(249,115,22,.12) 0%,transparent 70%);animation:glow 6s ease-in-out infinite}
+@keyframes glow{0%,100%{opacity:.6;transform:scale(1)}50%{opacity:1;transform:scale(1.1)}}
+.left-brand{position:relative;z-index:2}
+.brand-title{font-family:var(--font-head);font-size:52px;letter-spacing:2px;line-height:1;color:var(--text)}
+.brand-title span{color:var(--accent)}
+.brand-sub{font-size:15px;color:var(--text-dim);margin-top:8px;line-height:1.6}
+.feat-row{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--text-dim);margin-top:10px}
+.feat-dot{width:6px;height:6px;border-radius:50%;background:var(--accent);flex-shrink:0}
+
+.right{width:45%;display:flex;align-items:center;justify-content:center;background:var(--surface);border-left:1px solid var(--border);padding:48px 40px}
+.login-box{width:100%;max-width:420px}
+.login-logo{display:flex;align-items:center;gap:12px;margin-bottom:28px}
+.login-logo-icon{width:44px;height:44px;background:var(--accent);border-radius:10px;display:grid;place-items:center;font-size:22px}
+.login-logo-text{font-family:var(--font-head);font-size:28px;letter-spacing:1px}
+.auth-tabs{display:flex;gap:0;margin-bottom:24px;border:1px solid var(--border);border-radius:8px;overflow:hidden}
+.auth-tab{flex:1;padding:9px;text-align:center;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;color:var(--text-dim);font-family:var(--font-mono)}
+.auth-tab.active{background:var(--accent);color:#fff}
+
+.form-group-l{margin-bottom:16px}
+.form-label-l{font-size:11px;font-family:var(--font-mono);color:var(--text-muted);letter-spacing:1px;margin-bottom:6px;display:block}
+.form-input-l{width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:11px 14px;border-radius:8px;font-size:14px;outline:none}
+.btn-login{width:100%;padding:13px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:700;cursor:pointer;margin-top:6px}
+.divider{display:flex;align-items:center;gap:10px;margin:18px 0;color:var(--text-muted);font-size:12px}
+.divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--border)}
+.error-msg-l{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:var(--accent2);padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:14px;display:none}
+
+/* ══════════════════════════════════════
+   APP SCREEN
+══════════════════════════════════════ */
+#app-screen{display:none}
+.sidebar{position:fixed;top:0;left:0;width:240px;height:100vh;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;z-index:100}
+.logo{padding:20px 20px 16px;border-bottom:1px solid var(--border)}
+.nav{flex:1;padding:16px 10px}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;cursor:pointer;font-size:14px;color:var(--text-dim);margin-bottom:4px}
+.nav-item.active{background:rgba(249,115,22,.12);color:var(--accent)}
+.sidebar-footer{padding:16px;border-top:1px solid var(--border)}
+.main{margin-left:240px;min-height:100vh;display:flex;flex-direction:column}
+.topbar{height:56px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 24px;position:sticky;top:0;z-index:50}
+.content{flex:1;padding:24px}
+.page{display:none}
+.page.active{display:block}
+.stats-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;margin-bottom:24px}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px 20px;position:relative;overflow:hidden}
+.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--accent)}
+.map-container{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:24px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px}
+table{width:100%;border-collapse:collapse}
+th,td{padding:11px 16px;text-align:left;border-bottom:1px solid var(--border)}
+.badge{padding:3px 9px;border-radius:20px;font-size:11px;background:rgba(239,68,68,.15);color:var(--accent2)}
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:200;display:none;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+.modal-bg.open{display:flex}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:24px;width:450px}
+</style>
+</head>
+<body>
+
+<div id="login-screen">
+  <div class="left">
+    <div class="bg-grid"></div>
+    <div class="bg-glow"></div>
+    <div class="left-brand">
+      <div class="brand-title">R<span>A</span>LCA</div>
+      <div class="brand-sub">Rescue Agency Locator & Coordination Application</div>
+    </div>
+    <div class="feat-row"><div class="feat-dot"></div>Real-time agency tracking</div>
+    <div class="feat-row"><div class="feat-dot"></div>Instant SOS coordination</div>
+  </div>
+
+  <div class="right">
+    <div class="login-box">
+      <div class="login-logo">
+        <div class="login-logo-icon">🚨</div>
+        <div class="login-logo-text">RALCA</div>
+      </div>
+      <div class="auth-tabs">
+        <div class="auth-tab active" id="tab-login" onclick="switchAuthTab('login')">LOGIN</div>
+        <div class="auth-tab" id="tab-register" onclick="switchAuthTab('register')">REGISTER</div>
+      </div>
+
+      <div id="panel-login">
+        <div class="error-msg-l" id="loginError"></div>
+        <div class="form-group-l">
+          <label class="form-label-l">EMAIL ADDRESS</label>
+          <input type="email" class="form-input-l" id="loginEmail" placeholder="email@example.com"/>
+        </div>
+        <div class="form-group-l">
+          <label class="form-label-l">PASSWORD</label>
+          <input type="password" class="form-input-l" id="loginPass" placeholder="••••••••"/>
+        </div>
+        <button class="btn-login" onclick="attemptLogin()">LOGIN TO RALCA</button>
+        <div class="divider">OR</div>
+        <button class="btn-login" style="background:transparent; border:1px solid var(--border)" onclick="loginAsGuest()">Continue as Guest</button>
+      </div>
+
+      <div id="panel-register" style="display:none">
+        <div class="error-msg-l" id="regError"></div>
+        <div class="form-group-l">
+          <label class="form-label-l">EMAIL ADDRESS</label>
+          <input type="email" class="form-input-l" id="regEmail" placeholder="New account email"/>
+        </div>
+        <div class="form-group-l">
+          <label class="form-label-l">CREATE PASSWORD</label>
+          <input type="password" class="form-input-l" id="regPass" placeholder="Min. 6 characters"/>
+        </div>
+        <button class="btn-login" onclick="handleRegister()">REGISTER & CREATE ACCOUNT</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="app-screen">
+  <nav class="sidebar">
+    <div class="logo"><div class="logo-text">RALCA DASHBOARD</div></div>
+    <div class="nav">
+      <div class="nav-item active" onclick="navigate('dashboard')">📊 Dashboard</div>
+    </div>
+    <div class="sidebar-footer">
+      <div id="displayUserName" style="font-weight:600; font-size:13px">User</div>
+      <button class="btn-login" style="padding:8px; font-size:12px; margin-top:8px" onclick="doLogout()">Logout</button>
+    </div>
+  </nav>
+  <div class="main">
+    <div class="topbar"><div id="pageTitle" style="font-family:var(--font-head); font-size:20px">Dashboard</div></div>
+    <div class="content">
+      <div class="page active" id="page-dashboard">
+        <div class="stats-grid">
+          <div class="stat-card">Active Incidents: <span id="countIncidents">0</span></div>
+        </div>
+        <div class="map-container"><div id="minimap" style="height:300px; width:100%"></div></div>
+        <button class="btn-danger btn" style="padding:12px 24px" onclick="showModal('incident')">🆘 Report SOS</button>
+        <div class="card" style="margin-top:20px">
+          <table><thead><tr><th>TYPE</th><th>LOCATION</th><th>STATUS</th></tr></thead><tbody id="incidents-table"></tbody></table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="modal-incident">
+  <div class="modal">
+    <div style="font-family:var(--font-head); font-size:22px; margin-bottom:15px">🆘 New Incident</div>
+    <input type="text" id="sosLoc" class="form-input-l" placeholder="Emergency Location" style="margin-bottom:10px"/>
+    <button class="btn-login" onclick="submitSOS()">Send SOS</button>
+    <button class="btn-login" style="background:none; color:var(--text-dim)" onclick="closeModal('incident')">Cancel</button>
+  </div>
+</div>
+
+<!-- FIREBASE SDKs -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+  import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+  import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyCVqw3fAKf7hN2f0IHVdNVo_OmgumfIvU0",
+    authDomain: "sih1440-c6ca5.firebaseapp.com",
+    projectId: "sih1440-c6ca5",
+    storageBucket: "sih1440-c6ca5.firebasestorage.app",
+    messagingSenderId: "994841359713",
+    appId: "1:994841359713:web:7aedfd0b772ffd478c0120",
+    measurementId: "G-E17CKL1G9E"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+
+  // Globally expose functions for HTML onclick handlers[cite: 1]
+  window.switchAuthTab = (tab) => {
+    document.getElementById('tab-login').classList.toggle('active', tab==='login');
+    document.getElementById('tab-register').classList.toggle('active', tab==='register');
+    document.getElementById('panel-login').style.display = tab==='login' ? 'block' : 'none';
+    document.getElementById('panel-register').style.display = tab==='register' ? 'block' : 'none';
+  };
+
+  window.attemptLogin = async () => {
+    const email = document.getElementById('loginEmail').value;
+    const pass = document.getElementById('loginPass').value;
+    try {
+      await signInWithEmailAndPassword(auth, email, pass);
+    } catch (e) {
+      const err = document.getElementById('loginError');
+      err.textContent = e.message; err.style.display = 'block';
+    }
+  };
+
+  window.handleRegister = async () => {
+    const email = document.getElementById('regEmail').value;
+    const pass = document.getElementById('regPass').value;
+    const err = document.getElementById('regError');
+    err.style.display = 'none';
+
+    if(!email || pass.length < 6) {
+        err.textContent = "Valid email required and password minimum 6 characters.";
+        err.style.display = 'block';
+        return;
+    }
+
+    try {
+      const res = await createUserWithEmailAndPassword(auth, email, pass);
+      await setDoc(doc(db, "users", res.user.uid), {
+        email: email,
+        role: 'user',
+        name: email.split('@')[0],
+        joined: new Date().toISOString()
+      });
+    } catch (e) {
+      err.textContent = e.message;
+      err.style.display = 'block';
+    }
+  };
+
+  window.loginAsGuest = () => {
+    document.getElementById('displayUserName').textContent = "Guest User";
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('app-screen').style.display = 'block';
+    syncDashboard();
+  };
+
+  window.doLogout = () => signOut(auth);
+
+  onAuthStateChanged(auth, async (user) => {
+    if (user) {
+      const userDoc = await getDoc(doc(db, "users", user.uid));
+      document.getElementById('displayUserName').textContent = userDoc.exists() ? userDoc.data().name : user.email;
+      document.getElementById('login-screen').style.display = 'none';
+      document.getElementById('app-screen').style.display = 'block';
+      syncDashboard();
+    } else {
+      document.getElementById('app-screen').style.display = 'none';
+      document.getElementById('login-screen').style.display = 'flex';
+    }
+  });
+
+  window.submitSOS = async () => {
+    const loc = document.getElementById('sosLoc').value;
+    if(!loc) return;
+    await addDoc(collection(db, "incidents"), {
+        type: 'SOS Alert',
+        location: loc,
+        status: 'Active',
+        timestamp: new Date()
+    });
+    closeModal('incident');
+    document.getElementById('sosLoc').value = "";
+  };
+
+  function syncDashboard() {
+    onSnapshot(query(collection(db, "incidents"), orderBy("timestamp", "desc")), (snap) => {
+      const table = document.getElementById('incidents-table');
+      table.innerHTML = "";
+      document.getElementById('countIncidents').textContent = snap.size;
+      snap.forEach(doc => {
+        const data = doc.data();
+        table.innerHTML += `<tr><td>${data.type}</td><td>${data.location}</td><td><span class="badge">${data.status}</span></td></tr>`;
+      });
+    });
+    const map = L.map('minimap').setView([11.0168, 76.9558], 6); // Centered near Coimbatore
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png').addTo(map);
+  }
+
+  window.showModal = (id) => document.getElementById('modal-'+id).classList.add('open');
+  window.closeModal = (id) => document.getElementById('modal-'+id).classList.remove('open');
+  window.navigate = (page) => {
+    document.getElementById('pageTitle').textContent = page.charAt(0).toUpperCase() + page.slice(1);
+  };
+</script>
+</body>
+</html>
