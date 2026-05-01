@@ -1052,7 +1052,16 @@ const STATIC_AGENCIES = [
 /* ══════════════════════════════════════
    FIREBASE INIT
 ══════════════════════════════════════ */
-const firebaseConfig={apiKey:"AIzaSyD17S5lZFVIuGqg9F6DPsWbx0tFlLRobX4",authDomain:"ralca-d2cba.firebaseapp.com",databaseURL:"https://ralca-d2cba-default-rtdb.asia-southeast1.firebasedatabase.app",projectId:"ralca-d2cba",storageBucket:"ralca-d2cba.firebasestorage.app",messagingSenderId:"620928889618",appId:"1:620928889618:web:09d9d7238d928c934fb9cb"};
+const firebaseConfig = {
+  apiKey: "AIzaSyD17S5lZFVIuGqg9F6DPsWbx0tFlLRobX4",
+  authDomain: "ralca-d2cba.firebaseapp.com",
+  databaseURL: "https://ralca-d2cba-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "ralca-d2cba",
+  storageBucket: "ralca-d2cba.firebasestorage.app",
+  messagingSenderId: "620928889618",
+  appId: "1:620928889618:web:09d9d7238d928c934fb9cb"
+};
+
 firebase.initializeApp(firebaseConfig);
 const auth=firebase.auth(), db=firebase.database();
 let currentUser=null;
@@ -1085,30 +1094,86 @@ function switchAuthTab(tab){
   });
 }
 
-async function attemptLogin(){
-  const email=document.getElementById('loginEmail').value.trim();
-  const pass=document.getElementById('loginPass').value.trim();
-  if(!email||!pass){showLoginErr('Please fill all fields.');return;}
-  const btn=document.getElementById('loginBtn');
-  btn.disabled=true;btn.innerHTML='<div class="spinner"></div> Signing in…';
-  try{await auth.signInWithEmailAndPassword(email,pass);}
-  catch(e){showLoginErr(getFriendlyError(e.code));btn.disabled=false;btn.textContent='LOGIN TO RALCA';}
+function getFriendlyError(code) {
+  const map = {
+    'auth/user-not-found': 'No account found with this email.',
+    'auth/wrong-password': 'Incorrect password. Please try again.',
+    'auth/email-already-in-use': 'This email is already registered.',
+    'auth/invalid-email': 'Please enter a valid email address.',
+    'auth/weak-password': 'Password is too weak. Use at least 6 characters.',
+    'auth/operation-not-allowed': 'Email/Password accounts are not enabled in Firebase Console.',
+    'auth/too-many-requests': 'Too many attempts. Please try again later.',
+    'auth/network-request-failed': 'Network error. Check your internet connection.',
+    'auth/invalid-credential': 'Invalid login credentials.'
+  };
+  return map[code] || `System Error: ${code}`; 
 }
 
-async function registerWithFirebase(){
-  const email=document.getElementById('regEmail').value.trim();
-  const pass=document.getElementById('regPass').value.trim();
-  const err=document.getElementById('regError');
-  err.style.display='none';
-  if(!email||!pass){err.textContent='Please fill all fields.';err.style.display='block';return;}
-  if(pass.length<6){err.textContent='Password must be at least 6 characters.';err.style.display='block';return;}
-  const btn=document.getElementById('regBtn');
-  btn.disabled=true;btn.innerHTML='<div class="spinner"></div> Creating account…';
-  try{
-    const cred=await auth.createUserWithEmailAndPassword(email,pass);
-    await db.ref(`users/${cred.user.uid}`).set({email,role:'user',joined:new Date().toLocaleDateString(),createdAt:Date.now()});
+function showLoginErr(msg){const e=document.getElementById('loginError');e.textContent=msg;e.style.display='block';}
+
+async function attemptLogin() {
+  const email = document.getElementById('loginEmail').value.trim();
+  const pass = document.getElementById('loginPass').value.trim();
+  
+  if (!email || !pass) {
+    showLoginErr('Please fill all fields.');
+    return;
+  }
+
+  const btn = document.getElementById('loginBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<div class="spinner"></div> Signing in...';
+
+  try {
+    await auth.signInWithEmailAndPassword(email, pass);
+    // showNotif handled inside app launch
+  } catch (e) {
+    console.error("Login Error:", e);
+    showLoginErr(getFriendlyError(e.code));
+    btn.disabled = false;
+    btn.textContent = 'LOGIN TO RALCA';
+  }
+}
+
+async function registerWithFirebase() {
+  const email = document.getElementById('regEmail').value.trim();
+  const pass = document.getElementById('regPass').value.trim();
+  const err = document.getElementById('regError');
+  
+  err.style.display = 'none';
+  
+  if (!email || !pass) {
+    err.textContent = 'Please fill all fields.';
+    err.style.display = 'block';
+    return;
+  }
+  if(pass.length < 6){
+    err.textContent='Password must be at least 6 characters.';
+    err.style.display='block';
+    return;
+  }
+
+  const btn = document.getElementById('regBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<div class="spinner"></div> Creating account...';
+
+  try {
+    const cred = await auth.createUserWithEmailAndPassword(email, pass);
+    await db.ref(`users/${cred.user.uid}`).set({
+      email: email,
+      role: 'user',
+      joined: new Date().toLocaleDateString(),
+      createdAt: Date.now()
+    });
     addSystemLog(`New user registered: ${email}`);
-  }catch(e){err.textContent=getFriendlyError(e.code);err.style.display='block';btn.disabled=false;btn.textContent='CREATE ACCOUNT';}
+    // Will launchApp automatically via onAuthStateChanged
+  } catch (e) {
+    console.error("Auth Error:", e);
+    err.textContent = getFriendlyError(e.code);
+    err.style.display = 'block';
+    btn.disabled = false;
+    btn.textContent = 'CREATE ACCOUNT';
+  }
 }
 
 function loginAsGuest(){
@@ -1117,12 +1182,6 @@ function loginAsGuest(){
   document.getElementById('app-screen').style.display='block';
   setupAppUI(currentUser);initAll();addSystemLog('Guest login');
 }
-
-function getFriendlyError(code){
-  const map={'auth/user-not-found':'No account found.','auth/wrong-password':'Incorrect password.','auth/email-already-in-use':'Email already registered.','auth/invalid-email':'Invalid email.','auth/weak-password':'Password too weak (min 6 chars).','auth/too-many-requests':'Too many attempts. Try again later.','auth/invalid-credential':'Invalid email or password.'};
-  return map[code]||'Authentication failed. Try again.';
-}
-function showLoginErr(msg){const e=document.getElementById('loginError');e.textContent=msg;e.style.display='block';}
 
 function launchApp(user){
   currentUser=user;
