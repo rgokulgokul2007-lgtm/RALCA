@@ -1251,6 +1251,25 @@ async function seedDefaultData(){
 }
 
 function setupFirebaseListeners(){
+
+  db.ref('agencies').on('value', snap => {
+    // Only overwrite if Firebase has data
+    if (snap.exists()) {
+      allAgencies = [];
+      snap.forEach(child => allAgencies.push(child.val()));
+    }
+    
+    // Refresh the UI with the new Firebase data
+    renderDashboardAgencies();
+    renderAgencies();
+    
+    // Update the statistics numbers on the dashboard
+    const el = document.getElementById('stat-agencies');
+    if(el) el.textContent = allAgencies.length;
+    const el2 = document.getElementById('fb-agency-count');
+    if(el2) el2.textContent = allAgencies.length;
+  });
+  
   db.ref('alerts').orderByChild('time').limitToLast(50).on('value',snap=>{
     allAlerts=[];snap.forEach(child=>allAlerts.push({...child.val(),_key:child.key}));allAlerts.reverse();
     renderAlerts();renderDashboardAlerts();
