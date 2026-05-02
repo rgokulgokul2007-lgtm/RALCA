@@ -1031,7 +1031,11 @@ select option{background:var(--surface2)}
 /* ══════════════════════════════════════
    STATIC AGENCY DATA
 ══════════════════════════════════════ */
-const STATIC_AGENCIES = [
+<script>
+/* ══════════════════════════════════════
+   STATIC AGENCY DATA
+══════════════════════════════════════ */
+let allAgencies = [
   {id:'AGY001',name:'National Disaster Response Force (NDRF)',type:'NDRF',shortType:'NDRF',location:'Jai Singh Road, New Delhi',city:'New Delhi',pin:'110001',address:'6th Floor, NDCC-II Building, Jai Singh Road, New Delhi',lat:28.6271,lng:77.2109,status:'active',resources:120,amenities:['Tactical troop carriers','Inflatable motorized rescue boats','Hazmat suits','CSSR heavy lifting machinery','MFR kits','Trauma medicines','K9 sniffer dog units'],icon:'🛡️',color:'#f97316'},
   {id:'AGY002',name:'National Disaster Management Authority (NDMA)',type:'Coordination Body',shortType:'NDMA',location:'Safdarjung Enclave, New Delhi',city:'New Delhi',pin:'110029',address:'NDMA Bhawan, A-1, Safdarjung Enclave, New Delhi',lat:28.5694,lng:77.1958,status:'active',resources:80,amenities:['Mobile command vehicles','Satellite communication trucks','Incident response centers','Emergency dispatch equipment'],icon:'📡',color:'#22d3ee'},
   {id:'AGY003',name:'Indian Red Cross Society',type:'Medical / NGO',shortType:'Red Cross',location:'Red Cross Road, New Delhi',city:'New Delhi',pin:'110001',address:'1, Red Cross Road, New Delhi',lat:28.6129,lng:77.2066,status:'active',resources:200,amenities:['BLS & ALS ambulances','Mobile blood bank vans','Water purification units','AEDs','Emergency medicines'],icon:'🏥',color:'#ef4444'},
