@@ -1227,13 +1227,13 @@ let currentChannel='emergency-chennai-flood';
 
 async function seedDefaultData(){
 
-  const agSnap = await db.ref('agencies').once('value');
-  if(!agSnap.exists()){
-    // If Firebase is empty, push all our starting agencies to it!
-    for(const a of allAgencies) {
-      await db.ref(`agencies/${a.id}`).set(a);
-    }
+const agSnap = await db.ref('agencies').once('value');
+// If there is only 1 agency (or 0), push the full list of 15 to Firebase
+if(agSnap.numChildren() <= 1){
+  for(const a of allAgencies) {
+    await db.ref(`agencies/${a.id}`).set(a);
   }
+}
   const alSnap=await db.ref('alerts').once('value');
   if(!alSnap.exists()){
     const defaultAlerts=[
@@ -1257,24 +1257,28 @@ async function seedDefaultData(){
 
 function setupFirebaseListeners(){
 
+  // 👇 PASTE THE NEW BLOCK HERE 👇
   db.ref('agencies').on('value', snap => {
-    // Only overwrite if Firebase has data
     if (snap.exists()) {
       allAgencies = [];
-      snap.forEach(child => allAgencies.push(child.val()));
+      snap.forEach(child => {
+        allAgencies.push(child.val());
+      });
+      
+      // CRITICAL: Functions moved INSIDE the if-statement!
+      renderAgencies(); 
+      renderDashboardAgencies();
+
+      // Update counts
+      const el = document.getElementById('stat-agencies');
+      if(el) el.textContent = allAgencies.length;
+      const countHeader = document.querySelector('.section-title');
+      if(countHeader) countHeader.textContent = `🏛 ALL AGENCIES (${allAgencies.length})`;
     }
-    
-    // Refresh the UI with the new Firebase data
-    renderDashboardAgencies();
-    renderAgencies();
-    
-    // Update the statistics numbers on the dashboard
-    const el = document.getElementById('stat-agencies');
-    if(el) el.textContent = allAgencies.length;
-    const el2 = document.getElementById('fb-agency-count');
-    if(el2) el2.textContent = allAgencies.length;
   });
-  
+  // 👆 END OF NEW BLOCK 👆
+
+  // (The alerts listener stays exactly the same)
   db.ref('alerts').orderByChild('time').limitToLast(50).on('value',snap=>{
     allAlerts=[];snap.forEach(child=>allAlerts.push({...child.val(),_key:child.key}));allAlerts.reverse();
     renderAlerts();renderDashboardAlerts();
