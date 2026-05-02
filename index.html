@@ -1209,10 +1209,10 @@ function setupAppUI(user){
   document.querySelectorAll('.admin-feature').forEach(el=>{el.style.display=isGuest?'none':'';});
   if(isGuest){const mr=document.getElementById('msg-input-row');if(mr)mr.innerHTML='<div style="flex:1;text-align:center;font-size:13px;color:var(--text-muted);padding:12px">🔒 Log in to send messages</div>';}
   const sel=document.getElementById('res-agency-select');
-  if(sel) sel.innerHTML=STATIC_AGENCIES.map(a=>`<option>${a.name}</option>`).join('');
+  if(sel) sel.innerHTML=allAgencies.map(a=>`<option>${a.name}</option>`).join('');
   // Populate route-from
   const rf=document.getElementById('route-from');
-  if(rf) rf.innerHTML='<option value="">-- Select Agency --</option>'+STATIC_AGENCIES.map(a=>`<option value="${a.id}">${a.name}</option>`).join('');
+  if(rf) rf.innerHTML='<option value="">-- Select Agency --</option>'+allAgencies.map(a=>`<option value="${a.id}">${a.name}</option>`).join('');
 }
 
 async function doLogout(){
