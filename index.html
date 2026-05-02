@@ -1329,7 +1329,7 @@ function initMiniMap(){
   miniLeafMap=L.map('minimap',{zoomControl:false,scrollWheelZoom:false,dragging:false,attributionControl:false}).setView([24.0,78.5],4);
   L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{maxZoom:18}).addTo(miniLeafMap);
   incidentZones.forEach(z=>{L.circle([z.lat,z.lng],{color:z.color,fillColor:z.color,fillOpacity:0.12,radius:30000,weight:2,dashArray:'6,4'}).addTo(miniLeafMap);});
-  STATIC_AGENCIES.forEach(a=>{L.marker([a.lat,a.lng],{icon:makeIcon(getColor(a))}).addTo(miniLeafMap).bindTooltip(`<b>${a.name}</b><br>${a.type}`,{direction:'top'});});
+  allAgencies.forEach(a=>{L.marker([a.lat,a.lng],{icon:makeIcon(getColor(a))}).addTo(miniLeafMap).bindTooltip(`<b>${a.name}</b><br>${a.type}`,{direction:'top'});});
 }
 
 function initFullMap(){
@@ -1348,7 +1348,7 @@ function initFullMap(){
   legend.addTo(fullLeafMap);
   fullLeafMap.on('mousemove',e=>{const el=document.getElementById('mapCoords');if(el) el.textContent=`📍 ${e.latlng.lat.toFixed(4)}° N, ${e.latlng.lng.toFixed(4)}° E`;});
   fullMarkers=[];
-  STATIC_AGENCIES.forEach(a=>{
+  allAgencies.forEach(a=>{
     const m=L.marker([a.lat,a.lng],{icon:makeIcon(getColor(a))}).addTo(fullLeafMap).bindPopup(buildPopupHTML(a),{maxWidth:280});
     fullMarkers.push({marker:m,type:a.type,agency:a});
   });
@@ -1385,7 +1385,7 @@ function initCorridorMap(){
   });
   // Incident zones
   incidentZones.forEach(z=>{L.circle([z.lat,z.lng],{color:z.color,fillColor:z.color,fillOpacity:0.2,radius:20000,weight:2}).addTo(corridorMap).bindPopup(`<b>${z.label}</b>`);});
-  STATIC_AGENCIES.filter(a=>a.city==='Chennai').forEach(a=>{L.marker([a.lat,a.lng],{icon:makeIcon(getColor(a))}).addTo(corridorMap).bindTooltip(a.name);});
+  allAgencies.filter(a=>a.city==='Chennai').forEach(a=>{L.marker([a.lat,a.lng],{icon:makeIcon(getColor(a))}).addTo(corridorMap).bindTooltip(a.name);});
 }
 
 function renderRoadList(){
@@ -1409,7 +1409,7 @@ function calculateRoute(){
   const from=document.getElementById('route-from').value;
   const to=document.getElementById('route-to').value;
   if(!from){showNotif('Please select an origin agency.');return;}
-  const agency=STATIC_AGENCIES.find(a=>a.id===from);
+  const agency=allAgencies.find(a=>a.id===from);
   const clearRoads=roadStatus.filter(r=>r.clear);
   const routeInfo=document.getElementById('route-info');
   const stepsEl=document.getElementById('route-steps');
@@ -1482,7 +1482,7 @@ function showAIForecast(){
       <span class="ai-resource-status ai-status-${status}">${statusLabel}</span>
     </div>`;
   }).join('');
-  const matchedAgencies=STATIC_AGENCIES.filter(a=>forecast.agencyTypes.some(t=>a.type.includes(t.split(' ')[0]))).slice(0,3);
+  const matchedAgencies=allAgencies.filter(a=>forecast.agencyTypes.some(t=>a.type.includes(t.split(' ')[0]))).slice(0,3);
   document.getElementById('ai-matched-agencies').innerHTML=matchedAgencies.map(a=>`
     <div class="matched-agency" onclick="closeModal('incident');showAgencyDetail('${a.id}')">
       <span style="font-size:16px">${a.icon||'🏛'}</span>
@@ -1863,7 +1863,7 @@ function renderDashboardAlerts(){
 
 function renderDashboardAgencies(){
   const sm={active:'badge-active',standby:'badge-standby',busy:'badge-busy'};
-  document.getElementById('dashboard-agencies').innerHTML=STATIC_AGENCIES.filter(a=>a.status==='active').slice(0,5).map(a=>`<tr><td><strong>${escHtml(a.name)}</strong></td><td style="color:var(--text-muted)">${escHtml(a.shortType||a.type)}</td><td><span class="badge ${sm[a.status]||'badge-pending'}">${(a.status||'').toUpperCase()}</span></td></tr>`).join('');
+  document.getElementById('dashboard-agencies').innerHTML=allAgencies.filter(a=>a.status==='active').slice(0,5).map(a=>`<tr><td><strong>${escHtml(a.name)}</strong></td><td style="color:var(--text-muted)">${escHtml(a.shortType||a.type)}</td><td><span class="badge ${sm[a.status]||'badge-pending'}">${(a.status||'').toUpperCase()}</span></td></tr>`).join('');
 }
 
 function renderAlerts(){
@@ -1878,7 +1878,7 @@ function renderAgencies(filter){
   if(filter!==undefined) agencySearchFilter=filter;
   const sm={active:'badge-active',standby:'badge-standby',busy:'badge-busy'};
   const isAdmin=currentUser?.role==='admin';
-  const filtered=STATIC_AGENCIES.filter(a=>a.name.toLowerCase().includes(agencySearchFilter.toLowerCase())||a.type.toLowerCase().includes(agencySearchFilter.toLowerCase())||a.city.toLowerCase().includes(agencySearchFilter.toLowerCase()));
+  const filtered=allAgencies.filter(a=>a.name.toLowerCase().includes(agencySearchFilter.toLowerCase())||a.type.toLowerCase().includes(agencySearchFilter.toLowerCase())||a.city.toLowerCase().includes(agencySearchFilter.toLowerCase()));
   document.getElementById('agencies-table').innerHTML=filtered.length
     ? filtered.map(a=>{
         const topAmenities=(a.amenities||[]).slice(0,2).map(am=>`<span class="amenity-tag">${escHtml(am)}</span>`).join('');
@@ -1889,7 +1889,7 @@ function renderAgencies(filter){
 }
 
 function showAgencyDetail(id){
-  const a=STATIC_AGENCIES.find(ag=>ag.id===id);if(!a) return;
+  const a=allAgencies.find(ag=>ag.id===id);if(!a) return;
   const color=getColor(a);
   const amenitiesHtml=(a.amenities||[]).map(am=>`<span class="amenity-pill">${escHtml(am)}</span>`).join('');
   document.getElementById('agency-detail-body').innerHTML=`<div class="agency-modal-header"><div class="agency-modal-icon" style="background:${color}20;border:1px solid ${color}40">${a.icon||'🏛'}</div><div><div style="font-size:17px;font-weight:700">${escHtml(a.name)}</div><div class="agency-modal-location">📍 ${escHtml(a.address)}</div><div style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap"><span class="badge badge-pending">${escHtml(a.type)}</span><span class="badge ${a.status==='active'?'badge-active':a.status==='standby'?'badge-standby':'badge-busy'}">${(a.status||'').toUpperCase()}</span></div></div></div><div class="agency-info-grid"><div class="agency-info-item"><label>AGENCY ID</label><p style="font-family:var(--font-mono);color:var(--accent3)">${escHtml(a.id)}</p></div><div class="agency-info-item"><label>PIN CODE</label><p>${escHtml(a.pin)}</p></div><div class="agency-info-item"><label>CITY</label><p>${escHtml(a.city)}</p></div><div class="agency-info-item"><label>RESOURCES</label><p style="color:var(--accent)">${a.resources} units</p></div><div class="agency-info-item"><label>GPS COORDINATES</label><p style="font-family:var(--font-mono);font-size:12px">${a.lat.toFixed(4)}° N, ${a.lng.toFixed(4)}° E</p></div><div class="agency-info-item"><label>AGENCY TYPE</label><p>${escHtml(a.type)}</p></div></div><div class="amenities-section"><h4>🎒 ASSETS & AMENITIES (${(a.amenities||[]).length} items)</h4><div class="amenities-list">${amenitiesHtml}</div></div>`;
