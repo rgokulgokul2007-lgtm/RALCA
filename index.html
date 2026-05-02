@@ -1981,7 +1981,40 @@ async function createAlert(){
   await db.ref('alerts').push({type:severity,icon:severity==='critical'?'🚨':severity==='warning'?'⚠':'ℹ',title,meta:msg,time:Date.now()});
   addSystemLog(`Alert created: ${title}`);closeModal('newalert');showNotif('Alert pushed to Firebase!');
 }
+// 👇 PASTE THIS RIGHT HERE 👇
+  async function createAlert(){
+    if(currentUser?.role!=='admin'){showNotif('🔒 Admin only.');return;}
+    const title=document.getElementById('alert-title').value.trim();
+    const msg=document.getElementById('alert-msg').value.trim();
+    const severity=document.getElementById('alert-severity').value;
+    
+    if(!title||!msg){showNotif('Please fill title and message.');return;}
+    
+    try {
+      await db.ref('alerts').push({
+        type: severity,
+        icon: severity === 'critical' ? '🚨' : severity === 'warning' ? '⚠' : 'ℹ',
+        title: title,
+        meta: msg,
+        time: Date.now()
+      });
+      
+      addSystemLog(`Alert created: ${title}`);
+      closeModal('newalert');
+      showNotif('✅ Alert pushed to Firebase!');
+      
+    } catch (error) {
+      console.error("Firebase Write Error:", error);
+      showNotif('❌ ERROR: Firebase denied the request. Check console.');
+    }
+  }
+  // 👆 END OF PASTED CODE 👆
 
+
+  async function sendBroadcast(){
+    if(currentUser?.role!=='admin'){showNotif('🔒 Admin only.');return;}
+    const msg=document.getElementById('bcMessage').value.trim();
+    // ... rest of the sendBroadcast code
 async function sendBroadcast(){
   if(currentUser?.role!=='admin'){showNotif('🔒 Admin only.');return;}
   const msg=document.getElementById('bcMessage').value.trim();
