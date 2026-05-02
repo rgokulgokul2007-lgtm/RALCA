@@ -1229,6 +1229,14 @@ let allAlerts=[],allIncidents=[],allMessages=[],allCivilianSOS=[];
 let currentChannel='emergency-chennai-flood';
 
 async function seedDefaultData(){
+
+  const agSnap = await db.ref('agencies').once('value');
+  if(!agSnap.exists()){
+    // If Firebase is empty, push all our starting agencies to it!
+    for(const a of allAgencies) {
+      await db.ref(`agencies/${a.id}`).set(a);
+    }
+  }
   const alSnap=await db.ref('alerts').once('value');
   if(!alSnap.exists()){
     const defaultAlerts=[
