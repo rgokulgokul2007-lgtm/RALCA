@@ -77,7 +77,7 @@ a{text-decoration:none;color:inherit}
 .nav{flex:1;padding:16px 10px;overflow-y:auto}
 .nav-group{margin-bottom:24px}
 .nav-label{font-size:10px;font-family:var(--font-mono);color:var(--text-muted);padding:0 10px;margin-bottom:6px;letter-spacing:2px}
-.nav-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;cursor:pointer;transition:all .15s;font-size:14px;font-weight:500;color:var(--text-dim);position:relative}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;cursor:pointer;transition:alL .15s;font-size:14px;font-weight:500;color:var(--text-dim);position:relative}
 .nav-item:hover{background:var(--surface2);color:var(--text)}
 .nav-item.active{background:rgba(249,115,22,.12);color:var(--accent)}
 .nav-item .icon{font-size:16px;width:20px;text-align:center}
@@ -1258,6 +1258,22 @@ async function seedDefaultData(){
   }
 }
 
+  db.ref('agencies').on('value', snap => {
+    if (snap.exists()) {
+      allAgencies = [];
+      snap.forEach(child => allAgencies.push(child.val()));
+    }
+    
+    // Refresh the UI with the new Firebase data
+    renderDashboardAgencies();
+    renderAgencies();
+    
+    // Update the statistics numbers on the dashboard
+    const el = document.getElementById('stat-agencies');
+    if(el) el.textContent = allAgencies.length;
+    const el2 = document.getElementById('fb-agency-count');
+    if(el2) el2.textContent = allAgencies.length;
+  });
 function setupFirebaseListeners(){
 
   db.ref('agencies').on('value', snap => {
