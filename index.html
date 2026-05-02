@@ -1269,13 +1269,23 @@ function setupFirebaseListeners(){
     }
   });
 
-  db.ref('alerts').orderByChild('time').limitToLast(50).on('value',snap=>{
-    allAlerts=[];snap.forEach(child=>allAlerts.push({...child.val(),_key:child.key}));allAlerts.reverse();
-    renderAlerts();renderDashboardAlerts();
-    const el=document.getElementById('stat-alerts');if(el) el.textContent=allAlerts.length;
-    const badge=document.getElementById('alertBadge');if(badge) badge.textContent=allAlerts.filter(a=>a.type==='critical').length;
+ 
+db.ref('alerts').orderByChild('time').limitToLast(50).on('value', snap => {
+  allAlerts = []; 
+  snap.forEach(child => {
+    allAlerts.push({...child.val(), _key: child.key});
   });
+  // Sort so newest are at the top
+  allAlerts.reverse();
+  
+  // Update both the Alerts page and the Dashboard
+  renderAlerts(); 
+  renderDashboardAlerts();
 
+  // Update the red badge in the sidebar
+  const badge = document.getElementById('alertBadge');
+  if(badge) badge.textContent = allAlerts.filter(a => a.type === 'critical').length;
+});
   db.ref('incidents').orderByChild('time').limitToLast(20).on('value',snap=>{
     allIncidents=[];snap.forEach(child=>allIncidents.push({...child.val(),_key:child.key}));allIncidents.reverse();
     renderIncidents();
