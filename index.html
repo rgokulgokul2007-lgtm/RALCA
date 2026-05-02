@@ -2105,6 +2105,65 @@ function initAll(){
     if(el) el.addEventListener('input',generateSMS);
   });
 }
+  // ✅ PASTE ALL THESE FUNCTIONS AT THE BOTTOM
+function renderAlerts(){
+  const critEl = document.getElementById('critical-alerts');
+  const warnEl = document.getElementById('warn-alerts');
+  
+  if(critEl){
+    const crit = allAlerts.filter(a => a.type === 'critical');
+    critEl.innerHTML = crit.length ? crit.map(a => `
+      <div class="alert-item">
+        <div class="alert-icon critical">${a.icon || '🚨'}</div>
+        <div class="alert-content">
+          <div class="alert-title">${escHtml(a.title)}</div>
+          <div class="alert-meta">${escHtml(a.meta || '')}</div>
+        </div>
+        <div class="alert-time">${timeAgo(a.time)}</div>
+      </div>`).join('') : '<div style="padding:16px;color:var(--text-muted);font-size:13px">No critical alerts.</div>';
+  }
+
+  if(warnEl){
+    const warn = allAlerts.filter(a => a.type !== 'critical');
+    warnEl.innerHTML = warn.length ? warn.map(a => `
+      <div class="alert-item">
+        <div class="alert-icon ${a.type || 'info'}">${a.icon || '⚠'}</div>
+        <div class="alert-content">
+          <div class="alert-title">${escHtml(a.title)}</div>
+          <div class="alert-meta">${escHtml(a.meta || '')}</div>
+        </div>
+        <div class="alert-time">${timeAgo(a.time)}</div>
+      </div>`).join('') : '<div style="padding:16px;color:var(--text-muted);font-size:13px">No warnings.</div>';
+  }
+}
+
+function renderDashboardAlerts(){
+  const el = document.getElementById('dashboard-alerts');
+  if(!el) return;
+  const items = allAlerts.slice(0, 3);
+  el.innerHTML = items.map(a => `
+    <div class="alert-item">
+      <div class="alert-icon ${a.type || 'info'}">${a.icon || '⚠'}</div>
+      <div class="alert-content">
+        <div class="alert-title">${escHtml(a.title)}</div>
+        <div class="alert-meta">${escHtml(a.meta || '')}</div>
+      </div>
+      <div class="alert-time">${timeAgo(a.time)}</div>
+    </div>`).join('');
+}
+
+function timeAgo(ts){
+  if(!ts) return '—';
+  const diff = Date.now() - ts;
+  if(diff < 60000) return Math.floor(diff/1000) + 's ago';
+  if(diff < 3600000) return Math.floor(diff/60000) + ' min ago';
+  if(diff < 86400000) return Math.floor(diff/3600000) + ' hrs ago';
+  return new Date(ts).toLocaleDateString();
+}
+
+function escHtml(str){
+  return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
 </script>
 </body>
 </html>
