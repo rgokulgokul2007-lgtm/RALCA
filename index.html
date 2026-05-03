@@ -1757,6 +1757,7 @@ function startVoiceBroadcast(){
   const msg=document.getElementById('voice-msg').value.trim();
   if(!msg){showNotif('Please type a message to broadcast.');return;}
   if(!window.speechSynthesis){showNotif('⚠ Speech synthesis not supported in this browser. Try Chrome.');return;}
+  
   window.speechSynthesis.cancel();
   voiceUtterance=new SpeechSynthesisUtterance(msg);
   voiceUtterance.lang=selectedLang;
@@ -1765,35 +1766,25 @@ function startVoiceBroadcast(){
   const voices=window.speechSynthesis.getVoices();
   const langVoice=voices.find(v=>v.lang.startsWith(selectedLang.split('-')[0]));
   if(langVoice) voiceUtterance.voice=langVoice;
+  
   voiceUtterance.onstart=()=>{
     document.getElementById('voice-wave').classList.remove('stopped');
     document.getElementById('voice-status').textContent='BROADCASTING…';
     document.getElementById('voice-status').style.color='var(--accent3)';
   };
-voiceUtterance.onend = async () => {
+  
+  voiceUtterance.onend=()=>{
     document.getElementById('voice-wave').classList.add('stopped');
     document.getElementById('voice-status').textContent='COMPLETE';
     document.getElementById('voice-status').style.color='var(--green)';
     const lang=LANGUAGES.find(l=>l.code===selectedLang);
-    
-    // 👇 NEW: Push the broadcast directly to Firebase!
-    try {
-      await db.ref('voice_broadcasts').push({
-        msg: msg,
-        lang: lang?.name || selectedLang,
-        time: Date.now(),
-        sender: currentUser?.email || 'Unknown'
-      });
-    } catch(e) {
-      console.error("Firebase save failed:", e);
-    }
-    
-    addSystemLog(`Voice broadcast [${selectedLang}]: "${msg.slice(0,50)}"`);
-  };
-    
-  
-    
-    renderVoiceHistory();
+
+    db.ref('voice_broadcasts').push({
+      msg: msg,
+      lang: lang?.name || selectedLang,
+      time: Date.now()
+    });
+
     addSystemLog(`Voice broadcast [${selectedLang}]: "${msg.slice(0,50)}"`);
   };
   window.speechSynthesis.speak(voiceUtterance);
