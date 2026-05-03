@@ -1317,10 +1317,15 @@ db.ref('alerts').orderByChild('time').limitToLast(50).on('value', snap => {
     renderCivHeatmap();
   });
 
-  db.ref('system_logs').orderByChild('time').limitToLast(50).on('value',snap=>{
-    const logs=[];snap.forEach(child=>logs.push(child.val()));logs.reverse();
-    const body=document.getElementById('system-logs-body');
-    if(body) body.innerHTML=logs.length?logs.map(l=>`<div class="alert-item"><div class="alert-icon info">📋</div><div class="alert-content"><div class="alert-title">${escHtml(l.msg)}</div></div><div class="alert-time">${new Date(l.time).toLocaleTimeString()}</div></div>`).join(''):'<div style="padding:20px;color:var(--text-muted);text-align:center;font-size:13px">No logs yet.</div>';
+ // 👇 NEW: Listen for Voice Broadcasts from Firebase
+  db.ref('voice_broadcasts').orderByChild('time').limitToLast(10).on('value', snap => {
+    voiceBroadcastHistory = [];
+    snap.forEach(child => {
+      voiceBroadcastHistory.push(child.val());
+    });
+    // Reverse it so the newest broadcast is at the top of the list
+    voiceBroadcastHistory.reverse();
+    renderVoiceHistory();
   });
 
   db.ref('users').on('value',snap=>{renderUserMgmt(snap);});
@@ -1765,12 +1770,26 @@ function startVoiceBroadcast(){
     document.getElementById('voice-status').textContent='BROADCASTING…';
     document.getElementById('voice-status').style.color='var(--accent3)';
   };
-  voiceUtterance.onend=()=>{
+voiceUtterance.onend = async () => {
     document.getElementById('voice-wave').classList.add('stopped');
     document.getElementById('voice-status').textContent='COMPLETE';
     document.getElementById('voice-status').style.color='var(--green)';
     const lang=LANGUAGES.find(l=>l.code===selectedLang);
-    voiceBroadcastHistory.unshift({msg,lang:lang?.name||selectedLang,time:Date.now()});
+    
+    // 👇 NEW: Push the broadcast directly to Firebase!
+    try {
+      await db.ref('voice_broadcasts').push({
+        msg: msg,
+        lang: lang?.name || selectedLang,
+        time: Date.now(),
+        sender: currentUser?.email || 'Unknown'
+      });
+    } catch(e) {
+      console.error("Firebase save failed:", e);
+    }
+    
+    addSystemLog(`Voice broadcast [${selectedLang}]: "${msg.slice(0,50)}"`);
+  };
     
   
     
