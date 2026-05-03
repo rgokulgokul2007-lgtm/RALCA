@@ -1723,7 +1723,7 @@ const QUICK_PHRASES=[
 
 let selectedLang='ta-IN';
 let voiceUtterance=null;
-let voiceBroadcastHistory = JSON.parse(localStorage.getItem('ralca_voice_history')) || [];
+let voiceBroadcastHistory = [];
 
 function renderLanguageGrid(){
   document.getElementById('lang-grid').innerHTML=LANGUAGES.map(l=>`<div class="lang-chip${l.code===selectedLang?' selected':''}" onclick="selectLang('${l.code}',this)">${l.flag} ${l.name}</div>`).join('');
@@ -1772,8 +1772,7 @@ function startVoiceBroadcast(){
     const lang=LANGUAGES.find(l=>l.code===selectedLang);
     voiceBroadcastHistory.unshift({msg,lang:lang?.name||selectedLang,time:Date.now()});
     
-    // 👇 NEW: Save the updated list to the browser's permanent storage
-    localStorage.setItem('ralca_voice_history', JSON.stringify(voiceBroadcastHistory));
+  
     
     renderVoiceHistory();
     addSystemLog(`Voice broadcast [${selectedLang}]: "${msg.slice(0,50)}"`);
@@ -1788,13 +1787,7 @@ function stopVoiceBroadcast(){
   document.getElementById('voice-status').style.color='var(--text-muted)';
 }
 
-function renderVoiceHistory(){
-  const el=document.getElementById('voice-history');
-  if(!el) return;
-  el.innerHTML=voiceBroadcastHistory.length
-    ? voiceBroadcastHistory.slice(0,10).map(h=>`<div class="voice-history-item"><span class="vhi-lang">${escHtml(h.lang)}</span><span class="vhi-msg">${escHtml(h.msg.slice(0,60))}${h.msg.length>60?'…':''}</span><span class="vhi-time">${timeAgo(h.time)}</span></div>`).join('')
-    : '<div style="padding:16px;text-align:center;color:var(--text-muted);font-size:12px">No broadcasts yet.</div>';
-}
+
 
 /* ══════════════════════════════════════
    RESOURCE INVENTORY ALERTS
