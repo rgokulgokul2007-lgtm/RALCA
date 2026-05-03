@@ -1235,7 +1235,6 @@ let currentChannel='emergency-chennai-flood';
 
 async function seedDefaultData(){
   const agSnap = await db.ref('agencies').once('value');
-  // If there is only 1 agency (or 0), push the full list to Firebase
   if(agSnap.numChildren() <= 1){
     for(const a of allAgencies) {
       await db.ref(`agencies/${a.id}`).set(a);
@@ -1279,9 +1278,9 @@ function makeIcon(color){
 const incidentZones=[{lat:13.05,lng:80.22,label:'🌊 Flood - Tambaram',color:'#ef4444'},{lat:19.076,lng:72.88,label:'🌀 Cyclone Alert',color:'#f97316'}];
 
 function buildPopupHTML(a){
-  const amenityHtml=(a.amenities||[]).slice(0,4).map(am=>`<span style="display:inline-block;background:rgba(34,211,238,.1);border:1px solid rgba(34,211,238,.2);color:#22d3ee;padding:2px 6px;border-radius:10px;font-size:10px;margin:2px;font-family:monospace">${am}</span>`).join('');
+  const amenityHtml=(a.amenities||[]).slice(0,4).map(am=>`<span style="display:inline-block;background:rgba(34,211,238,.1);border:1px solid rgba(34,211,238,.2);color:#22d3ee;padding:2px 6px;border-radius:10px;font-size:10px;margin:2px;font-family:monospace">${escHtml(am)}</span>`).join('');
   const more=(a.amenities||[]).length>4?`<span style="font-size:10px;color:#64748b;margin-left:4px">+${(a.amenities||[]).length-4} more</span>`:'';
-  return `<div style="font-family:'DM Sans',sans-serif;min-width:220px;max-width:260px"><div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><span style="font-size:20px">${a.icon||'🏛'}</span><div><div style="font-weight:700;font-size:13px">${a.name}</div><div style="color:#94a3b8;font-size:11px">📍 ${a.city} — PIN: ${a.pin}</div></div></div><div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px"><span style="background:rgba(249,115,22,.2);color:#f97316;padding:2px 8px;border-radius:10px;font-size:11px">${a.type}</span><span style="background:rgba(16,185,129,.2);color:#10b981;padding:2px 8px;border-radius:10px;font-size:11px">${(a.status||'active').toUpperCase()}</span></div><div style="font-size:11px;color:#64748b;margin-bottom:6px">${a.address}</div><div style="margin-bottom:4px;font-size:11px;font-weight:600;color:#e2e8f0">KEY ASSETS:</div><div>${amenityHtml}${more}</div><div style="margin-top:8px;font-size:12px;color:#e2e8f0">👥 ${a.resources} resources</div></div>`;
+  return `<div style="font-family:'DM Sans',sans-serif;min-width:220px;max-width:260px"><div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><span style="font-size:20px">${a.icon||'🏛'}</span><div><div style="font-weight:700;font-size:13px">${escHtml(a.name)}</div><div style="color:#94a3b8;font-size:11px">📍 ${escHtml(a.city||'')} — PIN: ${escHtml(a.pin||'')}</div></div></div><div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px"><span style="background:rgba(249,115,22,.2);color:#f97316;padding:2px 8px;border-radius:10px;font-size:11px">${escHtml(a.type)}</span><span style="background:rgba(16,185,129,.2);color:#10b981;padding:2px 8px;border-radius:10px;font-size:11px">${(a.status||'active').toUpperCase()}</span></div><div style="font-size:11px;color:#64748b;margin-bottom:6px">${escHtml(a.address||'')}</div><div style="margin-bottom:4px;font-size:11px;font-weight:600;color:#e2e8f0">KEY ASSETS:</div><div>${amenityHtml}${more}</div><div style="margin-top:8px;font-size:12px;color:#e2e8f0">👥 ${a.resources||0} resources</div></div>`;
 }
 
 function initMiniMap(){
@@ -1289,7 +1288,11 @@ function initMiniMap(){
   miniLeafMap=L.map('minimap',{zoomControl:false,scrollWheelZoom:false,dragging:false,attributionControl:false}).setView([24.0,78.5],4);
   L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{maxZoom:18}).addTo(miniLeafMap);
   incidentZones.forEach(z=>{L.circle([z.lat,z.lng],{color:z.color,fillColor:z.color,fillOpacity:0.12,radius:30000,weight:2,dashArray:'6,4'}).addTo(miniLeafMap);});
-  allAgencies.forEach(a=>{L.marker([a.lat,a.lng],{icon:makeIcon(getColor(a))}).addTo(miniLeafMap).bindTooltip(`<b>${a.name}</b><br>${a.type}`,{direction:'top'});});
+  allAgencies.forEach(a=>{
+    if(a.lat && a.lng){
+      L.marker([a.lat,a.lng],{icon:makeIcon(getColor(a))}).addTo(miniLeafMap).bindTooltip(`<b>${escHtml(a.name)}</b><br>${escHtml(a.type)}`,{direction:'top'});
+    }
+  });
 }
 
 function initFullMap(){
@@ -1309,8 +1312,10 @@ function initFullMap(){
   fullLeafMap.on('mousemove',e=>{const el=document.getElementById('mapCoords');if(el) el.textContent=`📍 ${e.latlng.lat.toFixed(4)}° N, ${e.latlng.lng.toFixed(4)}° E`;});
   fullMarkers=[];
   allAgencies.forEach(a=>{
-    const m=L.marker([a.lat,a.lng],{icon:makeIcon(getColor(a))}).addTo(fullLeafMap).bindPopup(buildPopupHTML(a),{maxWidth:280});
-    fullMarkers.push({marker:m,type:a.type,agency:a});
+    if(a.lat && a.lng){
+      const m=L.marker([a.lat,a.lng],{icon:makeIcon(getColor(a))}).addTo(fullLeafMap).bindPopup(buildPopupHTML(a),{maxWidth:280});
+      fullMarkers.push({marker:m,type:a.type,agency:a});
+    }
   });
 }
 
@@ -1343,7 +1348,11 @@ function initCorridorMap(){
       .bindTooltip(s?.name+(s?.clear?' ✅ CLEAR':' ⚠ BLOCKED'));
   });
   incidentZones.forEach(z=>{L.circle([z.lat,z.lng],{color:z.color,fillColor:z.color,fillOpacity:0.2,radius:20000,weight:2}).addTo(corridorMap).bindPopup(`<b>${z.label}</b>`);});
-  allAgencies.filter(a=>a.city==='Chennai').forEach(a=>{L.marker([a.lat,a.lng],{icon:makeIcon(getColor(a))}).addTo(corridorMap).bindTooltip(a.name);});
+  allAgencies.filter(a=>(a.city||'').includes('Chennai')).forEach(a=>{
+    if(a.lat && a.lng){
+      L.marker([a.lat,a.lng],{icon:makeIcon(getColor(a))}).addTo(corridorMap).bindTooltip(a.name);
+    }
+  });
 }
 
 function renderRoadList(){
@@ -1440,13 +1449,13 @@ function showAIForecast(){
       <span class="ai-resource-status ai-status-${status}">${statusLabel}</span>
     </div>`;
   }).join('');
-  const matchedAgencies=allAgencies.filter(a=>forecast.agencyTypes.some(t=>a.type.includes(t.split(' ')[0]))).slice(0,3);
+  const matchedAgencies=allAgencies.filter(a=>forecast.agencyTypes.some(t=>(a.type||'').includes(t.split(' ')[0]))).slice(0,3);
   document.getElementById('ai-matched-agencies').innerHTML=matchedAgencies.map(a=>`
     <div class="matched-agency" onclick="closeModal('incident');showAgencyDetail('${a.id}')">
       <span style="font-size:16px">${a.icon||'🏛'}</span>
       <div>
         <div class="ma-name">${escHtml(a.name)}</div>
-        <div class="ma-sub">${escHtml(a.type)} · ${a.resources} resources · <span style="color:var(--green)">${a.status.toUpperCase()}</span></div>
+        <div class="ma-sub">${escHtml(a.type)} · ${a.resources||0} resources · <span style="color:var(--green)">${(a.status||'').toUpperCase()}</span></div>
       </div>
       <span style="font-size:11px;color:var(--accent3);font-family:var(--font-mono)">VIEW →</span>
     </div>`).join('');
@@ -1481,13 +1490,16 @@ async function submitCivilianSOS(){
   if(!location&&!civLat){showNotif('Please enter location or capture GPS.');return;}
   const lat=civLat||(13.05+(Math.random()-.5)*.3);
   const lng=civLng||(80.22+(Math.random()-.5)*.3);
-  await db.ref('civilian_sos').push({type:selectedSOSType,location:location||'GPS Pin',msg,lat,lng,time:Date.now()});
-  addSystemLog(`Civilian SOS: ${selectedSOSType} at ${location||lat+','+lng}`);
-  closeModal('civsos');
-  showNotif(`📍 SOS pin dropped: ${selectedSOSType}`);
-  civLat=null;civLng=null;
-  document.getElementById('civ-location').value='';
-  document.getElementById('civ-msg').value='';
+  
+  try {
+    await db.ref('civilian_sos').push({type:selectedSOSType,location:location||'GPS Pin',msg,lat,lng,time:Date.now()});
+    addSystemLog(`Civilian SOS: ${selectedSOSType} at ${location||lat+','+lng}`);
+    closeModal('civsos');
+    showNotif(`📍 SOS pin dropped: ${selectedSOSType}`);
+    civLat=null;civLng=null;
+    document.getElementById('civ-location').value='';
+    document.getElementById('civ-msg').value='';
+  } catch(e) { showNotif('❌ Firebase Sync Error.'); }
 }
 
 function initCivMap(){
@@ -1511,7 +1523,7 @@ function renderCivHeatmap(){
     const color=SOS_COLORS[s.type]||'#22d3ee';
     const icon=L.divIcon({className:'',html:`<div style="width:14px;height:14px;border-radius:50%;background:${color};border:2px solid #fff;box-shadow:0 0 10px ${color}bb;opacity:.9"></div>`,iconSize:[14,14],iconAnchor:[7,7]});
     const m=L.marker([s.lat,s.lng],{icon}).addTo(civMap)
-      .bindPopup(`<b>${s.type}</b><br>${s.location||'GPS'}<br><small style="color:#94a3b8">${s.msg||''}</small>`);
+      .bindPopup(`<b>${escHtml(s.type)}</b><br>${escHtml(s.location||'GPS')}<br><small style="color:#94a3b8">${escHtml(s.msg||'')}</small>`);
     civMarkers.push(m);
     const circle=L.circle([s.lat,s.lng],{color:color,fillColor:color,fillOpacity:0.06,radius:2000,weight:0}).addTo(civMap);
     civMarkers.push(circle);
@@ -1524,7 +1536,7 @@ function toggleHeatmapOnMap(){
   if(heatmapVisible){
     allCivilianSOS.forEach(s=>{
       const color=SOS_COLORS[s.type]||'#22d3ee';
-      L.circle([s.lat,s.lng],{color,fillColor:color,fillOpacity:0.2,radius:8000,weight:1}).addTo(fullLeafMap).bindPopup(`🆘 ${s.type}<br>${s.location||''}`);
+      L.circle([s.lat,s.lng],{color,fillColor:color,fillOpacity:0.2,radius:8000,weight:1}).addTo(fullLeafMap).bindPopup(`🆘 ${escHtml(s.type)}<br>${escHtml(s.location||'')}`);
     });
     showNotif(`🌡 Civilian heatmap: ${allCivilianSOS.length} SOS pins overlaid.`);
   } else {
@@ -1629,13 +1641,6 @@ function renderOfflineQueue(){
   el.innerHTML=offlineQueue.map((q,i)=>`<div style="padding:6px 0;border-bottom:1px solid rgba(30,45,71,.4);font-size:12px"><span style="color:var(--yellow);font-family:var(--font-mono)">[${i+1}]</span> ${escHtml(q.data)}</div>`).join('');
 }
 
-document.addEventListener('DOMContentLoaded',()=>{
-  ['sms-type','sms-desc'].forEach(id=>{
-    const el=document.getElementById(id);
-    if(el) el.addEventListener('input',generateSMS);
-  });
-});
-
 /* ══════════════════════════════════════
    FEATURE 5: VOICE BROADCAST
 ══════════════════════════════════════ */
@@ -1690,17 +1695,17 @@ function startVoiceBroadcast(){
   
   const langObj = LANGUAGES.find(l => l.code === selectedLang);
 
-  // 🔥 1. PUSH TO FIREBASE IMMEDIATELY
-  db.ref('voice_broadcasts').push({
-    msg: msg,
-    lang: langObj?.name || selectedLang,
-    time: Date.now()
-  });
+  try {
+    db.ref('voice_broadcasts').push({
+      msg: msg,
+      lang: langObj?.name || selectedLang,
+      time: Date.now()
+    });
+  } catch(e){}
   
   addSystemLog(`Voice broadcast [${selectedLang}]: "${msg.slice(0,50)}"`);
   document.getElementById('voice-msg').value = ''; 
 
-  // 🔊 2. PLAY THE AUDIO
   if(!window.speechSynthesis){ showNotif('⚠ Speech synthesis not supported.'); return; }
   
   window.speechSynthesis.cancel();
@@ -1713,15 +1718,17 @@ function startVoiceBroadcast(){
   if(langVoice) voiceUtterance.voice = langVoice;
   
   voiceUtterance.onstart = () => {
-    document.getElementById('voice-wave').classList.remove('stopped');
-    document.getElementById('voice-status').textContent = 'BROADCASTING…';
-    document.getElementById('voice-status').style.color = 'var(--accent3)';
+    const wv = document.getElementById('voice-wave');
+    if(wv) wv.classList.remove('stopped');
+    const vs = document.getElementById('voice-status');
+    if(vs) { vs.textContent = 'BROADCASTING…'; vs.style.color = 'var(--accent3)'; }
   };
   
   voiceUtterance.onend = () => {
-    document.getElementById('voice-wave').classList.add('stopped');
-    document.getElementById('voice-status').textContent = 'COMPLETE';
-    document.getElementById('voice-status').style.color = 'var(--green)';
+    const wv = document.getElementById('voice-wave');
+    if(wv) wv.classList.add('stopped');
+    const vs = document.getElementById('voice-status');
+    if(vs) { vs.textContent = 'COMPLETE'; vs.style.color = 'var(--green)'; }
   };
   
   window.speechSynthesis.speak(voiceUtterance);
@@ -1729,57 +1736,10 @@ function startVoiceBroadcast(){
 
 function stopVoiceBroadcast(){
   window.speechSynthesis?.cancel();
-  document.getElementById('voice-wave').classList.add('stopped');
-  document.getElementById('voice-status').textContent='STOPPED';
-  document.getElementById('voice-status').style.color='var(--text-muted)';
-}
-
-
-
-/* ══════════════════════════════════════
-   RESOURCE INVENTORY ALERTS
-══════════════════════════════════════ */
-const resources=[
-  {icon:'🚒',name:'Fire Engines',total:28,avail:22},
-  {icon:'🚑',name:'Ambulances',total:45,avail:38},
-  {icon:'🚁',name:'Helicopters',total:8,avail:2}, 
-  {icon:'⛵',name:'Rescue Boats',total:24,avail:3}, 
-  {icon:'🏕️',name:'Relief Tents',total:500,avail:320},
-  {icon:'💊',name:'Medical Kits',total:340,avail:340},
-  {icon:'🔋',name:'Generators',total:60,avail:48},
-  {icon:'🚛',name:'Trucks',total:35,avail:28},
-  {icon:'📡',name:'Comm Sets',total:120,avail:10}, 
-];
-
-function renderResources(){
-  const criticalItems=resources.filter(r=>(r.avail/r.total)<0.1);
-  if(criticalItems.length>0){
-    const bar=document.getElementById('inv-alert-bar');
-    if(bar){
-      bar.style.display='flex';
-      document.getElementById('inv-alert-text').textContent=`${criticalItems.map(r=>r.name).join(', ')} below 10% capacity!`;
-    }
-  }
-  const invAlerts=document.getElementById('resource-inv-alerts');
-  if(invAlerts && criticalItems.length>0){
-    invAlerts.innerHTML=criticalItems.map(r=>`<div class="inv-alert-bar" style="margin-bottom:8px;display:flex">
-      <span>${r.icon}</span>
-      <strong>${r.name}</strong>: Only ${r.avail} of ${r.total} remaining (${Math.round((r.avail/r.total)*100)}%)
-      <span class="inv-crit-tag" style="margin-left:6px">CRITICAL LOW</span>
-    </div>`).join('');
-  }
-  document.getElementById('resource-grid').innerHTML=resources.map(r=>{
-    const p=Math.round((r.avail/r.total)*100);
-    const isCrit=p<10;
-    return `<div class="resource-card${isCrit?' critical-low':''}">
-      ${isCrit?'<div style="position:absolute;top:8px;right:8px;background:var(--accent2);color:#fff;font-size:9px;font-family:var(--font-mono);padding:2px 6px;border-radius:10px;font-weight:700">⚠ LOW</div>':''}
-      <div class="resource-icon">${r.icon}</div>
-      <div class="resource-name">${r.name}</div>
-      <div class="resource-count">${r.avail}<span style="font-size:14px;color:var(--text-muted)">/${r.total}</span></div>
-      <div class="resource-avail">${p}% available</div>
-      <div class="progress-bar"><div class="progress-fill" style="width:${p}%;background:${p>70?'var(--green)':p>40?'var(--yellow)':p>10?'var(--accent)':'var(--accent2)'}"></div></div>
-    </div>`;
-  }).join('');
+  const wv = document.getElementById('voice-wave');
+  if(wv) wv.classList.add('stopped');
+  const vs = document.getElementById('voice-status');
+  if(vs) { vs.textContent = 'STOPPED'; vs.style.color = 'var(--text-muted)'; }
 }
 
 /* ══════════════════════════════════════
@@ -1838,12 +1798,12 @@ function renderAgencies(filter){
   if(filter!==undefined) agencySearchFilter=filter;
   const sm={active:'badge-active',standby:'badge-standby',busy:'badge-busy'};
   const isAdmin=currentUser?.role==='admin';
-  const filtered=allAgencies.filter(a=>a.name.toLowerCase().includes(agencySearchFilter.toLowerCase())||a.type.toLowerCase().includes(agencySearchFilter.toLowerCase())||a.city.toLowerCase().includes(agencySearchFilter.toLowerCase()));
+  const filtered=allAgencies.filter(a=>(a.name||'').toLowerCase().includes(agencySearchFilter.toLowerCase())||(a.type||'').toLowerCase().includes(agencySearchFilter.toLowerCase())||(a.city||'').toLowerCase().includes(agencySearchFilter.toLowerCase()));
   document.getElementById('agencies-table').innerHTML=filtered.length
     ? filtered.map(a=>{
         const topAmenities=(a.amenities||[]).slice(0,2).map(am=>`<span class="amenity-tag">${escHtml(am)}</span>`).join('');
         const more=(a.amenities||[]).length>2?`<span style="font-size:10px;color:var(--text-muted)">+${(a.amenities||[]).length-2} more</span>`:'';
-        return `<tr><td><div style="display:flex;align-items:center;gap:8px"><span style="font-size:18px">${a.icon||'🏛'}</span><div><strong>${escHtml(a.name)}</strong><div style="font-size:11px;color:var(--text-muted);font-family:var(--font-mono)">${escHtml(a.id)}</div></div></div></td><td><span style="font-size:12px;color:var(--text-dim)">${escHtml(a.type)}</span></td><td><span style="font-size:12px">${escHtml(a.city)}</span></td><td><span style="font-family:var(--font-mono);font-size:11px;color:var(--accent3)">${escHtml(a.pin)}</span></td><td><div class="amenity-tags">${topAmenities}${more}</div></td><td><span class="badge ${sm[a.status]||'badge-pending'}">${(a.status||'').toUpperCase()}</span></td><td><button class="btn btn-ghost" style="font-size:11px;padding:4px 10px" onclick="showAgencyDetail('${a.id}')">🔍 View</button>${isAdmin?`<button class="btn btn-success" style="font-size:11px;padding:4px 10px;margin-left:4px" onclick="showNotif('Resource request sent to ${escHtml(a.shortType||a.name)}!')">📤 Request</button>`:''}</td></tr>`;
+        return `<tr><td><div style="display:flex;align-items:center;gap:8px"><span style="font-size:18px">${a.icon||'🏛'}</span><div><strong>${escHtml(a.name)}</strong><div style="font-size:11px;color:var(--text-muted);font-family:var(--font-mono)">${escHtml(a.id)}</div></div></div></td><td><span style="font-size:12px;color:var(--text-dim)">${escHtml(a.type)}</span></td><td><span style="font-size:12px">${escHtml(a.city||'Unknown')}</span></td><td><span style="font-family:var(--font-mono);font-size:11px;color:var(--accent3)">${escHtml(a.pin||'')}</span></td><td><div class="amenity-tags">${topAmenities}${more}</div></td><td><span class="badge ${sm[a.status]||'badge-pending'}">${(a.status||'').toUpperCase()}</span></td><td><button class="btn btn-ghost" style="font-size:11px;padding:4px 10px" onclick="showAgencyDetail('${a.id}')">🔍 View</button>${isAdmin?`<button class="btn btn-success" style="font-size:11px;padding:4px 10px;margin-left:4px" onclick="showNotif('Resource request sent to ${escHtml(a.shortType||a.name)}!')">📤 Request</button>`:''}</td></tr>`;
       }).join('')
     : '<tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:20px">No agencies found.</td></tr>';
 }
@@ -1852,7 +1812,7 @@ function showAgencyDetail(id){
   const a=allAgencies.find(ag=>ag.id===id);if(!a) return;
   const color=getColor(a);
   const amenitiesHtml=(a.amenities||[]).map(am=>`<span class="amenity-pill">${escHtml(am)}</span>`).join('');
-  document.getElementById('agency-detail-body').innerHTML=`<div class="agency-modal-header"><div class="agency-modal-icon" style="background:${color}20;border:1px solid ${color}40">${a.icon||'🏛'}</div><div><div style="font-size:17px;font-weight:700">${escHtml(a.name)}</div><div class="agency-modal-location">📍 ${escHtml(a.address)}</div><div style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap"><span class="badge badge-pending">${escHtml(a.type)}</span><span class="badge ${a.status==='active'?'badge-active':a.status==='standby'?'badge-standby':'badge-busy'}">${(a.status||'').toUpperCase()}</span></div></div></div><div class="agency-info-grid"><div class="agency-info-item"><label>AGENCY ID</label><p style="font-family:var(--font-mono);color:var(--accent3)">${escHtml(a.id)}</p></div><div class="agency-info-item"><label>PIN CODE</label><p>${escHtml(a.pin)}</p></div><div class="agency-info-item"><label>CITY</label><p>${escHtml(a.city)}</p></div><div class="agency-info-item"><label>RESOURCES</label><p style="color:var(--accent)">${a.resources} units</p></div><div class="agency-info-item"><label>GPS COORDINATES</label><p style="font-family:var(--font-mono);font-size:12px">${a.lat.toFixed(4)}° N, ${a.lng.toFixed(4)}° E</p></div><div class="agency-info-item"><label>AGENCY TYPE</label><p>${escHtml(a.type)}</p></div></div><div class="amenities-section"><h4>🎒 ASSETS & AMENITIES (${(a.amenities||[]).length} items)</h4><div class="amenities-list">${amenitiesHtml}</div></div>`;
+  document.getElementById('agency-detail-body').innerHTML=`<div class="agency-modal-header"><div class="agency-modal-icon" style="background:${color}20;border:1px solid ${color}40">${a.icon||'🏛'}</div><div><div style="font-size:17px;font-weight:700">${escHtml(a.name)}</div><div class="agency-modal-location">📍 ${escHtml(a.address||'')}</div><div style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap"><span class="badge badge-pending">${escHtml(a.type)}</span><span class="badge ${a.status==='active'?'badge-active':a.status==='standby'?'badge-standby':'badge-busy'}">${(a.status||'').toUpperCase()}</span></div></div></div><div class="agency-info-grid"><div class="agency-info-item"><label>AGENCY ID</label><p style="font-family:var(--font-mono);color:var(--accent3)">${escHtml(a.id)}</p></div><div class="agency-info-item"><label>PIN CODE</label><p>${escHtml(a.pin||'N/A')}</p></div><div class="agency-info-item"><label>CITY</label><p>${escHtml(a.city||'N/A')}</p></div><div class="agency-info-item"><label>RESOURCES</label><p style="color:var(--accent)">${a.resources||0} units</p></div><div class="agency-info-item"><label>GPS COORDINATES</label><p style="font-family:var(--font-mono);font-size:12px">${a.lat?a.lat.toFixed(4):'N/A'}° N, ${a.lng?a.lng.toFixed(4):'N/A'}° E</p></div><div class="agency-info-item"><label>AGENCY TYPE</label><p>${escHtml(a.type)}</p></div></div><div class="amenities-section"><h4>🎒 ASSETS & AMENITIES (${(a.amenities||[]).length} items)</h4><div class="amenities-list">${amenitiesHtml}</div></div>`;
   showModal('agencydetail');
 }
 
@@ -1903,6 +1863,14 @@ function renderUserMgmt(snap){
   tbody.innerHTML=all.map(u=>`<tr><td style="font-family:var(--font-mono);font-size:12px">${escHtml(u.email)}</td><td><span class="badge ${u.role==='ADMIN'?'badge-busy':u.role==='OFFICER'?'badge-standby':'badge-active'}">${u.role}</span></td><td><span class="badge badge-active">Active</span></td><td style="color:var(--text-muted);font-size:12px">${u.joined}</td><td>${u.role!=='ADMIN'?`<button class="btn btn-ghost" style="font-size:11px;padding:4px 10px" onclick="showNotif('User action applied.')">Manage</button>`:'-'}</td></tr>`).join('');
 }
 
+function renderVoiceHistory(){
+  const el = document.getElementById('voice-history');
+  if(!el) return;
+  el.innerHTML = voiceBroadcastHistory.length
+    ? voiceBroadcastHistory.slice(0,10).map(h=>`<div class="voice-history-item"><span class="vhi-lang">${escHtml(h.lang)}</span><span class="vhi-msg">${escHtml(h.msg)}</span><span class="vhi-time">${timeAgo(h.time)}</span></div>`).join('')
+    : '<div style="padding:16px;text-align:center;color:var(--text-muted);font-size:12px">No broadcasts yet.</div>';
+}
+
 /* ══════════════════════════════════════
    ACTIONS
 ══════════════════════════════════════ */
@@ -1914,13 +1882,16 @@ async function submitIncident(){
   const desc=document.getElementById('inc-desc').value.trim();
   if(!location){showNotif('Please enter a location.');return;}
   const incident={id:'INC-'+Date.now(),type,severity,location,desc,reportedBy:currentUser?.name||'Unknown',status:'active',time:Date.now()};
-  await db.ref('incidents').push(incident);
-  await db.ref('alerts').push({type:'critical',icon:'🆘',title:`${type} — ${location}`,meta:`Severity: ${severity} · AI forecast available`,time:Date.now()});
-  addSystemLog(`Incident reported: ${type} at ${location} by ${currentUser?.email}`);
-  closeModal('incident');
-  showNotif('🆘 Incident sent! AI resource forecast generated.');
-  document.getElementById('inc-location').value='';
-  document.getElementById('inc-desc').value='';
+  
+  try {
+    await db.ref('incidents').push(incident);
+    await db.ref('alerts').push({type:'critical',icon:'🆘',title:`${type} — ${location}`,meta:`Severity: ${severity} · AI forecast available`,time:Date.now()});
+    addSystemLog(`Incident reported: ${type} at ${location} by ${currentUser?.email}`);
+    closeModal('incident');
+    showNotif('🆘 Incident sent! AI resource forecast generated.');
+    document.getElementById('inc-location').value='';
+    document.getElementById('inc-desc').value='';
+  } catch(e) { showNotif('❌ Firebase Error. Check rules.'); }
 }
 
 async function createAlert(){
@@ -1942,10 +1913,7 @@ async function createAlert(){
     addSystemLog(`Alert created: ${title}`);
     closeModal('newalert');
     showNotif('✅ Alert pushed to Firebase!');
-  } catch (error) {
-    console.error("Firebase Write Error:", error);
-    showNotif('❌ ERROR: Firebase denied the request. Check console.');
-  }
+  } catch (error) { showNotif('❌ ERROR: Firebase denied the request.'); }
 }
 
 async function sendBroadcast(){
@@ -1954,10 +1922,12 @@ async function sendBroadcast(){
   const target=document.getElementById('bcTarget').value;
   const priority=document.getElementById('bcPriority').value;
   if(!msg){showNotif('Please enter a message.');return;}
-  await db.ref('alerts').push({type:priority.includes('Critical')?'critical':priority.includes('Warning')?'warning':'info',icon:'📡',title:`📡 BROADCAST: ${target}`,meta:msg,time:Date.now()});
-  addSystemLog(`Broadcast sent (${priority}): "${msg.slice(0,40)}…"`);
-  showNotif('📡 Broadcast pushed to Firebase!');
-  document.getElementById('bcMessage').value='';
+  try {
+    await db.ref('alerts').push({type:priority.includes('Critical')?'critical':priority.includes('Warning')?'warning':'info',icon:'📡',title:`📡 BROADCAST: ${target}`,meta:msg,time:Date.now()});
+    addSystemLog(`Broadcast sent (${priority}): "${msg.slice(0,40)}…"`);
+    showNotif('📡 Broadcast pushed to Firebase!');
+    document.getElementById('bcMessage').value='';
+  } catch(e) { showNotif('❌ Broadcast failed.'); }
 }
 
 async function submitRegistration(){
@@ -1965,11 +1935,46 @@ async function submitRegistration(){
   const name=document.getElementById('reg-name').value.trim();
   const type=document.getElementById('reg-type').value;
   if(!name||type==='-- Select Type --'){showNotif('Agency name and type are required.');return;}
-  const agency={id:'AGY'+Date.now(),name,type,regno:document.getElementById('reg-regno').value,year:document.getElementById('reg-year').value,address:document.getElementById('reg-addr').value,contact:document.getElementById('reg-contact').value,phone:document.getElementById('reg-phone').value,email:document.getElementById('reg-email').value,district:document.getElementById('reg-district').value,lat:parseFloat(document.getElementById('gpsLat').value)||null,lng:parseFloat(document.getElementById('gpsLng').value)||null,personnel:parseInt(document.getElementById('reg-personnel').value)||0,vehicles:parseInt(document.getElementById('reg-vehicles').value)||0,resources:parseInt(document.getElementById('reg-personnel').value)||0,location:document.getElementById('reg-addr').value,spec:document.getElementById('reg-spec').value,resp:document.getElementById('reg-resp').value,notes:document.getElementById('reg-notes').value,status:'active',createdBy:currentUser.email,createdAt:Date.now()};
-  await db.ref(`agencies/${agency.id}`).set(agency);
-  addSystemLog(`Agency registered: ${name} by ${currentUser.email}`);
-  showNotif(`✅ ${name} registered in Firebase!`);
-  navigate('agencies',null);
+  
+  const agency={
+    id: 'AGY'+Date.now(),
+    name: name,
+    type: type,
+    shortType: type,
+    regno: document.getElementById('reg-regno').value || '',
+    year: document.getElementById('reg-year').value || '',
+    address: document.getElementById('reg-addr').value || '',
+    contact: document.getElementById('reg-contact').value || '',
+    phone: document.getElementById('reg-phone').value || '',
+    email: document.getElementById('reg-email').value || '',
+    district: document.getElementById('reg-district').value || '',
+    city: document.getElementById('reg-district').value || 'Unknown', // Safe fallback to prevent crashes
+    pin: '',
+    lat: parseFloat(document.getElementById('gpsLat').value) || null,
+    lng: parseFloat(document.getElementById('gpsLng').value) || null,
+    personnel: parseInt(document.getElementById('reg-personnel').value) || 0,
+    vehicles: parseInt(document.getElementById('reg-vehicles').value) || 0,
+    resources: parseInt(document.getElementById('reg-personnel').value) || 0,
+    location: document.getElementById('reg-addr').value || '',
+    spec: document.getElementById('reg-spec').value || '',
+    resp: document.getElementById('reg-resp').value || '',
+    notes: document.getElementById('reg-notes').value || '',
+    amenities: document.getElementById('reg-notes').value ? document.getElementById('reg-notes').value.split(',').map(s=>s.trim()) : ['Standard Equipment'],
+    status: 'active',
+    createdBy: currentUser.email,
+    createdAt: Date.now()
+  };
+  
+  try {
+    await db.ref(`agencies/${agency.id}`).set(agency);
+    addSystemLog(`Agency registered: ${name} by ${currentUser.email}`);
+    showNotif(`✅ ${name} registered in Firebase!`);
+    navigate('agencies',null);
+    clearRegistrationForm();
+  } catch(e) {
+    console.error(e);
+    showNotif('❌ Firebase Error. Agency not saved.');
+  }
 }
 
 function clearRegistrationForm(){
@@ -1981,8 +1986,10 @@ async function sendMsg(){
   if(currentUser?.role==='guest'){showNotif('🔒 Login to send messages.');return;}
   const inp=document.getElementById('msgInput');
   const txt=inp.value.trim();if(!txt) return;
-  await db.ref(`messages/${currentChannel}`).push({sender:currentUser.name||currentUser.email,role:(currentUser.role||'user').toUpperCase(),msg:txt,time:Date.now(),uid:currentUser.uid||'guest'});
-  inp.value='';
+  try {
+    await db.ref(`messages/${currentChannel}`).push({sender:currentUser.name||currentUser.email,role:(currentUser.role||'user').toUpperCase(),msg:txt,time:Date.now(),uid:currentUser.uid||'guest'});
+    inp.value='';
+  } catch(e){ showNotif('❌ Message send failed.'); }
 }
 
 function captureGPS(){
@@ -1995,10 +2002,12 @@ async function addDemoPin(){
   const types=Object.keys(typeColors);
   const t=types[Math.floor(Math.random()*types.length)];
   const lat=8+Math.random()*28,lng=68+Math.random()*22;
-  const a={id:'SIM'+Date.now(),name:'Demo Unit '+Math.floor(Math.random()*99),type:t,location:'Field',resources:5,status:'active',lat,lng,simulated:true,createdAt:Date.now()};
-  await db.ref(`agencies/${a.id}`).set(a);
-  if(fullLeafMap){const color=typeColors[t]||'#94a3b8';const m=L.marker([lat,lng],{icon:makeIcon(color)}).addTo(fullLeafMap).bindPopup(`<b>${a.name}</b><br>${t}<br><small>Simulated unit</small>`);fullMarkers.push({marker:m,type:t,agency:a});}
-  addSystemLog(`Simulated agency added: ${a.name}`);showNotif('New simulated agency added!');
+  const a={id:'SIM'+Date.now(),name:'Demo Unit '+Math.floor(Math.random()*99),type:t,city:'Simulated',pin:'',address:'Field',location:'Field',resources:5,status:'active',lat,lng,simulated:true,createdAt:Date.now()};
+  try {
+    await db.ref(`agencies/${a.id}`).set(a);
+    if(fullLeafMap){const color=typeColors[t]||'#94a3b8';const m=L.marker([lat,lng],{icon:makeIcon(color)}).addTo(fullLeafMap).bindPopup(`<b>${a.name}</b><br>${t}<br><small>Simulated unit</small>`);fullMarkers.push({marker:m,type:t,agency:a});}
+    addSystemLog(`Simulated agency added: ${a.name}`);showNotif('New simulated agency added!');
+  } catch(e) { showNotif('❌ Failed to add demo pin.'); }
 }
 
 function filterAgencies(){renderAgencies(document.getElementById('agencySearch').value);}
@@ -2008,7 +2017,7 @@ function toggleFilter(el,type){
   el.classList.add('active');
   if(!fullLeafMap) return;
   fullMarkers.forEach(({marker,type:t})=>{
-    const tl=t.toLowerCase();
+    const tl=(t||'').toLowerCase();
     let show=false;
     if(type==='all') show=true;
     else if(type==='ndrf') show=tl.includes('ndrf')||tl.includes('sdrf')||tl.includes('coordination');
@@ -2060,7 +2069,6 @@ function initAll(){
 }
 
 function setupFirebaseListeners(){
-
   db.ref('agencies').on('value', snap => {
     if (snap.exists()) {
       allAgencies = [];
@@ -2106,7 +2114,6 @@ function setupFirebaseListeners(){
     renderCivHeatmap();
   });
 
-  // VOICE BROADCAST LISTENER
   db.ref('voice_broadcasts').orderByChild('time').limitToLast(10).on('value', snap => {
     voiceBroadcastHistory = [];
     if(snap.exists()){
@@ -2116,7 +2123,6 @@ function setupFirebaseListeners(){
     renderVoiceHistory();
   });
 
-  // SYSTEM LOGS LISTENER
   db.ref('system_logs').orderByChild('time').limitToLast(50).on('value',snap=>{
     const logs=[];
     snap.forEach(child=>logs.push(child.val()));
