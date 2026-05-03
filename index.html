@@ -1723,7 +1723,7 @@ const QUICK_PHRASES=[
 
 let selectedLang='ta-IN';
 let voiceUtterance=null;
-const voiceBroadcastHistory=[];
+let voiceBroadcastHistory = JSON.parse(localStorage.getItem('ralca_voice_history')) || [];
 
 function renderLanguageGrid(){
   document.getElementById('lang-grid').innerHTML=LANGUAGES.map(l=>`<div class="lang-chip${l.code===selectedLang?' selected':''}" onclick="selectLang('${l.code}',this)">${l.flag} ${l.name}</div>`).join('');
