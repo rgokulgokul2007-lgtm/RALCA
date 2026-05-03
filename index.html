@@ -998,18 +998,28 @@ select option{background:var(--surface2)}
   <div class="modal">
     <div class="modal-title">🎒 Add Resource</div>
     <div class="form-grid">
-      <div class="form-group"><label>RESOURCE TYPE</label><select><option>Vehicle</option><option>Boat</option><option>Helicopter</option><option>Medical Kit</option><option>Tent</option><option>Generator</option></select></div>
-      <div class="form-group"><label>QUANTITY</label><input type="number" placeholder="0"/></div>
+      <div class="form-group">
+        <label>RESOURCE TYPE</label>
+        <select id="new-res-type">
+          <option value="Trucks">Vehicle (Trucks)</option>
+          <option value="Rescue Boats">Rescue Boat</option>
+          <option value="Helicopters">Helicopter</option>
+          <option value="Medical Kits">Medical Kit</option>
+          <option value="Relief Tents">Relief Tent</option>
+          <option value="Generators">Generator</option>
+        </select>
+      </div>
+      <div class="form-group"><label>QUANTITY</label><input type="number" id="new-res-qty" placeholder="0"/></div>
       <div class="form-group"><label>AGENCY</label><select id="res-agency-select"></select></div>
       <div class="form-group"><label>CONDITION</label><select><option>Operational</option><option>Needs Maintenance</option></select></div>
       <div class="form-actions">
         <button class="btn btn-ghost" onclick="closeModal('addresource')">Cancel</button>
-        <button class="btn btn-primary" onclick="closeModal('addresource');showNotif('Resource added!')">Add</button>
+        <button class="btn btn-primary" onclick="addNewResource()">Add to Inventory</button>
       </div>
     </div>
   </div>
 </div>
-
+  
 <!-- AGENCY DETAIL -->
 <div class="modal-bg" id="modal-agencydetail" onclick="if(event.target===this)closeModal('agencydetail')">
   <div class="modal" id="agency-detail-content" style="width:620px">
@@ -2164,6 +2174,32 @@ function timeAgo(ts){
 function escHtml(str){
   return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
+
+  function addNewResource() {
+  const typeSelect = document.getElementById('new-res-type');
+  const resourceName = typeSelect.value; 
+  const qtyInput = document.getElementById('new-res-qty').value;
+  const qty = parseInt(qtyInput);
+
+  if (!qty || qty <= 0) {
+    showNotif('❌ Please enter a valid quantity.');
+    return;
+  }
+
+  const resIndex = resources.findIndex(r => r.name === resourceName);
+  
+  if (resIndex !== -1) {
+    resources[resIndex].total += qty;
+    resources[resIndex].avail += qty;
+  }
+
+  renderResources();
+  
+  closeModal('addresource');
+  showNotif(`✅ Successfully added ${qty} ${resourceName} to inventory!`);
+  document.getElementById('new-res-qty').value = '';
+}
+  
 </script>
 </body>
 </html>
