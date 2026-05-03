@@ -1771,6 +1771,10 @@ function startVoiceBroadcast(){
     document.getElementById('voice-status').style.color='var(--green)';
     const lang=LANGUAGES.find(l=>l.code===selectedLang);
     voiceBroadcastHistory.unshift({msg,lang:lang?.name||selectedLang,time:Date.now()});
+    
+    // 👇 NEW: Save the updated list to the browser's permanent storage
+    localStorage.setItem('ralca_voice_history', JSON.stringify(voiceBroadcastHistory));
+    
     renderVoiceHistory();
     addSystemLog(`Voice broadcast [${selectedLang}]: "${msg.slice(0,50)}"`);
   };
