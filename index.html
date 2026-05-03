@@ -407,36 +407,38 @@ select option{background:var(--surface2)}
         <div><div class="logo-text">RALCA v2</div><div class="logo-sub">DISASTER MGMT · SIH1440</div></div>
       </div>
     </div>
-    <div class="nav">
-      <div class="nav-group">
-        <div class="nav-label">COMMAND</div>
-        <div class="nav-item active" onclick="navigate('dashboard',this)"><span class="icon">📊</span>Dashboard</div>
-        <div class="nav-item" onclick="navigate('map',this)"><span class="icon">🗺️</span>Live Map</div>
-        <div class="nav-item" onclick="navigate('corridor',this)"><span class="icon">🟢</span>Green Corridor</div>
-        <div class="nav-item" onclick="navigate('alerts',this)"><span class="icon">🚨</span>Alerts<span class="nav-badge" id="alertBadge">0</span></div>
-      </div>
-      <div class="nav-group">
-        <div class="nav-label">AGENCIES</div>
-        <div class="nav-item" onclick="navigate('agencies',this)"><span class="icon">🏛️</span>All Agencies</div>
-        <div class="nav-item admin-only" id="nav-register" onclick="navigate('register',this)"><span class="icon">➕</span>Register Agency</div>
-        <div class="nav-item" onclick="navigate('resources',this)"><span class="icon">🎒</span>Resources</div>
-      </div>
-      <div class="nav-group">
-        <div class="nav-label">COMMS</div>
-        <div class="nav-item" onclick="navigate('messaging',this)"><span class="icon">💬</span>Messaging<span class="nav-badge" id="msgBadge">●</span></div>
-        <div class="nav-item" onclick="navigate('incidents',this)"><span class="icon">⚡</span>Incidents</div>
-        <div class="nav-item" onclick="navigate('civilian',this)"><span class="icon">👥</span>Civilian SOS</div>
-        <div class="nav-item" onclick="navigate('voicecast',this)"><span class="icon">🎙</span>Voice Broadcast</div>
-        <div class="nav-item" onclick="navigate('offlinemode',this)"><span class="icon">📵</span>Offline / SMS Mode</div>
-      </div>
-      <div class="nav-group" id="admin-nav-group" style="display:none">
-        <div class="nav-label">SYSTEM (ADMIN)</div>
-        <div class="nav-item" onclick="navigate('adminpanel',this)"><span class="icon">⚙️</span>Control Panel</div>
-        <div class="nav-item" onclick="navigate('usermgmt',this)"><span class="icon">👥</span>User Management</div>
-        <div class="nav-item" onclick="navigate('systemlogs',this)"><span class="icon">📝</span>System Logs</div>
-        <div class="nav-item" onclick="navigate('broadcast',this)"><span class="icon">📡</span>Broadcast Alert</div>
-      </div>
-    </div>
+
+<div class="nav">
+      <div class="nav-group">
+        <div class="nav-label">COMMAND</div>
+        <div class="nav-item active" onclick="navigate('dashboard',this)">📊 Dashboard</div>
+        <div class="nav-item" onclick="navigate('map',this)">🗺️ Live Map</div>
+        <div class="nav-item" onclick="navigate('corridor',this)">🟢 Green Corridor</div>
+        <div class="nav-item" onclick="navigate('alerts',this)">🚨 Alerts <span class="nav-badge" id="alertBadge">0</span></div>
+      </div>
+      <div class="nav-group">
+        <div class="nav-label">AGENCIES</div>
+        <div class="nav-item" onclick="navigate('agencies',this)">🏛️ All Agencies</div>
+        <div class="nav-item admin-only" id="nav-register" onclick="navigate('register',this)">➕ Register Agency</div>
+        <div class="nav-item" onclick="navigate('resources',this)">🎒 Resources</div>
+      </div>
+      <div class="nav-group">
+        <div class="nav-label">COMMS</div>
+        <div class="nav-item" onclick="navigate('messaging',this)">💬 Messaging <span class="nav-badge" id="msgBadge">●</span></div>
+        <div class="nav-item" onclick="navigate('incidents',this)">⚡ Incidents</div>
+        <div class="nav-item" onclick="navigate('civilian',this)">👥 Civilian SOS</div>
+        <div class="nav-item" onclick="navigate('voicecast',this)">🎙 Voice Broadcast</div>
+        <div class="nav-item" onclick="navigate('offlinemode',this)">📵 Offline / SMS Mode</div>
+      </div>
+      <div class="nav-group" id="admin-nav-group" style="display:none">
+        <div class="nav-label">SYSTEM (ADMIN)</div>
+        <div class="nav-item" onclick="navigate('adminpanel',this)">⚙️ Control Panel</div>
+        <div class="nav-item" onclick="navigate('usermgmt',this)">👥 User Management</div>
+        <div class="nav-item" onclick="navigate('systemlogs',this)">📝 System Logs</div>
+        <div class="nav-item" onclick="navigate('broadcast',this)">📡 Broadcast Alert</div>
+      </div>
+    </div>
+    
     <div class="sidebar-footer">
       <div class="user-card" style="margin-bottom:12px">
         <div class="avatar" id="navAvatar">U</div>
