@@ -1265,70 +1265,70 @@ function setupFirebaseListeners(){
   db.ref('agencies').on('value', snap => {
     if (snap.exists()) {
       allAgencies = [];
-      snap.forEach(child => {
-        allAgencies.push(child.val());
-      });
-      
+      snap.forEach(child => allAgencies.push(child.val()));
       renderAgencies(); 
       renderDashboardAgencies();
-
       const el = document.getElementById('stat-agencies');
       if(el) el.textContent = allAgencies.length;
-      const countHeader = document.querySelector('.section-title');
-      if(countHeader) countHeader.textContent = `🏛 ALL AGENCIES (${allAgencies.length})`;
     }
   });
 
- 
-db.ref('alerts').orderByChild('time').limitToLast(50).on('value', snap => {
-  allAlerts = []; 
-  snap.forEach(child => {
-    allAlerts.push({...child.val(), _key: child.key});
+  db.ref('alerts').orderByChild('time').limitToLast(50).on('value', snap => {
+    allAlerts = []; 
+    snap.forEach(child => allAlerts.push({...child.val(), _key: child.key}));
+    allAlerts.reverse();
+    renderAlerts(); 
+    renderDashboardAlerts();
+    const badge = document.getElementById('alertBadge');
+    if(badge) badge.textContent = allAlerts.filter(a => a.type === 'critical').length;
   });
-  // Sort so newest are at the top
-  allAlerts.reverse();
-  
-  // Update both the Alerts page and the Dashboard
-  renderAlerts(); 
-  renderDashboardAlerts();
 
-  // Update the red badge in the sidebar
-  const badge = document.getElementById('alertBadge');
-  if(badge) badge.textContent = allAlerts.filter(a => a.type === 'critical').length;
-});
   db.ref('incidents').orderByChild('time').limitToLast(20).on('value',snap=>{
-    allIncidents=[];snap.forEach(child=>allIncidents.push({...child.val(),_key:child.key}));allIncidents.reverse();
+    allIncidents=[];
+    snap.forEach(child=>allIncidents.push({...child.val(),_key:child.key}));
+    allIncidents.reverse();
     renderIncidents();
-    const el=document.getElementById('stat-incidents');if(el) el.textContent=allIncidents.filter(i=>i.status==='active').length;
-    const el2=document.getElementById('fb-incident-count');if(el2) el2.textContent=allIncidents.length;
+    const el=document.getElementById('stat-incidents');
+    if(el) el.textContent=allIncidents.filter(i=>i.status==='active').length;
   });
 
   db.ref(`messages/${currentChannel}`).orderByChild('time').limitToLast(50).on('value',snap=>{
-    allMessages=[];snap.forEach(child=>allMessages.push({...child.val(),_key:child.key}));
+    allMessages=[];
+    snap.forEach(child=>allMessages.push({...child.val(),_key:child.key}));
     renderMessages();
-    const el=document.getElementById('stat-messages');if(el) el.textContent=allMessages.length;
   });
 
   db.ref('civilian_sos').orderByChild('time').limitToLast(100).on('value',snap=>{
-    allCivilianSOS=[];snap.forEach(child=>allCivilianSOS.push({...child.val(),_key:child.key}));allCivilianSOS.reverse();
+    allCivilianSOS=[];
+    snap.forEach(child=>allCivilianSOS.push({...child.val(),_key:child.key}));
+    allCivilianSOS.reverse();
     renderCivilianSOS();
-    const el=document.getElementById('stat-civilian-sos');if(el) el.textContent=allCivilianSOS.length;
     updateSOSCounters();
     renderCivHeatmap();
   });
 
- // 👇 NEW: Listen for Voice Broadcasts from Firebase
+  // VOICE BROADCAST LISTENER
   db.ref('voice_broadcasts').orderByChild('time').limitToLast(10).on('value', snap => {
     voiceBroadcastHistory = [];
-    snap.forEach(child => {
-      voiceBroadcastHistory.push(child.val());
-    });
-    // Reverse it so the newest broadcast is at the top of the list
-    voiceBroadcastHistory.reverse();
+    if(snap.exists()){
+      snap.forEach(child => voiceBroadcastHistory.push(child.val()));
+      voiceBroadcastHistory.reverse();
+    }
     renderVoiceHistory();
   });
 
-  db.ref('users').on('value',snap=>{renderUserMgmt(snap);});
+  // SYSTEM LOGS LISTENER
+  db.ref('system_logs').orderByChild('time').limitToLast(50).on('value',snap=>{
+    const logs=[];
+    snap.forEach(child=>logs.push(child.val()));
+    logs.reverse();
+    const body=document.getElementById('system-logs-body');
+    if(body) body.innerHTML=logs.length?logs.map(l=>`<div class="alert-item"><div class="alert-icon info">📋</div><div class="alert-content"><div class="alert-title">${escHtml(l.msg)}</div></div><div class="alert-time">${new Date(l.time).toLocaleTimeString()}</div></div>`).join(''):'<div style="padding:20px;color:var(--text-muted);text-align:center;font-size:13px">No logs yet.</div>';
+  });
+
+  db.ref('users').on('value',snap=>{
+    renderUserMgmt(snap);
+  });
 }
 
 async function addSystemLog(msg){try{await db.ref('system_logs').push({msg,time:Date.now()});}catch(e){}}
@@ -1773,20 +1773,46 @@ function startVoiceBroadcast(){
     document.getElementById('voice-status').style.color='var(--accent3)';
   };
   
-  voiceUtterance.onend=()=>{
-    document.getElementById('voice-wave').classList.add('stopped');
-    document.getElementById('voice-status').textContent='COMPLETE';
-    document.getElementById('voice-status').style.color='var(--green)';
-    const lang=LANGUAGES.find(l=>l.code===selectedLang);
+function startVoiceBroadcast(){
+  const msg = document.getElementById('voice-msg').value.trim();
+  if(!msg){ showNotif('Please type a message to broadcast.'); return; }
+  
+  const langObj = LANGUAGES.find(l => l.code === selectedLang);
 
-    db.ref('voice_broadcasts').push({
-      msg: msg,
-      lang: lang?.name || selectedLang,
-      time: Date.now()
-    });
+  // 🔥 1. PUSH TO FIREBASE IMMEDIATELY
+  db.ref('voice_broadcasts').push({
+    msg: msg,
+    lang: langObj?.name || selectedLang,
+    time: Date.now()
+  });
+  
+  addSystemLog(`Voice broadcast [${selectedLang}]: "${msg.slice(0,50)}"`);
+  document.getElementById('voice-msg').value = ''; 
 
-    addSystemLog(`Voice broadcast [${selectedLang}]: "${msg.slice(0,50)}"`);
+  // 🔊 2. PLAY THE AUDIO
+  if(!window.speechSynthesis){ showNotif('⚠ Speech synthesis not supported.'); return; }
+  
+  window.speechSynthesis.cancel();
+  voiceUtterance = new SpeechSynthesisUtterance(msg);
+  voiceUtterance.lang = selectedLang;
+  voiceUtterance.rate = 0.9;
+  voiceUtterance.pitch = 1;
+  const voices = window.speechSynthesis.getVoices();
+  const langVoice = voices.find(v => v.lang.startsWith(selectedLang.split('-')[0]));
+  if(langVoice) voiceUtterance.voice = langVoice;
+  
+  voiceUtterance.onstart = () => {
+    document.getElementById('voice-wave').classList.remove('stopped');
+    document.getElementById('voice-status').textContent = 'BROADCASTING…';
+    document.getElementById('voice-status').style.color = 'var(--accent3)';
   };
+  
+  voiceUtterance.onend = () => {
+    document.getElementById('voice-wave').classList.add('stopped');
+    document.getElementById('voice-status').textContent = 'COMPLETE';
+    document.getElementById('voice-status').style.color = 'var(--green)';
+  };
+  
   window.speechSynthesis.speak(voiceUtterance);
 }
 
