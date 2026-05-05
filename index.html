@@ -1871,8 +1871,17 @@ async function saveResource(){
   finally{if(btn){btn.disabled=false;btn.textContent='💾 Save to Firebase';}}
 }
 function filterMap(el,type){
-  document.querySelectorAll('.filter-chip').forEach(c=>c.classList.remove('active')); el.classList.add('active');
-  if(!fullMap) return;
+  document.querySelectorAll('.filter-chip').forEach(c=>c.classList.remove('active')); 
+  el.classList.add('active');
+  
+  if(!fullMap || !markerClusterGroup) return;
+
+  // 1. Clear existing clusters
+  markerClusterGroup.clearLayers(); 
+  
+  const markersToAdd = [];
+
+  // 2. Filter the markers
   fullMarkers.forEach(({marker,type:t})=>{
     const tl=(t||'').toLowerCase(); let show=false;
     if(type==='all') show=true;
@@ -1880,8 +1889,12 @@ function filterMap(el,type){
     else if(type==='medical') show=tl.includes('medical')||tl.includes('ems');
     else if(type==='ngo') show=tl.includes('ngo')||tl.includes('child')||tl.includes('elderly')||tl.includes('shelter')||tl.includes('wash')||tl.includes('logistics');
     else if(type==='coast') show=tl.includes('coast');
-    if(show) fullMap.addLayer(marker); else fullMap.removeLayer(marker);
+    
+    if(show) markersToAdd.push(marker);
   });
+
+  // 3. Re-add only the filtered markers to the cluster
+  markerClusterGroup.addLayers(markersToAdd);
 }
 
 let ntTimer;
