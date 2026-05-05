@@ -1194,10 +1194,19 @@ async function seedData() {
     for(const m of dmsgs) await db.ref('messages/emergency-chennai-flood').push(m);
   }
   // Seed resources to Firebase if not yet seeded
+ // Seed resources to Firebase if not yet seeded
   const resSnap = await db.ref('resources').once('value');
   if(!resSnap.exists()) {
     for(const [k,v] of Object.entries(DEFAULT_RESOURCES)) {
       await db.ref(`resources/${k}`).set({...v, key:k});
+    }
+  }
+
+  // Seed corridor roads to Firebase if not yet seeded
+  const rdSnap = await db.ref('corridor_roads').once('value');
+  if(!rdSnap.exists()) {
+    for(const r of INDIA_ROADS) {
+      await db.ref(`corridor_roads/${r.id}`).set(r);
     }
   }
 }
@@ -1321,7 +1330,24 @@ function listenFirebase() {
   /* ══════════════════════════════════════════════
      USERS — live user management table.
   ══════════════════════════════════════════════ */
+/* ══════════════════════════════════════════════
+     USERS — live user management table.
+  ══════════════════════════════════════════════ */
   db.ref('users').on('value', snap => renderUsers(snap));
+
+  /* ══════════════════════════════════════════════
+     CORRIDOR ROADS — Firebase live sync
+  ══════════════════════════════════════════════ */
+  db.ref('corridor_roads').on('value', snap => {
+    if(snap.exists()) {
+      roadStatus = [];
+      snap.forEach(c => roadStatus.push(c.val()));
+      
+      // Instantly update the UI when Firebase changes
+      renderRoadList();
+      if(corrMap) drawCorridorRoads();
+    }
+  });
 }
 
 /* Helper: safely set textContent of any element by ID */
@@ -1458,10 +1484,18 @@ function renderRoadList(){
   document.getElementById('blocked-count').textContent=roadStatus.filter(r=>!r.clear).length;
 }
 
-function toggleRoad(id){
-  roadStatus=roadStatus.map(r=>r.id===id?{...r,clear:!r.clear}:r);
-  renderRoadList(); drawCorridorRoads();
-  showNotif(`Road updated — ${roadStatus.filter(r=>r.clear).length}/${roadStatus.length} routes clear`);
+async function toggleRoad(id){
+  if(currentUser?.role==='guest'){showNotif('🔒 Login to update roads.');return;}
+  const road = roadStatus.find(r => r.id === id);
+  if(!road) return;
+  
+  try {
+    // Send the toggle command directly to Firebase
+    await db.ref(`corridor_roads/${id}`).update({ clear: !road.clear });
+    showNotif(`🚦 Updating road status...`);
+  } catch(e) {
+    showNotif('❌ Error updating road: ' + e.message);
+  }
 }
 
 function calcRoute(){
