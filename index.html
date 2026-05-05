@@ -865,14 +865,29 @@ select option{background:var(--surface2)}
 
 <div class="modal-bg" id="modal-addres" onclick="if(event.target===this)closeModal('addres')">
   <div class="modal">
-    <div class="modal-title">🎒 Add Resource</div>
+    <div class="modal-title">🎒 Update Resource → Firebase</div>
+    <div style="font-size:13px;color:var(--text-dim);margin-bottom:14px">Changes save to Firebase and update the inventory in real time across all sessions.</div>
     <div class="form-grid">
-      <div class="form-group"><label>TYPE</label><select><option>Vehicle</option><option>Boat</option><option>Helicopter</option><option>Medical Kit</option><option>Tent</option><option>Generator</option></select></div>
-      <div class="form-group"><label>QUANTITY</label><input type="number" placeholder="0"/></div>
-      <div class="form-group full"><label>AGENCY</label><select id="res-ag-sel"></select></div>
+      <div class="form-group full">
+        <label>RESOURCE TYPE *</label>
+        <select id="res-type-sel">
+          <option value="">-- Select Resource --</option>
+          <option value="fire_engines">🚒 Fire Engines</option>
+          <option value="ambulances">🚑 Ambulances</option>
+          <option value="helicopters">🚁 Helicopters</option>
+          <option value="rescue_boats">⛵ Rescue Boats</option>
+          <option value="relief_tents">🏕️ Relief Tents</option>
+          <option value="medical_kits">💊 Medical Kits</option>
+          <option value="generators">🔋 Generators</option>
+          <option value="trucks">🚛 Trucks</option>
+          <option value="comm_sets">📡 Comm Sets</option>
+        </select>
+      </div>
+      <div class="form-group"><label>TOTAL QUANTITY</label><input type="number" id="res-total" placeholder="e.g. 50" min="0"/></div>
+      <div class="form-group"><label>AVAILABLE NOW</label><input type="number" id="res-avail" placeholder="e.g. 40" min="0"/></div>
       <div class="form-actions">
         <button class="btn btn-ghost" onclick="closeModal('addres')">Cancel</button>
-        <button class="btn btn-primary" onclick="closeModal('addres');showNotif('Resource added!')">Add</button>
+        <button class="btn btn-primary" id="res-save-btn" onclick="saveResource()">💾 Save to Firebase</button>
       </div>
     </div>
   </div>
@@ -938,6 +953,20 @@ let allAgencies = [...STATIC_AGENCIES];
 let allAlerts = [], allIncidents = [], allMsgs = [], allSOS = [];
 let currentUser = null, currentChan = 'emergency-chennai-flood';
 const ADMIN_EMAIL = 'admin@gmail.com';
+
+/* Default resources — seeded to Firebase on first run */
+const DEFAULT_RESOURCES = {
+  fire_engines: {icon:'🚒',name:'Fire Engines', total:28, avail:22, key:'fire_engines'},
+  ambulances:   {icon:'🚑',name:'Ambulances',   total:45, avail:38, key:'ambulances'},
+  helicopters:  {icon:'🚁',name:'Helicopters',  total:8,  avail:2,  key:'helicopters'},
+  rescue_boats: {icon:'⛵',name:'Rescue Boats', total:24, avail:3,  key:'rescue_boats'},
+  relief_tents: {icon:'🏕️',name:'Relief Tents',total:500,avail:320,key:'relief_tents'},
+  medical_kits: {icon:'💊',name:'Medical Kits', total:340,avail:340,key:'medical_kits'},
+  generators:   {icon:'🔋',name:'Generators',   total:60, avail:48, key:'generators'},
+  trucks:       {icon:'🚛',name:'Trucks',        total:35, avail:28, key:'trucks'},
+  comm_sets:    {icon:'📡',name:'Comm Sets',    total:120,avail:10, key:'comm_sets'},
+};
+let allResources = JSON.parse(JSON.stringify(DEFAULT_RESOURCES));
 
 /* ════════════════════════════════════
    FIREBASE CONNECTION STATUS
@@ -1113,6 +1142,13 @@ async function seedData() {
     ];
     for(const m of dmsgs) await db.ref('messages/emergency-chennai-flood').push(m);
   }
+  // Seed resources to Firebase if not yet seeded
+  const resSnap = await db.ref('resources').once('value');
+  if(!resSnap.exists()) {
+    for(const [k,v] of Object.entries(DEFAULT_RESOURCES)) {
+      await db.ref(`resources/${k}`).set({...v, key:k});
+    }
+  }
 }
 
 function listenFirebase() {
@@ -1139,8 +1175,8 @@ function listenFirebase() {
     });
   });
 
-  /* ── ALERTS: All types correctly displayed ── */
-  db.ref('alerts').orderByChild('time').limitToLast(100).on('value', snap => {
+  /* ── ALERTS: ALL alerts, no limit, case-insensitive type ── */
+  db.ref('alerts').orderByChild('time').on('value', snap => {
     allAlerts = [];
     snap.forEach(c => allAlerts.push({...c.val(), _k:c.key}));
     allAlerts.reverse();
@@ -1149,8 +1185,8 @@ function listenFirebase() {
     const b=document.getElementById('alertBadge'); if(b) b.textContent=allAlerts.filter(a=>(a.type||'').toLowerCase()==='critical').length;
   });
 
-  /* ── INCIDENTS ── */
-  db.ref('incidents').orderByChild('time').limitToLast(50).on('value', snap => {
+  /* ── INCIDENTS: no limit, all persist forever ── */
+  db.ref('incidents').orderByChild('time').on('value', snap => {
     allIncidents=[];
     snap.forEach(c => allIncidents.push({...c.val(), _k:c.key}));
     allIncidents.reverse();
@@ -1166,8 +1202,8 @@ function listenFirebase() {
     renderMsgs();
   });
 
-  /* ── CIVILIAN SOS ── */
-  db.ref('civilian_sos').orderByChild('time').limitToLast(100).on('value', snap => {
+  /* ── CIVILIAN SOS: all records ── */
+  db.ref('civilian_sos').orderByChild('time').on('value', snap => {
     allSOS=[];
     snap.forEach(c => allSOS.push({...c.val(), _k:c.key}));
     allSOS.reverse();
@@ -1180,6 +1216,17 @@ function listenFirebase() {
     const logs=[]; snap.forEach(c=>logs.push(c.val())); logs.reverse();
     const b=document.getElementById('logs-body');
     if(b) b.innerHTML=logs.length?logs.map(l=>`<div class="alert-item"><div class="alert-icon info">📋</div><div class="alert-content"><div class="alert-title">${esc(l.msg)}</div></div><div class="alert-time">${new Date(l.time).toLocaleTimeString()}</div></div>`).join(''):'<div style="padding:20px;color:var(--text-muted);text-align:center;font-size:13px">No logs yet.</div>';
+  });
+
+  /* ── RESOURCES: Firebase-backed, live ── */
+  db.ref('resources').on('value', snap => {
+    if(snap.exists()) {
+      snap.forEach(c => {
+        const v = c.val();
+        if(v && c.key) allResources[c.key] = {...(allResources[c.key]||{}), ...v, key: c.key};
+      });
+    }
+    renderResources();
   });
 
   /* ── USERS ── */
@@ -1439,12 +1486,29 @@ function renderOffQ(){const el=document.getElementById('offline-q'); if(!el) ret
 ════════════════════════════════════ */
 const RESOURCES=[{icon:'🚒',name:'Fire Engines',total:28,avail:22},{icon:'🚑',name:'Ambulances',total:45,avail:38},{icon:'🚁',name:'Helicopters',total:8,avail:2},{icon:'⛵',name:'Rescue Boats',total:24,avail:3},{icon:'🏕️',name:'Relief Tents',total:500,avail:320},{icon:'💊',name:'Medical Kits',total:340,avail:340},{icon:'🔋',name:'Generators',total:60,avail:48},{icon:'🚛',name:'Trucks',total:35,avail:28},{icon:'📡',name:'Comm Sets',total:120,avail:10}];
 function renderResources(){
-  const crit=RESOURCES.filter(r=>(r.avail/r.total)<0.1);
-  const ib=document.getElementById('inv-bar'),ra=document.getElementById('res-alerts');
-  if(ib&&crit.length){ib.style.display='flex'; document.getElementById('inv-text').textContent=crit.map(r=>r.name).join(', ')+' below 10%!';}
-  if(ra) ra.innerHTML=crit.map(r=>`<div class="inv-alert" style="margin-bottom:8px">${r.icon}&nbsp;<strong>${r.name}</strong>: ${r.avail}/${r.total} (${Math.round(r.avail/r.total*100)}%)<span class="crit-tag" style="margin-left:6px">CRITICAL LOW</span></div>`).join('');
-  const grid=document.getElementById('res-grid'); if(!grid) return;
-  grid.innerHTML=RESOURCES.map(r=>{const p=Math.round(r.avail/r.total*100),crit=p<10; return`<div class="resource-card${crit?' critical-low':''}">${crit?'<div style="position:absolute;top:8px;right:8px;background:var(--accent2);color:#fff;font-size:9px;font-family:var(--font-mono);padding:2px 6px;border-radius:8px">⚠ LOW</div>':''}<div class="resource-icon">${r.icon}</div><div class="resource-name">${r.name}</div><div class="resource-count">${r.avail}<span style="font-size:14px;color:var(--text-muted)">/${r.total}</span></div><div style="font-size:11px;color:var(--text-muted)">${p}% available</div><div class="progress-bar"><div class="progress-fill" style="width:${p}%;background:${p>70?'var(--green)':p>40?'var(--yellow)':p>10?'var(--accent)':'var(--accent2)'}"></div></div></div>`; }).join('');
+  // Use allResources which is kept in sync by Firebase listener
+  const resources = Object.values(allResources);
+  if(!resources.length) return;
+  const crit = resources.filter(r => r.total > 0 && (r.avail/r.total) < 0.1);
+  const ib = document.getElementById('inv-bar'), ra = document.getElementById('res-alerts');
+  if(ib) {
+    if(crit.length) { ib.style.display='flex'; document.getElementById('inv-text').textContent = crit.map(r=>r.name).join(', ') + ' below 10%!'; }
+    else ib.style.display='none';
+  }
+  if(ra) ra.innerHTML = crit.map(r=>`<div class="inv-alert" style="margin-bottom:8px">${r.icon||'📦'}&nbsp;<strong>${r.name}</strong>: ${r.avail}/${r.total} (${Math.round((r.avail||0)/(r.total||1)*100)}%)<span class="crit-tag" style="margin-left:6px">CRITICAL LOW</span></div>`).join('');
+  const grid = document.getElementById('res-grid'); if(!grid) return;
+  grid.innerHTML = resources.map(r => {
+    const p = r.total > 0 ? Math.round((r.avail||0)/r.total*100) : 0;
+    const isCrit = p < 10;
+    return `<div class="resource-card${isCrit?' critical-low':''}" style="position:relative">
+      ${isCrit?'<div style="position:absolute;top:8px;right:8px;background:var(--accent2);color:#fff;font-size:9px;font-family:var(--font-mono);padding:2px 6px;border-radius:8px;font-weight:700">⚠ LOW</div>':''}
+      <div class="resource-icon">${r.icon||'📦'}</div>
+      <div class="resource-name">${esc(r.name||r.key)}</div>
+      <div class="resource-count">${r.avail||0}<span style="font-size:14px;color:var(--text-muted)">/${r.total||0}</span></div>
+      <div style="font-size:11px;color:var(--text-muted)">${p}% available</div>
+      <div class="progress-bar"><div class="progress-fill" style="width:${p}%;background:${p>70?'var(--green)':p>40?'var(--yellow)':p>10?'var(--accent)':'var(--accent2)'}"></div></div>
+    </div>`;
+  }).join('');
 }
 
 /* ════════════════════════════════════
@@ -1555,23 +1619,31 @@ async function submitIncident(){
   await db.ref('incidents').push(inc);
   await db.ref('alerts').push({type:'critical',icon:'🆘',title:`${type} — ${loc}`,meta:`Severity: ${sev} · By ${currentUser?.name||'User'}`,time:Date.now()});
   sysLog(`Incident: ${type} @ ${loc} by ${currentUser?.email}`);
-  closeModal('incident'); showNotif('🆘 Incident submitted! AI forecast generated.');
+  closeModal('incident'); showNotif('🆘 Incident saved to Firebase permanently! Visible in Incidents table.');
   document.getElementById('inc-loc').value=''; document.getElementById('inc-desc').value='';
 }
 async function createAlert(){
   if(currentUser?.role!=='admin'){showNotif('🔒 Admin only.');return;}
   const title=document.getElementById('al-title').value.trim(), msg=document.getElementById('al-msg').value.trim(), sev=document.getElementById('al-sev').value.toLowerCase();
   if(!title||!msg){showNotif('Fill title and message.');return;}
-  await db.ref('alerts').push({type:sev,icon:sev==='critical'?'🚨':sev==='warning'?'⚠':'ℹ',title,meta:msg,time:Date.now()});
-  sysLog(`Alert created: ${title}`); closeModal('newalert'); showNotif('✅ Alert pushed! Check Alerts page.');
+  try{
+    await db.ref('alerts').push({type:sev,icon:sev==='critical'?'🚨':sev==='warning'?'⚠':'ℹ',title,meta:msg,time:Date.now()});
+    sysLog(`Alert created: ${title}`); closeModal('newalert');
+    document.getElementById('al-title').value=''; document.getElementById('al-msg').value='';
+    showNotif('✅ Alert saved to Firebase! Go to Alerts tab — it is there now.');
+  }catch(e){showNotif('❌ Error saving alert: '+e.message);}
 }
 async function sendBroadcast(){
   if(currentUser?.role!=='admin'){showNotif('🔒 Admin only.');return;}
   const msg=document.getElementById('bc-msg').value.trim(), target=document.getElementById('bc-target').value, priority=document.getElementById('bc-priority').value;
   if(!msg){showNotif('Enter a message.');return;}
   const type=priority.toLowerCase().includes('critical')?'critical':priority.toLowerCase().includes('warning')?'warning':'info';
-  await db.ref('alerts').push({type,icon:'📡',title:`📡 BROADCAST: ${target}`,meta:msg,time:Date.now()});
-  sysLog(`Broadcast (${priority}): "${msg.slice(0,40)}…"`); showNotif('📡 Broadcast pushed! Visible in Alerts.'); document.getElementById('bc-msg').value='';
+  try{
+    await db.ref('alerts').push({type,icon:'📡',title:`📡 BROADCAST: ${target}`,meta:msg,time:Date.now()});
+    sysLog(`Broadcast (${priority}): "${msg.slice(0,40)}…"`);
+    document.getElementById('bc-msg').value='';
+    showNotif('📡 Broadcast saved to Firebase! Visible in Alerts tab now.');
+  }catch(e){showNotif('❌ Error: '+e.message);}
 }
 async function submitAgency(){
   if(currentUser?.role!=='admin'){showNotif('🔒 Admin only.');return;}
@@ -1580,18 +1652,48 @@ async function submitAgency(){
   const assets=document.getElementById('rg-assets').value; const amenities=assets?assets.split(',').map(s=>s.trim()).filter(Boolean):[];
   const lat=parseFloat(document.getElementById('rg-lat').value)||null, lng=parseFloat(document.getElementById('rg-lng').value)||null;
   const ag={id:'AGY'+Date.now(),name,type,shortType:type.split('/')[0].trim(),regno:document.getElementById('rg-regno').value,year:document.getElementById('rg-year').value,address:document.getElementById('rg-addr').value,contact:document.getElementById('rg-contact').value,phone:document.getElementById('rg-phone').value,email:document.getElementById('rg-email').value,city:document.getElementById('rg-state').value,pin:'000000',lat,lng,resources:parseInt(document.getElementById('rg-personnel').value)||0,status:'active',amenities,icon:'🏛',color:'#f97316',createdBy:currentUser.email,createdAt:Date.now()};
-  await db.ref(`agencies/${ag.id}`).set(ag);
-  sysLog(`Agency registered: ${name}`); showNotif(`✅ ${name} added! Now visible in All Agencies.`);
-  go('agencies',null);
+  try{
+    await db.ref(`agencies/${ag.id}`).set(ag);
+    sysLog(`Agency registered: ${name}`);
+    showNotif(`✅ ${name} saved to Firebase! Visible in All Agencies instantly.`);
+    go('agencies',null);
+  }catch(e){showNotif('❌ Error: '+e.message);}
 }
 function clearRegForm(){['rg-name','rg-regno','rg-year','rg-addr','rg-contact','rg-phone','rg-email','rg-lat','rg-lng','rg-personnel','rg-vehicles','rg-assets'].forEach(id=>{const el=document.getElementById(id); if(el) el.value='';});}
 function captureGPS(){document.getElementById('gps-status').textContent='Capturing…'; setTimeout(()=>{document.getElementById('rg-lat').value='13.0827'; document.getElementById('rg-lng').value='80.2707'; document.getElementById('gps-status').textContent='✅ Chennai, TN'; document.getElementById('gps-status').style.color='var(--green)';},1000);}
+
+/* KEY FIX: sendMsg — saved to Firebase, listener auto-renders, persists on refresh */
 async function sendMsg(){
   if(currentUser?.role==='guest'){showNotif('🔒 Login to send messages.');return;}
   const inp=document.getElementById('msgInput'), txt=inp.value.trim(); if(!txt) return;
   const role=currentUser.userType==='admin'?'ADMIN':currentUser.userType==='agency'?'AGENCY':currentUser.userType==='officer'?'OFFICER':'CIVILIAN';
-  await db.ref(`messages/${currentChan}`).push({sender:currentUser.name||currentUser.email,role,msg:txt,time:Date.now(),uid:currentUser.uid||'guest'});
-  inp.value='';
+  try{
+    await db.ref(`messages/${currentChan}`).push({sender:currentUser.name||currentUser.email,role,msg:txt,time:Date.now(),uid:currentUser.uid||'guest'});
+    inp.value=''; // Firebase .on('value') listener auto-triggers renderMsgs()
+  }catch(e){showNotif('❌ Message not sent: '+e.message);}
+}
+
+/* KEY FIX: saveResource — writes to Firebase, listener updates resource grid in real time */
+async function saveResource(){
+  if(currentUser?.role!=='admin'){showNotif('🔒 Admin only.');return;}
+  const key=document.getElementById('res-type-sel').value;
+  const total=parseInt(document.getElementById('res-total').value)||0;
+  const avail=parseInt(document.getElementById('res-avail').value)||0;
+  if(!key){showNotif('Select a resource type.');return;}
+  if(avail>total){showNotif('Available cannot exceed total.');return;}
+  const btn=document.getElementById('res-save-btn');
+  if(btn){btn.disabled=true;btn.textContent='Saving…';}
+  try{
+    const base=DEFAULT_RESOURCES[key]||{icon:'📦',name:key};
+    await db.ref(`resources/${key}`).set({...base, key, total, avail, updatedAt:Date.now(), updatedBy:currentUser.name||currentUser.email});
+    sysLog(`Resource updated: ${base.name} → ${avail}/${total}`);
+    closeModal('addres');
+    showNotif(`✅ ${base.name} updated: ${avail}/${total} — inventory refreshed instantly!`);
+    document.getElementById('res-type-sel').value='';
+    document.getElementById('res-total').value='';
+    document.getElementById('res-avail').value='';
+  }catch(e){showNotif('❌ Error saving resource: '+e.message);}
+  finally{if(btn){btn.disabled=false;btn.textContent='💾 Save to Firebase';}}
 }
 function filterMap(el,type){
   document.querySelectorAll('.filter-chip').forEach(c=>c.classList.remove('active')); el.classList.add('active');
@@ -1611,15 +1713,16 @@ let ntTimer;
 function showNotif(msg){document.querySelectorAll('.notif').forEach(n=>n.remove()); const n=document.createElement('div'); n.className='notif'; n.innerHTML=`<div class="notif-title">🔔 RALCA</div><div class="notif-body">${msg}</div>`; document.body.appendChild(n); clearTimeout(ntTimer); ntTimer=setTimeout(()=>n.remove(),4000);}
 function showModal(id){const el=document.getElementById('modal-'+id); if(el) el.classList.add('open'); if(id==='incident') showForecast();}
 function closeModal(id){const el=document.getElementById('modal-'+id); if(el) el.classList.remove('open');}
-function refreshAll(){showNotif('🔄 Refreshing…'); renderAlerts(); renderDashAlerts(); renderIncidents(); renderAgTable(); renderDashAgencies();}
+function refreshAll(){showNotif('🔄 Refreshing all data from Firebase…'); renderAlerts(); renderDashAlerts(); renderIncidents(); renderAgTable(); renderDashAgencies(); renderResources();}
 
 /* ════════════════════════════════════
    INIT ALL
 ════════════════════════════════════ */
 function initAll(){
-  renderResources(); renderChannels(); renderDashAgencies(); renderAgTable();
+  renderChannels(); renderDashAgencies(); renderAgTable();
   renderRoadList(); initVoice(); initPhrases(); renderVoiceHist(); renderOffQ();
-  listenFirebase(); seedData();
+  listenFirebase(); // this sets up all real-time listeners, including resources
+  seedData();       // seeds defaults on first run
   if(window.speechSynthesis){window.speechSynthesis.onvoiceschanged=()=>window.speechSynthesis.getVoices(); window.speechSynthesis.getVoices();}
   setTimeout(initMiniMap,300);
 }
