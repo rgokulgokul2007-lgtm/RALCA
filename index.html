@@ -1851,23 +1851,22 @@ async function submitIncident(){
 async function createAlert() {
   // 1. Verify Admin Status
   if (currentUser?.role !== 'admin') {
-    showNotif('🔒 Admin access required to create alerts.');
+    showNotif('🔒 Admin access required.');
     return;
   }
 
-  // 2. Grab ALL fields from the modal
+  // 2. Grab fields
   const typeCategory = document.getElementById('al-type').value; 
   const sev = document.getElementById('al-sev').value.toLowerCase();
   const title = document.getElementById('al-title').value.trim();
   const msg = document.getElementById('al-msg').value.trim();
 
-  // 3. Validation
   if (!title || !msg) {
     showNotif('⚠ Please fill in both the title and message.');
     return;
   }
 
-  // 4. Construct the exact Alert Object
+  // 3. Build the exact alert object
   const newAlert = {
     type: sev,
     icon: sev === 'critical' ? '🚨' : sev === 'warning' ? '⚠' : 'ℹ',
@@ -1876,27 +1875,23 @@ async function createAlert() {
     time: Date.now()
   };
 
+  // 🔥 THE BRUTE FORCE FIX: Shove it into the local array and force HTML to render IMMEDIATELY
+  allAlerts.unshift(newAlert);
+  renderAlerts(); 
+  renderDashAlerts();
+
+  // Close modal & clear form instantly
+  closeModal('newalert');
+  document.getElementById('al-title').value = '';
+  document.getElementById('al-msg').value = '';
+  showNotif('✅ Alert instantly forced to screen!');
+
+  // 4. Send to Firebase quietly in the background
   try {
-    // 🔥 THE FIX: Force the UI to update INSTANTLY before waiting for the server
-    allAlerts.unshift(newAlert);
-    renderAlerts(); 
-    renderDashAlerts();
-
-    // 5. Push to Firebase silently in the background
     await db.ref('alerts').push(newAlert);
-
     sysLog(`Alert created: ${title}`);
-    closeModal('newalert');
-
-    // 6. Clear form for next time
-    document.getElementById('al-title').value = '';
-    document.getElementById('al-msg').value = '';
-
-    showNotif('✅ Alert instantly published and saved!');
-    
   } catch (error) {
-    console.error("Firebase Write Error:", error);
-    showNotif('❌ Error saving alert. Check console.');
+    console.error("Firebase blocked the background save:", error);
   }
 }
 async function sendBroadcast(){
