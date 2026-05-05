@@ -412,7 +412,7 @@ select option{background:var(--surface2)}
   </div>
   <div id="inv-bar" class="inv-alert" style="display:none"><span>⚠</span><span id="inv-text">Critical inventory</span><span class="crit-tag">CRITICAL LOW</span><button class="btn btn-ghost" style="margin-left:auto;font-size:11px;padding:3px 10px" onclick="go('resources',null)">View →</button></div>
   <div class="stats-grid">
-    <div class="stat-card orange"><div class="stat-label">AGENCIES</div><div class="stat-value" id="st-agencies" style="color:var(--accent)">15</div><div class="stat-sub">Registered in DB</div></div>
+    <div class="stat-card orange"><div class="stat-label">AGENCIES</div><div class="stat-value" id="st-agencies" style="color:var(--accent)">0</div><div class="stat-sub">Registered in DB</div></div>
     <div class="stat-card red"><div class="stat-label">ACTIVE INCIDENTS</div><div class="stat-value" id="st-incidents" style="color:var(--accent2)">0</div><div class="stat-sub" style="color:var(--accent2)">LIVE</div></div>
     <div class="stat-card cyan"><div class="stat-label">TOTAL ALERTS</div><div class="stat-value" id="st-alerts" style="color:var(--accent3)">0</div><div class="stat-sub">All time</div></div>
     <div class="stat-card purple"><div class="stat-label">CIVILIAN SOS</div><div class="stat-value" id="st-sos" style="color:var(--purple)">0</div><div class="stat-sub" style="color:var(--purple)">CROWDSOURCED</div></div>
@@ -421,7 +421,7 @@ select option{background:var(--surface2)}
     <div class="map-header">
       <div class="map-title">🗺 LIVE AGENCY MAP</div>
       <div style="display:flex;align-items:center;gap:8px">
-        <span style="font-size:12px;color:var(--accent3);font-family:var(--font-mono)" id="mini-count">15 AGENCIES</span>
+        <span style="font-size:12px;color:var(--accent3);font-family:var(--font-mono)" id="mini-count">0 AGENCIES</span>
         <button class="btn btn-ghost" onclick="go('map',null)" style="font-size:11px">Full Map →</button>
       </div>
     </div>
@@ -771,7 +771,7 @@ select option{background:var(--surface2)}
     <div class="card-header"><div class="card-title">📊 FIREBASE STATUS</div></div>
     <div style="padding:20px;display:grid;grid-template-columns:repeat(3,1fr);gap:16px;text-align:center">
       <div><div style="font-family:var(--font-head);font-size:28px;color:var(--green)" id="fb-status">ONLINE</div><div style="font-size:11px;color:var(--text-muted);font-family:var(--font-mono)">CONNECTION</div></div>
-      <div><div style="font-family:var(--font-head);font-size:28px;color:var(--accent3)" id="fb-ag-count">15</div><div style="font-size:11px;color:var(--text-muted);font-family:var(--font-mono)">AGENCIES</div></div>
+      <div><div style="font-family:var(--font-head);font-size:28px;color:var(--accent3)" id="fb-ag-count">0</div><div style="font-size:11px;color:var(--text-muted);font-family:var(--font-mono)">AGENCIES</div></div>
       <div><div style="font-family:var(--font-head);font-size:28px;color:var(--accent)" id="fb-inc-count">0</div><div style="font-size:11px;color:var(--text-muted);font-family:var(--font-mono)">INCIDENTS</div></div>
     </div>
   </div>
@@ -921,7 +921,7 @@ select option{background:var(--surface2)}
 
 <script>
 /* ════════════════════════════════════
-   FIREBASE CONFIG (corrected)
+   FIREBASE CONFIG
 ════════════════════════════════════ */
 const firebaseConfig = {
   apiKey: "AIzaSyBTHohDW-10f7EolWpW8CUlfLCIJNDZmF8",
@@ -938,15 +938,12 @@ const auth = firebase.auth();
 const db = firebase.app().database("https://ralca-59e0a-default-rtdb.asia-southeast1.firebasedatabase.app");
 
 /* ════════════════════════════════════
-   STATIC AGENCY DATA — BASE (always shown)
+   STATIC AGENCY DATA
 ════════════════════════════════════ */
 const STATIC_AGENCIES = [
-  // 🚨 HEADQUARTERS
   {id:'AGY001', name:'National Disaster Response Force (HQ)', type:'NDRF', shortType:'NDRF', location:'New Delhi', city:'New Delhi', pin:'110001', address:'NDCC-II Building, Jai Singh Road', lat:28.6271, lng:77.2109, status:'active', resources:200, amenities:['Command Center', 'National Dispatch'], icon:'🛡️', color:'#f97316'},
   {id:'AGY002', name:'National Disaster Management Authority', type:'Coordination Body', shortType:'NDMA', location:'New Delhi', city:'New Delhi', pin:'110029', address:'Safdarjung Enclave', lat:28.5694, lng:77.1958, status:'active', resources:150, amenities:['Satellite Comms', 'Strategy Ops'], icon:'📡', color:'#22d3ee'},
   {id:'AGY003', name:'MHA Disaster Management Division', type:'Govt', shortType:'MHA', location:'New Delhi', city:'New Delhi', pin:'110001', address:'North Block', lat:28.6143, lng:77.2045, status:'active', resources:100, amenities:['Policy Coordination'], icon:'🏛️', color:'#3b82f6'},
-
-  // 🚨 NDRF BATTALIONS
   {id:'AGY004', name:'1st Battalion NDRF', type:'NDRF', shortType:'NDRF-1', location:'Guwahati', city:'Guwahati', pin:'781017', address:'Patgaon, Azara', lat:26.1200, lng:91.6000, status:'active', resources:120, amenities:['Flood Rescue', 'CSSR'], icon:'🛡️', color:'#f97316'},
   {id:'AGY005', name:'2nd Battalion NDRF', type:'NDRF', shortType:'NDRF-2', location:'Nadia', city:'Haringhata', pin:'741246', address:'Nadia, West Bengal', lat:22.9600, lng:88.5600, status:'active', resources:120, amenities:['Flood Rescue', 'Boats'], icon:'🛡️', color:'#f97316'},
   {id:'AGY006', name:'3rd Battalion NDRF', type:'NDRF', shortType:'NDRF-3', location:'Cuttack', city:'Cuttack', pin:'754013', address:'Mundali, Odisha', lat:20.4400, lng:85.7400, status:'active', resources:120, amenities:['Cyclone Prep', 'Evacuation'], icon:'🛡️', color:'#f97316'},
@@ -963,8 +960,6 @@ const STATIC_AGENCIES = [
   {id:'AGY017', name:'14th Battalion NDRF', type:'NDRF', shortType:'NDRF-14', location:'Nurpur', city:'Nurpur', pin:'176201', address:'Himachal Pradesh', lat:32.3005, lng:75.8953, status:'standby', resources:120, amenities:['Mountain Rescue'], icon:'🛡️', color:'#f97316'},
   {id:'AGY018', name:'15th Battalion NDRF', type:'NDRF', shortType:'NDRF-15', location:'Gadarpur', city:'Gadarpur', pin:'263152', address:'Uttarakhand', lat:29.0347, lng:79.2555, status:'active', resources:120, amenities:['Landslide Clearance'], icon:'🛡️', color:'#f97316'},
   {id:'AGY019', name:'16th Battalion NDRF', type:'NDRF', shortType:'NDRF-16', location:'Dwarka', city:'New Delhi', pin:'110077', address:'New Delhi', lat:28.5823, lng:77.0500, status:'active', resources:120, amenities:['Urban SAR'], icon:'🛡️', color:'#f97316'},
-
-  // 🟡 STATE DISASTER RESPONSE FORCES (SDRF)
   {id:'AGY020', name:'Andhra Pradesh SDRF', type:'SDRF', shortType:'SDRF-AP', location:'Amaravati', city:'Amaravati', pin:'522020', address:'AP HQ', lat:16.5115, lng:80.5186, status:'active', resources:80, amenities:['Coastal Rescue'], icon:'🚒', color:'#fbbf24'},
   {id:'AGY021', name:'Arunachal Pradesh SDRF', type:'SDRF', shortType:'SDRF-AR', location:'Itanagar', city:'Itanagar', pin:'791111', address:'AR HQ', lat:27.0886, lng:93.6053, status:'standby', resources:60, amenities:['Mountain Rescue'], icon:'🚒', color:'#fbbf24'},
   {id:'AGY022', name:'Assam SDRF', type:'SDRF', shortType:'SDRF-AS', location:'Guwahati', city:'Guwahati', pin:'781006', address:'Assam HQ', lat:26.1445, lng:91.7362, status:'active', resources:90, amenities:['River Boats'], icon:'🚒', color:'#fbbf24'},
@@ -985,8 +980,6 @@ const STATIC_AGENCIES = [
   {id:'AGY037', name:'Uttar Pradesh SDRF', type:'SDRF', shortType:'SDRF-UP', location:'Lucknow', city:'Lucknow', pin:'226001', address:'UP HQ', lat:26.8467, lng:80.9462, status:'active', resources:110, amenities:['River Ops'], icon:'🚒', color:'#fbbf24'},
   {id:'AGY038', name:'Uttarakhand SDRF', type:'SDRF', shortType:'SDRF-UK', location:'Dehradun', city:'Dehradun', pin:'248001', address:'UK HQ', lat:30.3165, lng:78.0322, status:'active', resources:75, amenities:['Landslide Rescue'], icon:'🚒', color:'#fbbf24'},
   {id:'AGY039', name:'West Bengal SDRF', type:'SDRF', shortType:'SDRF-WB', location:'Kolkata', city:'Kolkata', pin:'700001', address:'WB HQ', lat:22.5726, lng:88.3639, status:'active', resources:95, amenities:['Cyclone Evac'], icon:'🚒', color:'#fbbf24'},
-
-  // 🟢 MAJOR DISASTER RESPONSE NGOs
   {id:'AGY040', name:'Indian Red Cross Society', type:'Medical / NGO', shortType:'Red Cross', location:'New Delhi', city:'New Delhi', pin:'110001', address:'1, Red Cross Road', lat:28.6129, lng:77.2066, status:'active', resources:200, amenities:['Ambulances', 'Blood Banks'], icon:'🏥', color:'#10b981'},
   {id:'AGY041', name:'Goonj NGO', type:'NGO', shortType:'Goonj', location:'New Delhi', city:'New Delhi', pin:'110076', address:'Sarita Vihar', lat:28.5330, lng:77.2932, status:'active', resources:40, amenities:['Clothing', 'Rations'], icon:'📦', color:'#10b981'},
   {id:'AGY042', name:'SEEDS India', type:'NGO / Shelter', shortType:'SEEDS', location:'New Delhi', city:'New Delhi', pin:'110016', address:'R.K. Puram', lat:28.5679, lng:77.1756, status:'standby', resources:45, amenities:['Tents', 'Shelter Kits'], icon:'🏗️', color:'#10b981'},
@@ -999,13 +992,12 @@ const STATIC_AGENCIES = [
   {id:'AGY049', name:'CARE Emergency Response', type:'NGO', shortType:'CARE ERT', location:'New Delhi', city:'New Delhi', pin:'110016', address:'Hauz Khas', lat:28.5525, lng:77.2025, status:'active', resources:45, amenities:['Rapid Deployment'], icon:'🚐', color:'#10b981'},
   {id:'AGY050', name:'Doctors For You (DFY)', type:'Medical / NGO', shortType:'DFY', location:'Mumbai', city:'Mumbai', pin:'400070', address:'Kurla', lat:19.0760, lng:72.8777, status:'active', resources:60, amenities:['Mobile Clinics', 'Trauma Care'], icon:'🩺', color:'#10b981'}
 ];
-/* Working copy — Firebase merges into this */
+
 let allAgencies = [...STATIC_AGENCIES];
 let allAlerts = [], allIncidents = [], allMsgs = [], allSOS = [];
 let currentUser = null, currentChan = 'emergency-chennai-flood';
 const ADMIN_EMAIL = 'admin@gmail.com';
 
-/* Default resources — seeded to Firebase on first run */
 const DEFAULT_RESOURCES = {
   fire_engines: {icon:'🚒',name:'Fire Engines', total:28, avail:22, key:'fire_engines'},
   ambulances:   {icon:'🚑',name:'Ambulances',   total:45, avail:38, key:'ambulances'},
@@ -1123,7 +1115,7 @@ async function doLogout() {
 }
 
 /* ════════════════════════════════════
-   SETUP UI (Role-based visibility)
+   SETUP UI
 ════════════════════════════════════ */
 function setupUI(user) {
   const role = user.role||'civilian';
@@ -1135,14 +1127,11 @@ function setupUI(user) {
   document.getElementById('navName').textContent   = user.name||'User';
   document.getElementById('navRole').textContent   = (user.userType||role).toUpperCase();
 
-  // Admin-only elements
   document.querySelectorAll('.show-admin').forEach(el => el.style.display = isAdmin ? '' : 'none');
   document.getElementById('ng-admin').style.display  = isAdmin ? 'block' : 'none';
-  // Agency-and-up elements
   document.querySelectorAll('.show-agency').forEach(el => el.style.display = isAgency ? '' : 'none');
   document.getElementById('ng-agencies').style.display = isAgency ? 'block' : 'none';
 
-  // Banners
   document.getElementById('admin-banner').style.display  = isAdmin ? 'flex' : 'none';
   document.getElementById('guest-banner').style.display  = role==='guest' ? 'block' : 'none';
   document.getElementById('civ-banner').style.display    = role==='civilian' ? 'flex' : 'none';
@@ -1150,12 +1139,8 @@ function setupUI(user) {
   document.getElementById('inc-dot').style.display       = isCivil ? 'none' : '';
   document.getElementById('inc-label').style.display     = isCivil ? 'none' : '';
 
-  // Populate dropdowns
-  ['res-ag-sel','route-from'].forEach(id => {
-    const el = document.getElementById(id); if(!el) return;
-    if(id==='route-from') el.innerHTML = '<option value="">-- Select Agency --</option>' + allAgencies.map(a=>`<option value="${a.id}">${a.name}</option>`).join('');
-    else el.innerHTML = allAgencies.map(a=>`<option>${a.name}</option>`).join('');
-  });
+  const rf = document.getElementById('route-from');
+  if(rf) rf.innerHTML = '<option value="">-- Select Agency --</option>' + allAgencies.map(a=>`<option value="${a.id}">${esc(a.name)}</option>`).join('');
 
   if(role==='guest') {
     const mi = document.getElementById('msg-input-area');
@@ -1164,15 +1149,13 @@ function setupUI(user) {
 }
 
 /* ════════════════════════════════════
-   FIREBASE LISTENERS — ALL FIXED
+   SEED DATA
 ════════════════════════════════════ */
 async function seedData() {
-  // Seed static agencies if DB is empty
   for(const a of STATIC_AGENCIES) {
     const s = await db.ref(`agencies/${a.id}`).once('value');
     if(!s.exists()) await db.ref(`agencies/${a.id}`).set(a);
   }
-  // Seed default alerts
   const as = await db.ref('alerts').once('value');
   if(!as.exists()) {
     const defaults = [
@@ -1183,7 +1166,6 @@ async function seedData() {
     ];
     for(const a of defaults) await db.ref('alerts').push(a);
   }
-  // Seed messages
   const ms = await db.ref('messages/emergency-chennai-flood').once('value');
   if(!ms.exists()) {
     const dmsgs = [
@@ -1193,16 +1175,12 @@ async function seedData() {
     ];
     for(const m of dmsgs) await db.ref('messages/emergency-chennai-flood').push(m);
   }
-  // Seed resources to Firebase if not yet seeded
-// Seed resources to Firebase if not yet seeded
   const resSnap = await db.ref('resources').once('value');
   if(!resSnap.exists()) {
     for(const [k,v] of Object.entries(DEFAULT_RESOURCES)) {
       await db.ref(`resources/${k}`).set({...v, key:k});
     }
   }
-
-  // Seed corridor roads to Firebase if not yet seeded
   const rdSnap = await db.ref('corridor_roads').once('value');
   if(!rdSnap.exists()) {
     for(const r of INDIA_ROADS) {
@@ -1211,13 +1189,12 @@ async function seedData() {
   }
 }
 
+/* ════════════════════════════════════
+   FIREBASE LISTENERS
+════════════════════════════════════ */
 function listenFirebase() {
 
-  /* ══════════════════════════════════════════════
-     AGENCIES — merge Firebase + static base.
-     Always updates: dashboard table, agencies page,
-     stat counters, map mini-count, all dropdowns.
-  ══════════════════════════════════════════════ */
+  /* AGENCIES */
   db.ref('agencies').on('value', snap => {
     const fbMap = {};
     if(snap.exists()) snap.forEach(c => { const v=c.val(); if(v&&v.id) fbMap[v.id]=v; });
@@ -1226,7 +1203,6 @@ function listenFirebase() {
     Object.values(fbMap).forEach(a => { merged[a.id] = a; });
     allAgencies = Object.values(merged);
 
-    // Always update every element that shows agency data
     renderDashAgencies();
     renderAgTable();
     const n = allAgencies.length;
@@ -1234,75 +1210,55 @@ function listenFirebase() {
     setEl('fb-ag-count', n);
     setEl('ag-count', n);
     setEl('mini-count', n + ' AGENCIES');
-    // Repopulate dropdowns while keeping current selection
     const rf = document.getElementById('route-from');
     if(rf) { const cv=rf.value; rf.innerHTML='<option value="">-- Select Agency --</option>'+allAgencies.map(a=>`<option value="${a.id}">${esc(a.name)}</option>`).join(''); rf.value=cv; }
   });
 
-  /* ══════════════════════════════════════════════
-     ALERTS — ALL alerts, no limit.
-     Persists forever. Updates: critical list,
-     warning list, dashboard preview, badge counter.
-  ══════════════════════════════════════════════ */
+  /* ALERTS — live sync, no limit */
   db.ref('alerts').orderByChild('time').on('value', snap => {
     allAlerts = [];
-    snap.forEach(c => allAlerts.push({...c.val(), _k:c.key}));
-    allAlerts.reverse(); // newest first
-
-    // Always update ALL alert display points
+    if(snap.exists()) {
+      snap.forEach(c => { allAlerts.push({ ...c.val(), _k: c.key }); });
+    }
+    allAlerts.reverse();
     renderAlerts();
     renderDashAlerts();
-    setEl('st-alerts', allAlerts.length);
-    const critCount = allAlerts.filter(a=>(a.type||'').toLowerCase()==='critical').length;
-    setEl('alertBadge', critCount);
+    const count = allAlerts.length;
+    setEl('st-alerts', count);
+    const critOnly = allAlerts.filter(a => String(a.type).toLowerCase() === 'critical');
+    setEl('alertBadge', critOnly.length);
   });
 
-  /* ══════════════════════════════════════════════
-     INCIDENTS — ALL incidents, no limit.
-     Persists forever across refreshes.
-     Updates: incident table, dashboard stats.
-  ══════════════════════════════════════════════ */
+  /* INCIDENTS */
   db.ref('incidents').orderByChild('time').on('value', snap => {
     allIncidents = [];
     snap.forEach(c => allIncidents.push({...c.val(), _k:c.key}));
-    allIncidents.reverse(); // newest first
-
-    // Always render the incident table
+    allIncidents.reverse();
     renderIncidents();
     const activeCount = allIncidents.filter(i=>(i.status||'').toLowerCase()==='active').length;
     setEl('st-incidents', activeCount);
     setEl('fb-inc-count', allIncidents.length);
   });
 
-  /* ══════════════════════════════════════════════
-     MESSAGES — current channel, no limit.
-     Persists forever. New messages appear instantly.
-  ══════════════════════════════════════════════ */
+  /* MESSAGES */
   db.ref(`messages/${currentChan}`).orderByChild('time').on('value', snap => {
     allMsgs = [];
     snap.forEach(c => allMsgs.push({...c.val(), _k:c.key}));
-    // Messages are in time-ascending order (oldest first for chat)
     renderMsgs();
   });
 
-  /* ══════════════════════════════════════════════
-     CIVILIAN SOS — ALL records, persists forever.
-     Updates: heatmap, table, chips, dashboard stat.
-  ══════════════════════════════════════════════ */
+  /* CIVILIAN SOS */
   db.ref('civilian_sos').orderByChild('time').on('value', snap => {
     allSOS = [];
     snap.forEach(c => allSOS.push({...c.val(), _k:c.key}));
-    allSOS.reverse(); // newest first
-
+    allSOS.reverse();
     renderSOSTable();
     updateSOSChips();
-    renderCivHeatmap(); // only renders if civMap is initialised
+    renderCivHeatmap();
     setEl('st-sos', allSOS.length);
   });
 
-  /* ══════════════════════════════════════════════
-     SYSTEM LOGS — last 200 entries.
-  ══════════════════════════════════════════════ */
+  /* SYSTEM LOGS */
   db.ref('system_logs').orderByChild('time').limitToLast(200).on('value', snap => {
     const logs = []; snap.forEach(c => logs.push(c.val())); logs.reverse();
     const b = document.getElementById('logs-body');
@@ -1311,13 +1267,9 @@ function listenFirebase() {
       : '<div style="padding:20px;color:var(--text-muted);text-align:center;font-size:13px">No logs yet.</div>';
   });
 
-  /* ══════════════════════════════════════════════
-     RESOURCES — Firebase-backed, persists forever.
-     Updates resource grid and stat cards in real time.
-  ══════════════════════════════════════════════ */
+  /* RESOURCES */
   db.ref('resources').on('value', snap => {
     if(snap.exists()) {
-      // Reset then rebuild from Firebase
       allResources = JSON.parse(JSON.stringify(DEFAULT_RESOURCES));
       snap.forEach(c => {
         const v = c.val();
@@ -1327,39 +1279,25 @@ function listenFirebase() {
     renderResources();
   });
 
-  /* ══════════════════════════════════════════════
-     USERS — live user management table.
-  ══════════════════════════════════════════════ */
-/* ══════════════════════════════════════════════
-     USERS — live user management table.
-  ══════════════════════════════════════════════ */
-
-/* ══════════════════════════════════════════════
-     USERS — live user management table.
-  ══════════════════════════════════════════════ */
+  /* USERS */
   db.ref('users').on('value', snap => renderUsers(snap));
 
-  /* ══════════════════════════════════════════════
-     CORRIDOR ROADS — PERSISTENCE FIX
-  ══════════════════════════════════════════════ */
+  /* CORRIDOR ROADS */
   db.ref('corridor_roads').on('value', snap => {
     if(snap.exists()) {
       const fbData = snap.val();
-      // Merge Firebase status into your local INDIA_ROADS definitions
       roadStatus = roadStatus.map(localRoad => {
         if(fbData[localRoad.id]) {
           return { ...localRoad, clear: fbData[localRoad.id].clear };
         }
         return localRoad;
       });
-      
-      // Instantly update the UI switches and Map
       renderRoadList();
       if(corrMap) drawCorridorRoads();
     }
   });
 }
-/* Helper: safely set textContent of any element by ID */
+
 function setEl(id, val) {
   const el = document.getElementById(id);
   if(el) el.textContent = val;
@@ -1371,50 +1309,46 @@ async function sysLog(msg) { try { await db.ref('system_logs').push({msg,time:Da
    INDIA-WIDE CORRIDOR ROADS
 ════════════════════════════════════ */
 const INDIA_ROADS = [
-  // National Highways North-South (NH-44)
-  {id:'nh44_jk',  name:'NH-44: Srinagar—Jalandhar',   segment:'J&K–Punjab stretch',        clear:true,  from:[32.72,74.86],to:[31.32,75.57]},
-  {id:'nh44_pb',  name:'NH-44: Jalandhar—Delhi',        segment:'Punjab–Delhi corridor',      clear:true,  from:[31.32,75.57],to:[28.55,77.10]},
-  {id:'nh44_da',  name:'NH-44: Delhi—Agra',             segment:'Mathura bypass',             clear:true,  from:[28.55,77.10],to:[27.18,78.01]},
-  {id:'nh44_an',  name:'NH-44: Agra—Nagpur',            segment:'Gwalior–Bhopal–Nagpur',      clear:false, from:[27.18,78.01],to:[21.15,79.09]},
-  {id:'nh44_nb',  name:'NH-44: Nagpur—Bengaluru',       segment:'Hyderabad–Bengaluru',        clear:true,  from:[21.15,79.09],to:[12.97,77.59]},
-  {id:'nh44_bc',  name:'NH-44: Bengaluru—Chennai',      segment:'Krishnagiri–Chennai',        clear:true,  from:[12.97,77.59],to:[13.08,80.27]},
-  {id:'nh44_ck',  name:'NH-44: Chennai—Kanyakumari',    segment:'Madurai–Kanyakumari',        clear:false, from:[9.92,78.12], to:[8.09,77.55]},
-  // East-West (NH-27)
-  {id:'nh27_ae',  name:'NH-27: Ahmedabad—Nagpur',       segment:'East-West Corridor West',    clear:true,  from:[23.03,72.58],to:[21.15,79.09]},
-  {id:'nh27_nv',  name:'NH-27: Nagpur—Varanasi',        segment:'East-West Corridor East',    clear:true,  from:[21.15,79.09],to:[25.32,83.01]},
-  // Delhi–Mumbai (NH-48)
-  {id:'nh48_dj',  name:'NH-48: Delhi—Jaipur',           segment:'Gurugram–Jaipur',            clear:true,  from:[28.44,77.03],to:[26.91,75.79]},
-  {id:'nh48_jm',  name:'NH-48: Jaipur—Mumbai',          segment:'Ahmedabad–Mumbai',           clear:false, from:[26.91,75.79],to:[19.08,72.88]},
-  // East Coast (NH-16)
-  {id:'nh16_kb',  name:'NH-16: Kolkata—Bhubaneswar',    segment:'Kharagpur–Bhubaneswar',      clear:true,  from:[22.33,87.32],to:[20.29,85.84]},
-  {id:'nh16_bv',  name:'NH-16: Bhubaneswar—Vizag',      segment:'Coastal corridor',           clear:true,  from:[20.29,85.84],to:[17.69,83.22]},
-  {id:'nh16_vc',  name:'NH-16: Vizag—Chennai',          segment:'Vijayawada–Nellore',         clear:false, from:[17.69,83.22],to:[13.08,80.27]},
-  // Delhi-Kolkata (NH-19)
-  {id:'nh19_dk',  name:'NH-19: Delhi—Kolkata',          segment:'Allahabad–Varanasi–Patna',   clear:false, from:[25.45,81.84],to:[22.57,88.36]},
-  // Northeast (NH-37/NH-27E)
-  {id:'nh37',     name:'NH-37: Guwahati—Dibrugarh',     segment:'Assam Valley',               clear:true,  from:[26.14,91.74],to:[27.49,94.91]},
-  // Chennai Local
-  {id:'omr',      name:'OMR — Sholinganallur–Perungudi', segment:'IT Corridor stretch',        clear:true,  from:[12.89,80.23],to:[13.03,80.25]},
-  {id:'gst',      name:'GST Road — Pallavaram–Tambaram', segment:'Tambaram stretch',           clear:false, from:[12.97,80.16],to:[12.93,80.11]},
-  {id:'ecr',      name:'ECR — East Coast Road, Chennai', segment:'Thiruvanmiyur–Kovalam',      clear:true,  from:[12.98,80.27],to:[12.79,80.25]},
-  {id:'rajiv',    name:'Rajiv Gandhi Salai (IT Corridor)',segment:'Perungudi–Sholinganallur',  clear:true,  from:[13.01,80.25],to:[12.90,80.23]},
-  // Mumbai
-  {id:'mumbai_pw',name:'Mumbai–Pune Expressway',         segment:'Khopoli–Pune',               clear:true,  from:[19.08,72.88],to:[18.52,73.86]},
-  {id:'mumbai_et',name:'Eastern Express Highway',        segment:'Thane–Mulund',               clear:false, from:[19.20,72.97],to:[19.13,72.92]},
+  {id:'nh44_jk',  name:'NH-44: Srinagar—Jalandhar',    segment:'J&K–Punjab stretch',         clear:true,  from:[32.72,74.86],to:[31.32,75.57]},
+  {id:'nh44_pb',  name:'NH-44: Jalandhar—Delhi',         segment:'Punjab–Delhi corridor',       clear:true,  from:[31.32,75.57],to:[28.55,77.10]},
+  {id:'nh44_da',  name:'NH-44: Delhi—Agra',              segment:'Mathura bypass',              clear:true,  from:[28.55,77.10],to:[27.18,78.01]},
+  {id:'nh44_an',  name:'NH-44: Agra—Nagpur',             segment:'Gwalior–Bhopal–Nagpur',       clear:false, from:[27.18,78.01],to:[21.15,79.09]},
+  {id:'nh44_nb',  name:'NH-44: Nagpur—Bengaluru',        segment:'Hyderabad–Bengaluru',         clear:true,  from:[21.15,79.09],to:[12.97,77.59]},
+  {id:'nh44_bc',  name:'NH-44: Bengaluru—Chennai',       segment:'Krishnagiri–Chennai',         clear:true,  from:[12.97,77.59],to:[13.08,80.27]},
+  {id:'nh44_ck',  name:'NH-44: Chennai—Kanyakumari',     segment:'Madurai–Kanyakumari',         clear:false, from:[9.92,78.12], to:[8.09,77.55]},
+  {id:'nh27_ae',  name:'NH-27: Ahmedabad—Nagpur',        segment:'East-West Corridor West',     clear:true,  from:[23.03,72.58],to:[21.15,79.09]},
+  {id:'nh27_nv',  name:'NH-27: Nagpur—Varanasi',         segment:'East-West Corridor East',     clear:true,  from:[21.15,79.09],to:[25.32,83.01]},
+  {id:'nh48_dj',  name:'NH-48: Delhi—Jaipur',            segment:'Gurugram–Jaipur',             clear:true,  from:[28.44,77.03],to:[26.91,75.79]},
+  {id:'nh48_jm',  name:'NH-48: Jaipur—Mumbai',           segment:'Ahmedabad–Mumbai',            clear:false, from:[26.91,75.79],to:[19.08,72.88]},
+  {id:'nh16_kb',  name:'NH-16: Kolkata—Bhubaneswar',     segment:'Kharagpur–Bhubaneswar',       clear:true,  from:[22.33,87.32],to:[20.29,85.84]},
+  {id:'nh16_bv',  name:'NH-16: Bhubaneswar—Vizag',       segment:'Coastal corridor',            clear:true,  from:[20.29,85.84],to:[17.69,83.22]},
+  {id:'nh16_vc',  name:'NH-16: Vizag—Chennai',           segment:'Vijayawada–Nellore',          clear:false, from:[17.69,83.22],to:[13.08,80.27]},
+  {id:'nh19_dk',  name:'NH-19: Delhi—Kolkata',           segment:'Allahabad–Varanasi–Patna',    clear:false, from:[25.45,81.84],to:[22.57,88.36]},
+  {id:'nh37',     name:'NH-37: Guwahati—Dibrugarh',      segment:'Assam Valley',                clear:true,  from:[26.14,91.74],to:[27.49,94.91]},
+  {id:'omr',      name:'OMR — Sholinganallur–Perungudi',  segment:'IT Corridor stretch',         clear:true,  from:[12.89,80.23],to:[13.03,80.25]},
+  {id:'gst',      name:'GST Road — Pallavaram–Tambaram',  segment:'Tambaram stretch',            clear:false, from:[12.97,80.16],to:[12.93,80.11]},
+  {id:'ecr',      name:'ECR — East Coast Road, Chennai',  segment:'Thiruvanmiyur–Kovalam',       clear:true,  from:[12.98,80.27],to:[12.79,80.25]},
+  {id:'rajiv',    name:'Rajiv Gandhi Salai (IT Corridor)', segment:'Perungudi–Sholinganallur',   clear:true,  from:[13.01,80.25],to:[12.90,80.23]},
+  {id:'mumbai_pw',name:'Mumbai–Pune Expressway',          segment:'Khopoli–Pune',                clear:true,  from:[19.08,72.88],to:[18.52,73.86]},
+  {id:'mumbai_et',name:'Eastern Express Highway',         segment:'Thane–Mulund',                clear:false, from:[19.20,72.97],to:[19.13,72.92]},
 ];
-// Keep INDIA_ROADS exactly as you have it. 
-// Change only this line to let Firebase populate it:
 let roadStatus = [...INDIA_ROADS];
+
 /* ════════════════════════════════════
    MAPS
 ════════════════════════════════════ */
 let miniMap=null, fullMap=null, corrMap=null, civMap=null;
 let fullMarkers=[], civMarkers=[], corrLayers=[], hmVisible=false;
-let markerClusterGroup; 
-const TYPE_COLORS={'NDRF':'#f97316','SDRF':'#f97316', /* ... */};
-const INCIDENT_ZONES=[{lat:13.05,lng:80.22,label:'🌊 Flood — Tambaram',color:'#ef4444',r:40000},{lat:19.076,lng:72.88,label:'🌊 Flood — Mumbai',color:'#3b82f6',r:50000},{lat:20.29,lng:85.84,label:'🌀 Cyclone — Odisha',color:'#f97316',r:80000},{lat:22.57,lng:88.36,label:'🌊 Flood — Kolkata',color:'#3b82f6',r:50000},{lat:28.61,lng:77.23,label:'⚠ Alert — Delhi',color:'#fbbf24',r:40000}];
+let markerClusterGroup;
+const INCIDENT_ZONES=[
+  {lat:13.05,lng:80.22,label:'🌊 Flood — Tambaram',color:'#ef4444',r:40000},
+  {lat:19.076,lng:72.88,label:'🌊 Flood — Mumbai',color:'#3b82f6',r:50000},
+  {lat:20.29,lng:85.84,label:'🌀 Cyclone — Odisha',color:'#f97316',r:80000},
+  {lat:22.57,lng:88.36,label:'🌊 Flood — Kolkata',color:'#3b82f6',r:50000},
+  {lat:28.61,lng:77.23,label:'⚠ Alert — Delhi',color:'#fbbf24',r:40000}
+];
 
-function getColor(a){return a.color||TYPE_COLORS[a.type]||'#94a3b8';}
+function getColor(a){return a.color||'#94a3b8';}
 function mkIcon(c){return L.divIcon({className:'',html:`<div style="width:16px;height:16px;border-radius:50%;background:${c};border:2.5px solid #fff;box-shadow:0 0 10px ${c}80"></div>`,iconSize:[16,16],iconAnchor:[8,8]});}
 
 function popupHTML(a){
@@ -1432,29 +1366,17 @@ function initMiniMap(){
 }
 
 function initFullMap(){
-  // 1. Create the map and cluster group ONLY ONCE
   if(!fullMap) {
     fullMap=L.map('fullmap',{zoomControl:true,attributionControl:false}).setView([22,79],5);
     L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{maxZoom:18}).addTo(fullMap);
-    
     INCIDENT_ZONES.forEach(z=>L.circle([z.lat,z.lng],{color:z.color,fillColor:z.color,fillOpacity:.15,radius:z.r,weight:2,dashArray:'8,4'}).addTo(fullMap).bindPopup(`<b>${z.label}</b>`));
-
-    // Initialize Cluster Group
-    markerClusterGroup = L.markerClusterGroup({
-      maxClusterRadius: 40,
-      spiderfyOnMaxZoom: true,
-      disableClusteringAtZoom: 12
-    });
+    markerClusterGroup = L.markerClusterGroup({maxClusterRadius:40,spiderfyOnMaxZoom:true,disableClusteringAtZoom:12});
     fullMap.addLayer(markerClusterGroup);
-
     fullMap.on('mousemove',e=>{const el=document.getElementById('mapCoords'); if(el) el.textContent=`📍 ${e.latlng.lat.toFixed(4)}°N, ${e.latlng.lng.toFixed(4)}°E`;});
   }
-
-  // 2. ALWAYS REFRESH MARKERS (This fixes the missing pins!)
-  if (markerClusterGroup) {
+  if(markerClusterGroup) {
     markerClusterGroup.clearLayers();
     fullMarkers=[];
-
     allAgencies.forEach(a=>{
       if(!a.lat||!a.lng) return;
       const m=L.marker([a.lat,a.lng],{icon:mkIcon(getColor(a))}).bindPopup(popupHTML(a),{maxWidth:270});
@@ -1479,9 +1401,7 @@ function drawCorridorRoads(){
   roadStatus.forEach(r=>{
     if(!r.from||!r.to) return;
     const c=r.clear?'#10b981':'#ef4444';
-    // Glow layer
     const glow=L.polyline([r.from,r.to],{color:c,weight:14,opacity:.08}).addTo(corrMap);
-    // Main line
     const line=L.polyline([r.from,r.to],{color:c,weight:3.5,dashArray:r.clear?null:'10,6',opacity:.85}).addTo(corrMap).bindTooltip(`${r.name}<br>${r.clear?'✅ CLEAR':'⚠ BLOCKED'} — ${r.segment}`,{sticky:true});
     corrLayers.push(glow,line);
   });
@@ -1496,21 +1416,15 @@ function renderRoadList(){
 
 async function toggleRoad(id){
   if(currentUser?.role==='guest'){showNotif('🔒 Login to update roads.');return;}
-  
-  // Find the road in our local array
   const roadIndex = roadStatus.findIndex(r => r.id === id);
   if(roadIndex === -1) return;
-
   const newStatus = !roadStatus[roadIndex].clear;
-
   try {
-    // Update Firebase with ONLY the new clear status
     await db.ref(`corridor_roads/${id}`).update({ clear: newStatus });
     showNotif(`🚦 Road ${newStatus ? 'Enabled' : 'Disabled'}`);
-  } catch(e) {
-    console.error(e);
-  }
+  } catch(e) { console.error(e); }
 }
+
 function calcRoute(){
   const from=document.getElementById('route-from').value;
   const to=document.getElementById('route-to').value;
@@ -1652,12 +1566,10 @@ function renderOffQ(){const el=document.getElementById('offline-q'); if(!el) ret
 /* ════════════════════════════════════
    RESOURCES
 ════════════════════════════════════ */
-const RESOURCES=[{icon:'🚒',name:'Fire Engines',total:28,avail:22},{icon:'🚑',name:'Ambulances',total:45,avail:38},{icon:'🚁',name:'Helicopters',total:8,avail:2},{icon:'⛵',name:'Rescue Boats',total:24,avail:3},{icon:'🏕️',name:'Relief Tents',total:500,avail:320},{icon:'💊',name:'Medical Kits',total:340,avail:340},{icon:'🔋',name:'Generators',total:60,avail:48},{icon:'🚛',name:'Trucks',total:35,avail:28},{icon:'📡',name:'Comm Sets',total:120,avail:10}];
 function renderResources(){
   const resources = Object.values(allResources);
   if(!resources.length) return;
 
-  // Update the 4 summary stat cards from Firebase data
   const vehicles = ['fire_engines','ambulances','trucks','helicopters'];
   const totVeh = vehicles.reduce((s,k)=>s+(allResources[k]?.total||0),0);
   const avVeh  = vehicles.reduce((s,k)=>s+(allResources[k]?.avail||0),0);
@@ -1672,7 +1584,6 @@ function renderResources(){
   setEl('rs-boats',     rb ? rb.total : 24);
   setEl('rs-boats-s',   rb ? `${(rb.total||0)-(rb.avail||0)} deployed` : '6 deployed');
 
-  // Critical inventory alert bar
   const crit = resources.filter(r => r.total > 0 && (r.avail||0)/(r.total) < 0.1);
   const ib = document.getElementById('inv-bar'), ra = document.getElementById('res-alerts');
   if(ib) {
@@ -1681,7 +1592,6 @@ function renderResources(){
   }
   if(ra) ra.innerHTML = crit.map(r=>`<div class="inv-bar" style="margin-bottom:8px">${r.icon||'📦'}&nbsp;<strong>${esc(r.name)}</strong>: ${r.avail||0}/${r.total||0} (${Math.round((r.avail||0)/(r.total||1)*100)}%)<span class="crit-tag" style="margin-left:6px">CRITICAL LOW</span></div>`).join('');
 
-  // Resource cards grid
   const grid = document.getElementById('res-grid'); if(!grid) return;
   grid.innerHTML = resources.map(r => {
     const p = r.total > 0 ? Math.round((r.avail||0)/r.total*100) : 0;
@@ -1698,7 +1608,20 @@ function renderResources(){
 }
 
 /* ════════════════════════════════════
-   NAVIGATION — re-render on every visit
+   AGENCIES TABLE
+════════════════════════════════════ */
+function renderAgTable(){
+  const tb=document.getElementById('ag-table'); if(!tb) return;
+  const q=(document.getElementById('agSearch')?.value||'').toLowerCase();
+  const sm={active:'badge-active',standby:'badge-standby',busy:'badge-busy'};
+  const filtered=q?allAgencies.filter(a=>a.name.toLowerCase().includes(q)||a.type.toLowerCase().includes(q)||(a.city||'').toLowerCase().includes(q)):allAgencies;
+  tb.innerHTML=filtered.map(a=>`<tr><td><strong>${esc(a.name)}</strong><div style="font-size:11px;color:var(--text-muted)">${esc(a.address||'')}</div></td><td style="font-size:12px">${esc(a.type)}</td><td>${esc(a.city||a.location||'')}</td><td style="font-family:var(--font-mono);font-size:11px;color:var(--accent3)">${esc(a.pin||'')}</td><td>${(a.amenities||[]).slice(0,2).map(x=>`<span class="amenity-tag">${esc(x)}</span>`).join(' ')}${(a.amenities||[]).length>2?`<span style="font-size:10px;color:var(--text-muted)"> +${(a.amenities||[]).length-2}</span>`:''}</td><td><span class="badge ${sm[a.status||'active']||'badge-pending'}">${(a.status||'active').toUpperCase()}</span></td><td><button class="btn btn-ghost" style="font-size:11px;padding:4px 10px" onclick="showAgDetail('${esc(a.id)}')">View →</button></td></tr>`).join('');
+  setEl('ag-count', filtered.length);
+}
+function filterAgencies(){ renderAgTable(); }
+
+/* ════════════════════════════════════
+   NAVIGATION
 ════════════════════════════════════ */
 function go(page, navEl) {
   const adminOnly=['adminpanel','usermgmt','logs','broadcast','register'];
@@ -1719,9 +1642,6 @@ function go(page, navEl) {
   };
   setEl('pageTitle', titles[page]||page);
 
-  /* Every page re-renders from the in-memory arrays
-     which are always kept in sync by Firebase listeners.
-     This means data is NEVER lost on navigation or refresh. */
   if(page==='dashboard') {
     renderDashAlerts();
     renderDashAgencies();
@@ -1732,23 +1652,18 @@ function go(page, navEl) {
     setTimeout(()=>{ initMiniMap(); miniMap?.invalidateSize(); }, 100);
   }
   if(page==='map')        { setTimeout(()=>{ initFullMap(); fullMap?.invalidateSize(); }, 100); }
-  if(page==='corridor')  { setTimeout(()=>{ initCorrMap(); corrMap?.invalidateSize(); renderRoadList(); }, 100); }
-  if(page==='alerts')    { renderAlerts(); }
-  if(page==='agencies')  { renderAgTable(); }
-  if(page==='register')  { /* form page — no render needed */ }
-  if(page==='resources') { renderResources(); }
-  if(page==='messaging') { renderChannels(); renderMsgs(); }
-  if(page==='incidents') { renderIncidents(); }
-  if(page==='civilian')  {
+  if(page==='corridor')   { setTimeout(()=>{ initCorrMap(); corrMap?.invalidateSize(); renderRoadList(); }, 100); }
+  if(page==='alerts')     { renderAlerts(); }
+  if(page==='agencies')   { renderAgTable(); }
+  if(page==='resources')  { renderResources(); }
+  if(page==='messaging')  { renderChannels(); renderMsgs(); }
+  if(page==='incidents')  { renderIncidents(); }
+  if(page==='civilian')   {
     renderSOSTable(); updateSOSChips();
     setTimeout(()=>{ initCivMap(); civMap?.invalidateSize(); }, 100);
   }
   if(page==='voice')      { initVoice(); initPhrases(); renderVoiceHist(); }
   if(page==='offline')    { genSMS(); renderOffQ(); }
-  if(page==='adminpanel') { /* stats already in DOM from listeners */ }
-  if(page==='usermgmt')   { /* users-table updated by Firebase listener */ }
-  if(page==='logs')       { /* logs-body updated by Firebase listener */ }
-  if(page==='broadcast')  { /* form page */ }
 }
 
 /* ════════════════════════════════════
@@ -1762,32 +1677,49 @@ function renderDashAlerts(){
   if(!allAlerts.length){el.innerHTML='<div style="padding:20px;color:var(--text-muted);font-size:13px">No alerts yet. Alerts pushed to Firebase will appear here in real time.</div>'; return;}
   el.innerHTML=allAlerts.slice(0,5).map(a=>`<div class="alert-item"><div class="alert-icon ${(a.type||'info').toLowerCase()}">${a.icon||'⚠'}</div><div class="alert-content"><div class="alert-title">${esc(a.title)}</div><div class="alert-meta">${esc(a.meta||'')}</div></div><div class="alert-time">${ago(a.time)}</div></div>`).join('');
 }
+
 function renderDashAgencies(){
   const el=document.getElementById('dash-agencies'); if(!el) return;
   const sm={active:'badge-active',standby:'badge-standby',busy:'badge-busy'};
   el.innerHTML=allAgencies.filter(a=>(a.status||'').toLowerCase()==='active').slice(0,5).map(a=>`<tr><td><strong>${esc(a.name)}</strong></td><td style="color:var(--text-muted);font-size:12px">${esc(a.shortType||a.type)}</td><td><span class="badge ${sm[a.status||'active']||'badge-pending'}">${(a.status||'').toUpperCase()}</span></td></tr>`).join('');
 }
 
-// ALERTS — case-insensitive type check (key fix)
-function renderAlerts(){
-  const ce=document.getElementById('crit-alerts'), we=document.getElementById('warn-alerts');
-  if(ce){const c=allAlerts.filter(a=>(a.type||'').toLowerCase()==='critical'); ce.innerHTML=c.length?c.map(a=>`<div class="alert-item"><div class="alert-icon critical">${a.icon||'🚨'}</div><div class="alert-content"><div class="alert-title">${esc(a.title)}</div><div class="alert-meta">${esc(a.meta||'')}</div></div><div class="alert-time">${ago(a.time)}</div></div>`).join(''):'<div style="padding:16px;color:var(--text-muted);font-size:13px">No critical alerts.</div>';}
-  if(we){const w=allAlerts.filter(a=>(a.type||'').toLowerCase()!=='critical'); we.innerHTML=w.length?w.map(a=>`<div class="alert-item"><div class="alert-icon ${(a.type||'info').toLowerCase()}">${a.icon||'⚠'}</div><div class="alert-content"><div class="alert-title">${esc(a.title)}</div><div class="alert-meta">${esc(a.meta||'')}</div></div><div class="alert-time">${ago(a.time)}</div></div>`).join(''):'<div style="padding:16px;color:var(--text-muted);font-size:13px">No warnings.</div>';}
-}
+/* ════════════════════════════════════
+   ✅ FIX: renderAlerts — SINGLE DEFINITION
+   This was duplicated in the original code causing the
+   "Unexpected token '}'" SyntaxError that crashed the app.
+════════════════════════════════════ */
+function renderAlerts() {
+  const ce = document.getElementById('crit-alerts');
+  const we = document.getElementById('warn-alerts');
+  if(!ce || !we) return;
 
-let agFilter='';
-function filterAgencies(){agFilter=document.getElementById('agSearch')?.value||''; renderAgTable();}
-function renderAgTable(){
-  const sm={active:'badge-active',standby:'badge-standby',busy:'badge-busy'};
-  const isAdmin=currentUser?.role==='admin';
-  const q=agFilter.toLowerCase();
-  const filtered=allAgencies.filter(a=>(a.name||'').toLowerCase().includes(q)||(a.type||'').toLowerCase().includes(q)||(a.city||'').toLowerCase().includes(q));
-  const tb=document.getElementById('ag-table'); if(!tb) return;
-  tb.innerHTML=filtered.length?filtered.map(a=>{
-    const tags=(a.amenities||[]).slice(0,2).map(x=>`<span class="amenity-tag">${esc(x)}</span>`).join('');
-    const more=(a.amenities||[]).length>2?`<span style="font-size:10px;color:var(--text-muted)">+${(a.amenities||[]).length-2}</span>`:'';
-    return`<tr><td><div style="display:flex;align-items:center;gap:8px"><span style="font-size:16px">${a.icon||'🏛'}</span><div><strong>${esc(a.name)}</strong><div style="font-size:10px;color:var(--text-muted);font-family:var(--font-mono)">${esc(a.id)}</div></div></div></td><td style="font-size:12px;color:var(--text-dim)">${esc(a.type)}</td><td style="font-size:12px">${esc(a.city||'')}</td><td style="font-family:var(--font-mono);font-size:11px;color:var(--accent3)">${esc(a.pin||'')}</td><td><div style="display:flex;gap:3px;flex-wrap:wrap">${tags}${more}</div></td><td><span class="badge ${sm[a.status||'active']||'badge-pending'}">${(a.status||'').toUpperCase()}</span></td><td><button class="btn btn-ghost" style="font-size:11px;padding:4px 10px" onclick="showAgDetail('${a.id}')">🔍 View</button>${isAdmin?`<button class="btn btn-success" style="font-size:11px;padding:4px 10px;margin-left:4px" onclick="showNotif('Request sent to ${esc(a.shortType||a.name)}!')">📤 Req</button>`:''}</td></tr>`;
-  }).join(''):'<tr><td colspan="7" style="text-align:center;padding:20px;color:var(--text-muted)">No agencies found.</td></tr>';
+  const criticals = allAlerts.filter(a => String(a.type).toLowerCase() === 'critical');
+  const warnings  = allAlerts.filter(a => String(a.type).toLowerCase() !== 'critical');
+
+  ce.innerHTML = criticals.length > 0
+    ? criticals.map(a => `
+        <div class="alert-item">
+          <div class="alert-icon critical">${a.icon || '🚨'}</div>
+          <div class="alert-content">
+            <div class="alert-title">${esc(a.title)}</div>
+            <div class="alert-meta">${esc(a.meta || '')}</div>
+          </div>
+          <div class="alert-time">${ago(a.time)}</div>
+        </div>`).join('')
+    : '<div style="padding:16px;color:var(--text-muted);font-size:13px">No critical alerts.</div>';
+
+  we.innerHTML = warnings.length > 0
+    ? warnings.map(a => `
+        <div class="alert-item">
+          <div class="alert-icon ${String(a.type).toLowerCase() === 'warning' ? 'warning' : 'info'}">${a.icon || '⚠'}</div>
+          <div class="alert-content">
+            <div class="alert-title">${esc(a.title)}</div>
+            <div class="alert-meta">${esc(a.meta || '')}</div>
+          </div>
+          <div class="alert-time">${ago(a.time)}</div>
+        </div>`).join('')
+    : '<div style="padding:16px;color:var(--text-muted);font-size:13px">No warnings or info alerts.</div>';
 }
 
 function showAgDetail(id){
@@ -1797,13 +1729,22 @@ function showAgDetail(id){
   showModal('agdetail');
 }
 
-const CHANNELS=[{id:'emergency-chennai-flood',icon:'🔴',name:'Emergency — Chennai Flood',n:12,u:5},{id:'ndrf-command',icon:'🟠',name:'NDRF Command',n:8,u:2},{id:'medical-coord',icon:'🟡',name:'Medical Coordination',n:5,u:0},{id:'logistics',icon:'🔵',name:'Logistics & Supply',n:9,u:1},{id:'general',icon:'⚪',name:'General Broadcast',n:48,u:0},{id:'civilian-updates',icon:'🟣',name:'Civilian Updates',n:20,u:3}];
-function renderChannels(){const el=document.getElementById('channel-list'); if(!el) return; el.innerHTML=CHANNELS.map(c=>`<div style="padding:9px;border-radius:8px;cursor:pointer;background:${c.id===currentChan?'rgba(249,115,22,.1)':'transparent'};display:flex;align-items:center;gap:8px;margin-bottom:3px" onclick="switchChan('${c.id}','${c.name}')"><span>${c.icon}</span><div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${c.name}</div><div style="font-size:11px;color:var(--text-muted)">${c.n} agencies</div></div>${c.u?`<span class="nav-badge">${c.u}</span>`:''}</div>`).join('');}
+const CHANNELS=[
+  {id:'emergency-chennai-flood',icon:'🔴',name:'Emergency — Chennai Flood',n:12,u:5},
+  {id:'ndrf-command',icon:'🟠',name:'NDRF Command',n:8,u:2},
+  {id:'medical-coord',icon:'🟡',name:'Medical Coordination',n:5,u:0},
+  {id:'logistics',icon:'🔵',name:'Logistics & Supply',n:9,u:1},
+  {id:'general',icon:'⚪',name:'General Broadcast',n:48,u:0},
+  {id:'civilian-updates',icon:'🟣',name:'Civilian Updates',n:20,u:3}
+];
+function renderChannels(){
+  const el=document.getElementById('channel-list'); if(!el) return;
+  el.innerHTML=CHANNELS.map(c=>`<div style="padding:9px;border-radius:8px;cursor:pointer;background:${c.id===currentChan?'rgba(249,115,22,.1)':'transparent'};display:flex;align-items:center;gap:8px;margin-bottom:3px" onclick="switchChan('${c.id}','${c.name}')"><span>${c.icon}</span><div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${c.name}</div><div style="font-size:11px;color:var(--text-muted)">${c.n} agencies</div></div>${c.u?`<span class="nav-badge">${c.u}</span>`:''}</div>`).join('');
+}
 function switchChan(id, name) {
-  db.ref(`messages/${currentChan}`).off(); // detach old listener
+  db.ref(`messages/${currentChan}`).off();
   currentChan = id;
   const t = document.getElementById('chan-title'); if(t) t.textContent = name;
-  // No limitToLast — all messages persist and show forever
   db.ref(`messages/${currentChan}`).orderByChild('time').on('value', snap => {
     allMsgs = [];
     snap.forEach(c => allMsgs.push({...c.val(), _k:c.key}));
@@ -1817,13 +1758,18 @@ function renderMsgs(){
   el.innerHTML=allMsgs.map(m=>`<div style="display:flex;gap:10px;align-items:flex-start"><div class="avatar" style="width:28px;height:28px;font-size:11px;flex-shrink:0">${(m.sender||'U').charAt(0)}</div><div><div style="display:flex;align-items:center;gap:7px;margin-bottom:3px"><span style="font-size:13px;font-weight:600">${esc(m.sender)}</span><span class="badge badge-pending" style="font-size:10px">${esc(m.role||'USER')}</span><span style="font-size:11px;color:var(--text-muted)">${m.time?new Date(m.time).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}):''}</span></div><div style="background:var(--surface2);padding:8px 12px;border-radius:0 8px 8px 8px;font-size:13px;line-height:1.5">${esc(m.msg)}</div></div></div>`).join('');
   el.scrollTop=el.scrollHeight;
 }
+
 function renderIncidents(){
   const sv={Critical:'badge-busy',High:'badge-standby',Medium:'badge-pending',Low:'badge-active'};
   const ss={active:'badge-busy',resolved:'badge-active',monitoring:'badge-standby'};
   const el=document.getElementById('inc-table'); if(!el) return;
-  el.innerHTML=allIncidents.length?allIncidents.map(i=>`<tr><td style="font-family:var(--font-mono);color:var(--accent3);font-size:11px">${esc(i.id||i._k||'—')}</td><td><strong>${esc(i.type)}</strong></td><td>${esc(i.location)}</td><td><span class="badge ${sv[i.severity]||'badge-pending'}">${esc(i.severity)}</span></td><td style="font-size:12px;color:var(--text-muted)">${esc(i.reportedBy||'—')}</td><td style="font-size:12px;color:var(--text-muted)">${ago(i.time)}</td><td><span class="badge ${ss[(i.status||'active').toLowerCase()]||'badge-busy'}">${(i.status||'active').toUpperCase()}</span></td><td><button class="btn btn-purple" style="font-size:10px;padding:2px 8px" onclick="openForecast('${esc(i.type)}')">🤖 AI</button></td></tr>`).join(''):'<tr><td colspan="8" style="text-align:center;padding:20px;color:var(--text-muted)">No incidents yet.</td></tr>';
+  el.innerHTML=allIncidents.length
+    ? allIncidents.map(i=>`<tr><td style="font-family:var(--font-mono);color:var(--accent3);font-size:11px">${esc(i.id||i._k||'—')}</td><td><strong>${esc(i.type)}</strong></td><td>${esc(i.location)}</td><td><span class="badge ${sv[i.severity]||'badge-pending'}">${esc(i.severity)}</span></td><td style="font-size:12px;color:var(--text-muted)">${esc(i.reportedBy||'—')}</td><td style="font-size:12px;color:var(--text-muted)">${ago(i.time)}</td><td><span class="badge ${ss[(i.status||'active').toLowerCase()]||'badge-busy'}">${(i.status||'active').toUpperCase()}</span></td><td><button class="btn btn-purple" style="font-size:10px;padding:2px 8px" onclick="openForecast('${esc(i.type)}')">🤖 AI</button></td></tr>`).join('')
+    : '<tr><td colspan="8" style="text-align:center;padding:20px;color:var(--text-muted)">No incidents yet.</td></tr>';
 }
+
 function openForecast(t){const s=document.getElementById('inc-type'); if(s) s.value=t; showForecast(); showModal('incident');}
+
 function renderUsers(snap){
   const tb=document.getElementById('users-table'); if(!tb) return;
   const fixed=[{email:ADMIN_EMAIL,fullName:'Gokul R',userType:'admin',orgName:'RALCA System',joined:'System'}];
@@ -1845,51 +1791,22 @@ async function submitIncident(){
   await db.ref('incidents').push(inc);
   await db.ref('alerts').push({type:'critical',icon:'🆘',title:`${type} — ${loc}`,meta:`Severity: ${sev} · By ${currentUser?.name||'User'}`,time:Date.now()});
   sysLog(`Incident: ${type} @ ${loc} by ${currentUser?.email}`);
-  closeModal('incident'); showNotif('🆘 Incident saved to Firebase permanently! Visible in Incidents table.');
+  closeModal('incident'); showNotif('🆘 Incident saved to Firebase! Visible in Incidents table.');
   document.getElementById('inc-loc').value=''; document.getElementById('inc-desc').value='';
 }
-async function createAlert() {
-  if (currentUser?.role !== 'admin') {
-    showNotif('🔒 Admin access required.');
-    return;
-  }
 
-  const typeCategory = document.getElementById('al-type').value; 
-  const sev = document.getElementById('al-sev').value.toLowerCase();
-  const title = document.getElementById('al-title').value.trim();
-  const msg = document.getElementById('al-msg').value.trim();
-
-  if (!title || !msg) {
-    showNotif('⚠ Please fill in both the title and message.');
-    return;
-  }
-
-  const newAlert = {
-    type: sev,
-    icon: sev === 'critical' ? '🚨' : sev === 'warning' ? '⚠' : 'ℹ',
-    title: title,
-    meta: `[${typeCategory}] ${msg}`, 
-    time: Date.now()
-  };
-
-  // 🔥 FORCE IT ONTO THE SCREEN IMMEDIATELY
-  allAlerts.unshift(newAlert);
-  renderAlerts(); 
-  renderDashAlerts();
-
-  closeModal('newalert');
-  document.getElementById('al-title').value = '';
-  document.getElementById('al-msg').value = '';
-
-  showNotif('✅ BOOM: Alert forced to screen!');
-
-  try {
-    await db.ref('alerts').push(newAlert);
-    sysLog(`Alert created: ${title}`);
-  } catch (error) {
-    console.error("Firebase error:", error);
-  }
+async function createAlert(){
+  if(currentUser?.role!=='admin'){showNotif('🔒 Admin only.');return;}
+  const title=document.getElementById('al-title').value.trim(), msg=document.getElementById('al-msg').value.trim(), sev=document.getElementById('al-sev').value.toLowerCase();
+  if(!title||!msg){showNotif('Fill title and message.');return;}
+  try{
+    await db.ref('alerts').push({type:sev,icon:sev==='critical'?'🚨':sev==='warning'?'⚠':'ℹ',title,meta:msg,time:Date.now()});
+    sysLog(`Alert created: ${title}`); closeModal('newalert');
+    document.getElementById('al-title').value=''; document.getElementById('al-msg').value='';
+    showNotif('✅ Alert saved to Firebase! Go to Alerts tab — it is there now.');
+  }catch(e){showNotif('❌ Error saving alert: '+e.message);}
 }
+
 async function sendBroadcast(){
   if(currentUser?.role!=='admin'){showNotif('🔒 Admin only.');return;}
   const msg=document.getElementById('bc-msg').value.trim(), target=document.getElementById('bc-target').value, priority=document.getElementById('bc-priority').value;
@@ -1902,11 +1819,13 @@ async function sendBroadcast(){
     showNotif('📡 Broadcast saved to Firebase! Visible in Alerts tab now.');
   }catch(e){showNotif('❌ Error: '+e.message);}
 }
+
 async function submitAgency(){
   if(currentUser?.role!=='admin'){showNotif('🔒 Admin only.');return;}
   const name=document.getElementById('rg-name').value.trim(), type=document.getElementById('rg-type').value;
   if(!name||type==='-- Select Type --'){showNotif('Name and type required.');return;}
-  const assets=document.getElementById('rg-assets').value; const amenities=assets?assets.split(',').map(s=>s.trim()).filter(Boolean):[];
+  const assets=document.getElementById('rg-assets').value;
+  const amenities=assets?assets.split(',').map(s=>s.trim()).filter(Boolean):[];
   const lat=parseFloat(document.getElementById('rg-lat').value)||null, lng=parseFloat(document.getElementById('rg-lng').value)||null;
   const ag={id:'AGY'+Date.now(),name,type,shortType:type.split('/')[0].trim(),regno:document.getElementById('rg-regno').value,year:document.getElementById('rg-year').value,address:document.getElementById('rg-addr').value,contact:document.getElementById('rg-contact').value,phone:document.getElementById('rg-phone').value,email:document.getElementById('rg-email').value,city:document.getElementById('rg-state').value,pin:'000000',lat,lng,resources:parseInt(document.getElementById('rg-personnel').value)||0,status:'active',amenities,icon:'🏛',color:'#f97316',createdBy:currentUser.email,createdAt:Date.now()};
   try{
@@ -1916,21 +1835,26 @@ async function submitAgency(){
     go('agencies',null);
   }catch(e){showNotif('❌ Error: '+e.message);}
 }
-function clearRegForm(){['rg-name','rg-regno','rg-year','rg-addr','rg-contact','rg-phone','rg-email','rg-lat','rg-lng','rg-personnel','rg-vehicles','rg-assets'].forEach(id=>{const el=document.getElementById(id); if(el) el.value='';});}
-function captureGPS(){document.getElementById('gps-status').textContent='Capturing…'; setTimeout(()=>{document.getElementById('rg-lat').value='13.0827'; document.getElementById('rg-lng').value='80.2707'; document.getElementById('gps-status').textContent='✅ Chennai, TN'; document.getElementById('gps-status').style.color='var(--green)';},1000);}
 
-/* KEY FIX: sendMsg — saved to Firebase, listener auto-renders, persists on refresh */
+function clearRegForm(){
+  ['rg-name','rg-regno','rg-year','rg-addr','rg-contact','rg-phone','rg-email','rg-lat','rg-lng','rg-personnel','rg-vehicles','rg-assets'].forEach(id=>{const el=document.getElementById(id); if(el) el.value='';});
+}
+
+function captureGPS(){
+  document.getElementById('gps-status').textContent='Capturing…';
+  setTimeout(()=>{document.getElementById('rg-lat').value='13.0827'; document.getElementById('rg-lng').value='80.2707'; document.getElementById('gps-status').textContent='✅ Chennai, TN'; document.getElementById('gps-status').style.color='var(--green)';},1000);
+}
+
 async function sendMsg(){
   if(currentUser?.role==='guest'){showNotif('🔒 Login to send messages.');return;}
   const inp=document.getElementById('msgInput'), txt=inp.value.trim(); if(!txt) return;
   const role=currentUser.userType==='admin'?'ADMIN':currentUser.userType==='agency'?'AGENCY':currentUser.userType==='officer'?'OFFICER':'CIVILIAN';
   try{
     await db.ref(`messages/${currentChan}`).push({sender:currentUser.name||currentUser.email,role,msg:txt,time:Date.now(),uid:currentUser.uid||'guest'});
-    inp.value=''; // Firebase .on('value') listener auto-triggers renderMsgs()
+    inp.value='';
   }catch(e){showNotif('❌ Message not sent: '+e.message);}
 }
 
-/* KEY FIX: saveResource — writes to Firebase, listener updates resource grid in real time */
 async function saveResource(){
   if(currentUser?.role!=='admin'){showNotif('🔒 Admin only.');return;}
   const key=document.getElementById('res-type-sel').value;
@@ -1952,18 +1876,13 @@ async function saveResource(){
   }catch(e){showNotif('❌ Error saving resource: '+e.message);}
   finally{if(btn){btn.disabled=false;btn.textContent='💾 Save to Firebase';}}
 }
+
 function filterMap(el,type){
-  document.querySelectorAll('.filter-chip').forEach(c=>c.classList.remove('active')); 
+  document.querySelectorAll('.filter-chip').forEach(c=>c.classList.remove('active'));
   el.classList.add('active');
-  
   if(!fullMap || !markerClusterGroup) return;
-
-  // 1. Clear existing clusters
-  markerClusterGroup.clearLayers(); 
-  
+  markerClusterGroup.clearLayers();
   const markersToAdd = [];
-
-  // 2. Filter the markers
   fullMarkers.forEach(({marker,type:t})=>{
     const tl=(t||'').toLowerCase(); let show=false;
     if(type==='all') show=true;
@@ -1971,28 +1890,30 @@ function filterMap(el,type){
     else if(type==='medical') show=tl.includes('medical')||tl.includes('ems');
     else if(type==='ngo') show=tl.includes('ngo')||tl.includes('child')||tl.includes('elderly')||tl.includes('shelter')||tl.includes('wash')||tl.includes('logistics');
     else if(type==='coast') show=tl.includes('coast');
-    
     if(show) markersToAdd.push(marker);
   });
-
-  // 3. Re-add only the filtered markers to the cluster
   markerClusterGroup.addLayers(markersToAdd);
 }
 
 let ntTimer;
-function showNotif(msg){document.querySelectorAll('.notif').forEach(n=>n.remove()); const n=document.createElement('div'); n.className='notif'; n.innerHTML=`<div class="notif-title">🔔 RALCA</div><div class="notif-body">${msg}</div>`; document.body.appendChild(n); clearTimeout(ntTimer); ntTimer=setTimeout(()=>n.remove(),4000);}
+function showNotif(msg){
+  document.querySelectorAll('.notif').forEach(n=>n.remove());
+  const n=document.createElement('div'); n.className='notif';
+  n.innerHTML=`<div class="notif-title">🔔 RALCA</div><div class="notif-body">${msg}</div>`;
+  document.body.appendChild(n);
+  clearTimeout(ntTimer); ntTimer=setTimeout(()=>n.remove(),4000);
+}
 function showModal(id){const el=document.getElementById('modal-'+id); if(el) el.classList.add('open'); if(id==='incident') showForecast();}
 function closeModal(id){const el=document.getElementById('modal-'+id); if(el) el.classList.remove('open');}
+
 function refreshAll(){
   showNotif('🔄 All data refreshed from Firebase!');
-  // Re-render every section from in-memory arrays (already synced by listeners)
   renderAlerts(); renderDashAlerts();
   renderIncidents();
   renderAgTable(); renderDashAgencies();
   renderResources();
   renderSOSTable(); updateSOSChips();
   renderMsgs();
-  // Update all stat counters
   setEl('st-agencies', allAgencies.length);
   setEl('st-incidents', allIncidents.filter(i=>(i.status||'').toLowerCase()==='active').length);
   setEl('st-alerts', allAlerts.length);
@@ -2008,77 +1929,11 @@ function refreshAll(){
 function initAll(){
   renderChannels(); renderDashAgencies(); renderAgTable();
   renderRoadList(); initVoice(); initPhrases(); renderVoiceHist(); renderOffQ();
-  listenFirebase(); // this sets up all real-time listeners, including resources
-  seedData();       // seeds defaults on first run
+  listenFirebase();
+  seedData();
   if(window.speechSynthesis){window.speechSynthesis.onvoiceschanged=()=>window.speechSynthesis.getVoices(); window.speechSynthesis.getVoices();}
-  setTimeout(initMiniMap,300);
+  setTimeout(initMiniMap, 300);
 }
-
-  /* ════════════════════════════════════
-   THE BRUTE-FORCE ALERT OVERRIDE 
-   (Paste at the very bottom, right above </script>)
-════════════════════════════════════ */
-const localForcedAlerts = [];
-
-// 1. Hijack the render function so Firebase cannot erase our alerts
-renderAlerts = function() {
-    // Merge our local locked alerts with whatever Firebase sends
-    const mergedAlerts = [...localForcedAlerts, ...allAlerts];
-    
-    const ce = document.getElementById('crit-alerts');
-    const we = document.getElementById('warn-alerts');
-    
-    // Force render Critical Alerts & Update the Red Badge
-    if(ce) {
-        const c = mergedAlerts.filter(a => (a.type || '').toLowerCase() === 'critical');
-        ce.innerHTML = c.length ? c.map(a => `<div class="alert-item"><div class="alert-icon critical">${a.icon||'🚨'}</div><div class="alert-content"><div class="alert-title">${esc(a.title)}</div><div class="alert-meta">${esc(a.meta||'')}</div></div><div class="alert-time">Just now</div></div>`).join('') : '<div style="padding:16px;color:var(--text-muted);font-size:13px">No critical alerts.</div>';
-        
-        const badge = document.getElementById('alertBadge');
-        if (badge) badge.textContent = c.length; // Updates the red 0 to 1!
-    }
-    
-    // Force render Warning Alerts
-    if(we) {
-        const w = mergedAlerts.filter(a => (a.type || '').toLowerCase() !== 'critical');
-        we.innerHTML = w.length ? w.map(a => `<div class="alert-item"><div class="alert-icon ${(a.type||'info').toLowerCase()}">${a.icon||'⚠'}</div><div class="alert-content"><div class="alert-title">${esc(a.title)}</div><div class="alert-meta">${esc(a.meta||'')}</div></div><div class="alert-time">Just now</div></div>`).join('') : '<div style="padding:16px;color:var(--text-muted);font-size:13px">No warnings.</div>';
-    }
-};
-
-// 2. Override the button function to bypass the Firebase delay entirely
-window.createAlert = async function() {
-    const sev = document.getElementById('al-sev').value.toLowerCase();
-    const title = document.getElementById('al-title').value.trim();
-    const msg = document.getElementById('al-msg').value.trim();
-    const typeCat = document.getElementById('al-type').value;
-
-    if (!title || !msg) {
-        showNotif('⚠ Please fill in both the title and message.');
-        return;
-    }
-
-    const newAlert = {
-        type: sev,
-        icon: sev === 'critical' ? '🚨' : sev === 'warning' ? '⚠' : 'ℹ',
-        title: title,
-        meta: `[${typeCat}] ${msg}`, 
-        time: Date.now()
-    };
-
-    // Lock it into our untouchable array
-    localForcedAlerts.unshift(newAlert);
-    
-    // Force the screen to render it instantly
-    renderAlerts(); 
-    
-    // Close modal and clear
-    closeModal('newalert');
-    document.getElementById('al-title').value = '';
-    document.getElementById('al-msg').value = '';
-    showNotif('✅ Alert locked successfully to your screen!');
-
-    // Send to Firebase quietly in the background (we don't care if it fails anymore)
-    try { await db.ref('alerts').push(newAlert); } catch(e) {}
-};
 </script>
 </body>
 </html>
