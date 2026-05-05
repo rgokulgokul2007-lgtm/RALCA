@@ -1244,17 +1244,27 @@ function listenFirebase() {
      Persists forever. Updates: critical list,
      warning list, dashboard preview, badge counter.
   ══════════════════════════════════════════════ */
+/* ══════════════════════════════════════════════
+     ALERTS — LIVE SYNC FIX
+  ══════════════════════════════════════════════ */
   db.ref('alerts').orderByChild('time').on('value', snap => {
     allAlerts = [];
-    snap.forEach(c => allAlerts.push({...c.val(), _k:c.key}));
-    allAlerts.reverse(); // newest first
+    if (snap.exists()) {
+      snap.forEach(c => {
+        allAlerts.push({ ...c.val(), _k: c.key });
+      });
+    }
+    allAlerts.reverse(); 
 
-    // Always update ALL alert display points
+    // This triggers the visual update in the "Alerts" tab space
     renderAlerts();
     renderDashAlerts();
-    setEl('st-alerts', allAlerts.length);
-    const critCount = allAlerts.filter(a=>(a.type||'').toLowerCase()==='critical').length;
-    setEl('alertBadge', critCount);
+    
+    // Update counters
+    const count = allAlerts.length;
+    setEl('st-alerts', count);
+    const critOnly = allAlerts.filter(a => String(a.type).toLowerCase() === 'critical');
+    setEl('alertBadge', critOnly.length);
   });
 
   /* ══════════════════════════════════════════════
@@ -1766,25 +1776,39 @@ function renderDashAgencies(){
 }
 
 // ALERTS — case-insensitive type check (key fix)
-function renderAlerts(){
-  const ce=document.getElementById('crit-alerts'), we=document.getElementById('warn-alerts');
-  if(ce){const c=allAlerts.filter(a=>(a.type||'').toLowerCase()==='critical'); ce.innerHTML=c.length?c.map(a=>`<div class="alert-item"><div class="alert-icon critical">${a.icon||'🚨'}</div><div class="alert-content"><div class="alert-title">${esc(a.title)}</div><div class="alert-meta">${esc(a.meta||'')}</div></div><div class="alert-time">${ago(a.time)}</div></div>`).join(''):'<div style="padding:16px;color:var(--text-muted);font-size:13px">No critical alerts.</div>';}
-  if(we){const w=allAlerts.filter(a=>(a.type||'').toLowerCase()!=='critical'); we.innerHTML=w.length?w.map(a=>`<div class="alert-item"><div class="alert-icon ${(a.type||'info').toLowerCase()}">${a.icon||'⚠'}</div><div class="alert-content"><div class="alert-title">${esc(a.title)}</div><div class="alert-meta">${esc(a.meta||'')}</div></div><div class="alert-time">${ago(a.time)}</div></div>`).join(''):'<div style="padding:16px;color:var(--text-muted);font-size:13px">No warnings.</div>';}
-}
+function renderAlerts() {
+  const ce = document.getElementById('crit-alerts');
+  const we = document.getElementById('warn-alerts');
+  
+  if (!ce || !we) return;
 
-let agFilter='';
-function filterAgencies(){agFilter=document.getElementById('agSearch')?.value||''; renderAgTable();}
-function renderAgTable(){
-  const sm={active:'badge-active',standby:'badge-standby',busy:'badge-busy'};
-  const isAdmin=currentUser?.role==='admin';
-  const q=agFilter.toLowerCase();
-  const filtered=allAgencies.filter(a=>(a.name||'').toLowerCase().includes(q)||(a.type||'').toLowerCase().includes(q)||(a.city||'').toLowerCase().includes(q));
-  const tb=document.getElementById('ag-table'); if(!tb) return;
-  tb.innerHTML=filtered.length?filtered.map(a=>{
-    const tags=(a.amenities||[]).slice(0,2).map(x=>`<span class="amenity-tag">${esc(x)}</span>`).join('');
-    const more=(a.amenities||[]).length>2?`<span style="font-size:10px;color:var(--text-muted)">+${(a.amenities||[]).length-2}</span>`:'';
-    return`<tr><td><div style="display:flex;align-items:center;gap:8px"><span style="font-size:16px">${a.icon||'🏛'}</span><div><strong>${esc(a.name)}</strong><div style="font-size:10px;color:var(--text-muted);font-family:var(--font-mono)">${esc(a.id)}</div></div></div></td><td style="font-size:12px;color:var(--text-dim)">${esc(a.type)}</td><td style="font-size:12px">${esc(a.city||'')}</td><td style="font-family:var(--font-mono);font-size:11px;color:var(--accent3)">${esc(a.pin||'')}</td><td><div style="display:flex;gap:3px;flex-wrap:wrap">${tags}${more}</div></td><td><span class="badge ${sm[a.status||'active']||'badge-pending'}">${(a.status||'').toUpperCase()}</span></td><td><button class="btn btn-ghost" style="font-size:11px;padding:4px 10px" onclick="showAgDetail('${a.id}')">🔍 View</button>${isAdmin?`<button class="btn btn-success" style="font-size:11px;padding:4px 10px;margin-left:4px" onclick="showNotif('Request sent to ${esc(a.shortType||a.name)}!')">📤 Req</button>`:''}</td></tr>`;
-  }).join(''):'<tr><td colspan="7" style="text-align:center;padding:20px;color:var(--text-muted)">No agencies found.</td></tr>';
+  // 1. Filter the arrays
+  const criticals = allAlerts.filter(a => String(a.type).toLowerCase() === 'critical');
+  const warnings = allAlerts.filter(a => String(a.type).toLowerCase() !== 'critical');
+
+  // 2. Render Critical Space
+  ce.innerHTML = criticals.length > 0 ? criticals.map(a => `
+    <div class="alert-item">
+      <div class="alert-icon critical">${a.icon || '🚨'}</div>
+      <div class="alert-content">
+        <div class="alert-title">${esc(a.title)}</div>
+        <div class="alert-meta">${esc(a.meta || '')}</div>
+      </div>
+      <div class="alert-time">${ago(a.time)}</div>
+    </div>
+  `).join('') : '<div style="padding:16px;color:var(--text-muted);font-size:13px">No critical alerts.</div>';
+
+  // 3. Render Warning/Info Space
+  we.innerHTML = warnings.length > 0 ? warnings.map(a => `
+    <div class="alert-item">
+      <div class="alert-icon ${String(a.type).toLowerCase() === 'warning' ? 'warning' : 'info'}">${a.icon || '⚠'}</div>
+      <div class="alert-content">
+        <div class="alert-title">${esc(a.title)}</div>
+        <div class="alert-meta">${esc(a.meta || '')}</div>
+      </div>
+      <div class="alert-time">${ago(a.time)}</div>
+    </div>
+  `).join('') : '<div style="padding:16px;color:var(--text-muted);font-size:13px">No warnings or info alerts.</div>';
 }
 
 function showAgDetail(id){
