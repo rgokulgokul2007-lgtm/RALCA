@@ -1327,12 +1327,6 @@ function listenFirebase() {
     renderResources();
   });
 
-  /* ══════════════════════════════════════════════
-     USERS — live user management table.
-  ══════════════════════════════════════════════ */
-/* ══════════════════════════════════════════════
-     USERS — live user management table.
-  ══════════════════════════════════════════════ */
  /* ══════════════════════════════════════════════
      USERS — live user management table.
   ══════════════════════════════════════════════ */
@@ -1344,7 +1338,7 @@ function listenFirebase() {
   db.ref('corridor_roads').on('value', snap => {
     if(snap.exists()) {
       const fbData = snap.val();
-      // Merge Firebase states into your existing local road list
+      // Merge Firebase status into your local INDIA_ROADS definitions
       roadStatus = roadStatus.map(localRoad => {
         if(fbData[localRoad.id]) {
           return { ...localRoad, clear: fbData[localRoad.id].clear };
@@ -1352,13 +1346,14 @@ function listenFirebase() {
         return localRoad;
       });
       
-      // Refresh the UI to show the "sticky" toggles
+      // Instantly update the UI switches and Map
       renderRoadList();
       if(corrMap) drawCorridorRoads();
     }
   });
-} // <--- Function now ends here
-
+}
+      
+   
 /* Helper: safely set textContent of any element by ID */
 function setEl(id, val) {
   const el = document.getElementById(id);
