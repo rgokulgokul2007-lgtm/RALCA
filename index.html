@@ -1359,7 +1359,7 @@ function listenFirebase() {
       // Refresh the UI to show the "sticky" toggles
       renderRoadList();
       if(corrMap) drawCorridorRoads();
-    }
+   
   });
 } // <--- Function now ends here
   db.ref('corridor_roads').on('value', snap => {
