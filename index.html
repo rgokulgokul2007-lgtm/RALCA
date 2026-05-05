@@ -1849,11 +1849,13 @@ async function submitIncident(){
   document.getElementById('inc-loc').value=''; document.getElementById('inc-desc').value='';
 }
 async function createAlert() {
+  // 1. Verify Admin Status
   if (currentUser?.role !== 'admin') {
     showNotif('🔒 Admin access required.');
     return;
   }
 
+  // 2. Grab fields
   const typeCategory = document.getElementById('al-type').value; 
   const sev = document.getElementById('al-sev').value.toLowerCase();
   const title = document.getElementById('al-title').value.trim();
@@ -1864,6 +1866,7 @@ async function createAlert() {
     return;
   }
 
+  // 3. Build the exact alert object
   const newAlert = {
     type: sev,
     icon: sev === 'critical' ? '🚨' : sev === 'warning' ? '⚠' : 'ℹ',
@@ -1872,7 +1875,7 @@ async function createAlert() {
     time: Date.now()
   };
 
-  // 🔥 FORCE IT ONTO THE SCREEN IMMEDIATELY
+  // 🔥 THE BRUTE FORCE FIX: Shove it into the local array and force HTML to render IMMEDIATELY
   allAlerts.unshift(newAlert);
   renderAlerts(); 
   renderDashAlerts();
@@ -1881,16 +1884,14 @@ async function createAlert() {
   closeModal('newalert');
   document.getElementById('al-title').value = '';
   document.getElementById('al-msg').value = '';
+  showNotif('✅ Alert instantly forced to screen!');
 
-  // 🚨 THE CACHE TEST - You MUST see this exact text pop up!
-  showNotif('✅ BOOM: Alert forced to screen!');
-
-  // Send to Firebase quietly in the background
+  // 4. Send to Firebase quietly in the background
   try {
     await db.ref('alerts').push(newAlert);
     sysLog(`Alert created: ${title}`);
   } catch (error) {
-    console.error("Firebase error:", error);
+    console.error("Firebase blocked the background save:", error);
   }
 }
 async function sendBroadcast(){
