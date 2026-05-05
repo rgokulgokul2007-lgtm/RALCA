@@ -256,14 +256,12 @@ select option{background:var(--surface2)}
 </head>
 <body>
 
-<!-- LOADING -->
 <div id="loading-screen">
   <div class="load-title">R<span>A</span>LCA</div>
   <div class="load-ring"></div>
   <div class="load-sub">VERIFYING SESSION…</div>
 </div>
 
-<!-- LOGIN -->
 <div id="login-screen">
   <div class="left">
     <div class="bg-grid"></div><div class="bg-glow"></div>
@@ -278,7 +276,7 @@ select option{background:var(--surface2)}
       <div class="feat-row"><div class="feat-dot"></div>👥 Civilian SOS Crowdsourced Heatmap</div>
       <div class="feat-row"><div class="feat-dot"></div>🟢 India-Wide Green Corridor Routing</div>
       <div class="feat-row"><div class="feat-dot"></div>🎙 Multi-Lingual Voice Broadcast</div>
-      <div class="feat-row"><div class="feat-dot"></div>📵 SMS Offline Mode</div>
+      <div class="feat-row"><div class="feat-dot"></div>📵 SMS Offline Mode & Caching</div>
     </div>
   </div>
   <div class="right">
@@ -288,7 +286,6 @@ select option{background:var(--surface2)}
         <div class="auth-tab active" id="tab-login" onclick="switchTab('login')">LOGIN</div>
         <div class="auth-tab" id="tab-reg" onclick="switchTab('reg')">REGISTER</div>
       </div>
-      <!-- LOGIN PANEL -->
       <div id="panel-login">
         <div class="login-title">SECURE LOGIN</div>
         <div class="login-desc">Access the emergency coordination platform</div>
@@ -302,7 +299,6 @@ select option{background:var(--surface2)}
           👑 ADMIN: admin@gmail.com<br>🏛 AGENCY: Register → Agency tab<br>👤 CIVILIAN: Register → Civilian tab
         </div>
       </div>
-      <!-- REGISTER PANEL -->
       <div id="panel-reg" style="display:none">
         <div class="login-title">CREATE ACCOUNT</div>
         <div class="login-desc">Select your account type</div>
@@ -325,7 +321,6 @@ select option{background:var(--surface2)}
   </div>
 </div>
 
-<!-- APP -->
 <div id="app-screen">
   <nav class="sidebar">
     <div class="logo">
@@ -378,6 +373,7 @@ select option{background:var(--surface2)}
     <div class="topbar">
       <div class="topbar-title" id="pageTitle">Dashboard</div>
       <div class="topbar-actions">
+        <button class="btn btn-ghost show-agency" id="liveTrackBtn" onclick="toggleLiveTracking()">📍 Broadcast Live Location</button>
         <div class="live-badge"><div style="width:7px;height:7px;border-radius:50%;background:var(--green);animation:pulse 2s infinite"></div>FIREBASE LIVE</div>
         <span id="offline-ind" style="display:none;background:rgba(239,68,68,.15);color:var(--accent2);padding:2px 10px;border-radius:20px;font-size:11px;font-family:var(--font-mono);font-weight:700">OFFLINE MODE</span>
         <div class="alert-pulse" id="inc-dot"></div>
@@ -388,7 +384,6 @@ select option{background:var(--surface2)}
     </div>
     <div class="content">
 
-<!-- ═══ DASHBOARD ═══ -->
 <div class="page active" id="page-dashboard">
   <div id="guest-banner" style="display:none;background:rgba(249,115,22,.15);border:1px solid var(--accent);color:var(--accent);padding:12px 16px;border-radius:8px;margin-bottom:16px;font-size:13px;font-weight:500">
     👋 Guest Mode — Read Only. <a onclick="doLogout()" style="text-decoration:underline;cursor:pointer;font-weight:700">Login / Register</a> to interact.
@@ -429,7 +424,6 @@ select option{background:var(--surface2)}
   </div>
 </div>
 
-<!-- ═══ LIVE MAP ═══ -->
 <div class="page" id="page-map">
   <div class="section-header">
     <div class="section-title">🗺 LIVE TRACKING MAP</div>
@@ -453,7 +447,6 @@ select option{background:var(--surface2)}
   </div>
 </div>
 
-<!-- ═══ GREEN CORRIDOR ═══ -->
 <div class="page" id="page-corridor">
   <div class="section-header">
     <div class="section-title">🟢 GREEN CORRIDOR — ALL INDIA</div>
@@ -502,7 +495,6 @@ select option{background:var(--surface2)}
   </div>
 </div>
 
-<!-- ═══ ALERTS ═══ -->
 <div class="page" id="page-alerts">
   <div class="section-header">
     <div class="section-title">🚨 ALERTS & NOTIFICATIONS</div>
@@ -518,7 +510,6 @@ select option{background:var(--surface2)}
   </div>
 </div>
 
-<!-- ═══ AGENCIES ═══ -->
 <div class="page" id="page-agencies">
   <div class="section-header">
     <div class="section-title">🏛 ALL AGENCIES (<span id="ag-count">0</span>)</div>
@@ -535,7 +526,6 @@ select option{background:var(--surface2)}
   </div>
 </div>
 
-<!-- ═══ REGISTER AGENCY ═══ -->
 <div class="page" id="page-register">
   <div class="section-title" style="margin-bottom:18px">➕ REGISTER NEW AGENCY → Firebase</div>
   <div class="form-section">
@@ -587,7 +577,6 @@ select option{background:var(--surface2)}
   </div>
 </div>
 
-<!-- ═══ RESOURCES ═══ -->
 <div class="page" id="page-resources">
   <div class="section-header">
     <div class="section-title">🎒 RESOURCE INVENTORY</div>
@@ -595,15 +584,14 @@ select option{background:var(--surface2)}
   </div>
   <div id="res-alerts"></div>
   <div class="stats-grid" style="margin-bottom:20px">
-    <div class="stat-card orange"><div class="stat-label">TOTAL VEHICLES</div><div class="stat-value" style="color:var(--accent)">86</div><div class="stat-sub">72 available</div></div>
-    <div class="stat-card cyan"><div class="stat-label">PERSONNEL</div><div class="stat-value" style="color:var(--accent3)">1,240</div><div class="stat-sub">890 on standby</div></div>
-    <div class="stat-card green"><div class="stat-label">MEDICAL KITS</div><div class="stat-value" style="color:var(--green)">340</div><div class="stat-sub">100% stocked</div></div>
-    <div class="stat-card red"><div class="stat-label">RESCUE BOATS</div><div class="stat-value" style="color:var(--accent2)">24</div><div class="stat-sub" style="color:var(--accent2)">6 deployed</div></div>
+    <div class="stat-card orange"><div class="stat-label">TOTAL VEHICLES</div><div class="stat-value" id="rs-vehicles" style="color:var(--accent)">86</div><div class="stat-sub" id="rs-vehicles-s">72 available</div></div>
+    <div class="stat-card cyan"><div class="stat-label">PERSONNEL</div><div class="stat-value" id="rs-personnel" style="color:var(--accent3)">1,240</div><div class="stat-sub" id="rs-personnel-s">890 on standby</div></div>
+    <div class="stat-card green"><div class="stat-label">MEDICAL KITS</div><div class="stat-value" id="rs-medkits" style="color:var(--green)">340</div><div class="stat-sub" id="rs-medkits-s">100% stocked</div></div>
+    <div class="stat-card red"><div class="stat-label">RESCUE BOATS</div><div class="stat-value" id="rs-boats" style="color:var(--accent2)">24</div><div class="stat-sub" id="rs-boats-s" style="color:var(--accent2)">6 deployed</div></div>
   </div>
   <div class="resource-grid" id="res-grid"></div>
 </div>
 
-<!-- ═══ MESSAGING ═══ -->
 <div class="page" id="page-messaging">
   <div style="margin-bottom:16px;display:flex;align-items:center;gap:10px">
     <div class="section-title">💬 INTER-AGENCY MESSAGING</div>
@@ -627,7 +615,6 @@ select option{background:var(--surface2)}
   </div>
 </div>
 
-<!-- ═══ INCIDENTS ═══ -->
 <div class="page" id="page-incidents">
   <div class="section-header">
     <div class="section-title">⚡ INCIDENT MANAGEMENT <span class="live-badge" style="font-size:10px;margin-left:8px">● LIVE</span></div>
@@ -641,7 +628,6 @@ select option{background:var(--surface2)}
   </div>
 </div>
 
-<!-- ═══ CIVILIAN SOS ═══ -->
 <div class="page" id="page-civilian">
   <div class="section-header">
     <div class="section-title">👥 CIVILIAN SOS — LIVE HEATMAP</div>
@@ -669,7 +655,6 @@ select option{background:var(--surface2)}
   </div>
 </div>
 
-<!-- ═══ VOICE BROADCAST ═══ -->
 <div class="page" id="page-voice">
   <div class="section-header"><div class="section-title">🎙 VOICE BROADCAST</div><div class="live-badge">● WEB SPEECH API</div></div>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
@@ -703,9 +688,8 @@ select option{background:var(--surface2)}
   </div>
 </div>
 
-<!-- ═══ OFFLINE / SMS ═══ -->
 <div class="page" id="page-offline">
-  <div class="section-header"><div class="section-title">📵 OFFLINE / SMS MODE</div><div class="live-badge">● CONNECTIVITY AWARE</div></div>
+  <div class="section-header"><div class="section-title">📵 OFFLINE / SMS MODE</div><div class="live-badge">● NATIVE INTENT API</div></div>
   <div style="display:flex;align-items:center;gap:10px;padding:12px 16px;background:rgba(239,68,68,.05);border:1px solid rgba(239,68,68,.2);border-radius:10px;margin-bottom:16px">
     <span id="conn-pill" style="background:rgba(16,185,129,.15);color:var(--green);padding:2px 10px;border-radius:20px;font-size:11px;font-family:var(--font-mono);font-weight:700">ONLINE</span>
     <span id="conn-text" style="font-size:13px;font-weight:600">Network active</span>
@@ -721,8 +705,8 @@ select option{background:var(--surface2)}
         <div style="font-size:13px;color:var(--text-dim);margin-bottom:10px">When internet fails, SMS this format to our gateway:</div>
         <div class="sms-box">RALCA | SOS | &lt;TYPE&gt; | &lt;LAT&gt; | &lt;LNG&gt; | &lt;DESC&gt;</div>
         <div class="sms-box" style="color:var(--green)">RALCA | SOS | FLOOD | 13.08 | 80.27 | Road submerged need boats</div>
-        <div class="sms-step"><div class="sms-num">1</div><div><div style="font-size:13px">SMS to <b style="color:var(--accent)">+91-1800-RALCA-0</b></div><div style="font-size:11px;color:var(--text-muted);margin-top:2px">Toll-free gateway</div></div></div>
-        <div class="sms-step"><div class="sms-num">2</div><div><div style="font-size:13px">Gateway posts to Firebase</div><div style="font-size:11px;color:var(--text-muted);margin-top:2px">All coordinators notified instantly</div></div></div>
+        <div class="sms-step"><div class="sms-num">1</div><div><div style="font-size:13px">Tap "Launch SMS" below</div><div style="font-size:11px;color:var(--text-muted);margin-top:2px">Opens native messaging app</div></div></div>
+        <div class="sms-step"><div class="sms-num">2</div><div><div style="font-size:13px">Gateway posts to Firebase</div><div style="font-size:11px;color:var(--text-muted);margin-top:2px">Webhook triggered by Twilio/Fast2SMS</div></div></div>
         <div class="sms-step"><div class="sms-num">3</div><div><div style="font-size:13px">Incident created on dashboard</div><div style="font-size:11px;color:var(--text-muted);margin-top:2px">Auto-appears in Incidents table</div></div></div>
       </div>
     </div>
@@ -736,7 +720,10 @@ select option{background:var(--surface2)}
           <span id="sms-gps" style="font-size:11px;color:var(--text-muted);align-self:center"></span>
         </div>
         <div class="sms-box" id="gen-sms" style="color:var(--yellow);min-height:36px">Fill fields above →</div>
-        <button class="btn btn-primary" onclick="copySMS()" style="margin-top:10px;width:100%;justify-content:center">📋 Copy SMS</button>
+        <div style="display:flex; gap: 8px; margin-top:10px">
+            <button class="btn btn-ghost" onclick="copySMS()" style="flex:1;justify-content:center">📋 Copy</button>
+            <button class="btn btn-primary" onclick="triggerSMS()" style="flex:1;justify-content:center">📱 Launch SMS</button>
+        </div>
       </div>
       <div class="card">
         <div class="card-header"><div class="card-title" style="font-size:14px">📊 Offline Queue</div></div>
@@ -746,7 +733,6 @@ select option{background:var(--surface2)}
   </div>
 </div>
 
-<!-- ═══ ADMIN PANEL ═══ -->
 <div class="page" id="page-adminpanel">
   <div class="section-header"><div class="section-title">🛡️ ADMIN CONTROL PANEL</div><span style="background:rgba(249,115,22,.15);color:var(--accent);padding:4px 12px;border-radius:20px;font-size:11px;font-family:var(--font-mono)">👑 ADMIN</span></div>
   <div class="admin-grid">
@@ -767,19 +753,16 @@ select option{background:var(--surface2)}
   </div>
 </div>
 
-<!-- ═══ USER MGMT ═══ -->
 <div class="page" id="page-usermgmt">
   <div class="section-header"><div class="section-title">👥 USER MANAGEMENT</div><span style="background:rgba(249,115,22,.15);color:var(--accent);padding:4px 12px;border-radius:20px;font-size:11px;font-family:var(--font-mono)">👑 ADMIN ONLY</span></div>
   <div class="card"><div class="card-body"><table><thead><tr><th>EMAIL</th><th>NAME</th><th>TYPE</th><th>ORG</th><th>JOINED</th><th>ACTION</th></tr></thead><tbody id="users-table"></tbody></table></div></div>
 </div>
 
-<!-- ═══ SYSTEM LOGS ═══ -->
 <div class="page" id="page-logs">
   <div class="section-header"><div class="section-title">📝 SYSTEM LOGS <span class="live-badge" style="font-size:10px;margin-left:8px">● LIVE</span></div><span style="background:rgba(249,115,22,.15);color:var(--accent);padding:4px 12px;border-radius:20px;font-size:11px;font-family:var(--font-mono)">👑 ADMIN ONLY</span></div>
   <div class="card"><div id="logs-body" style="padding:8px 0"></div></div>
 </div>
 
-<!-- ═══ BROADCAST ═══ -->
 <div class="page" id="page-broadcast">
   <div class="section-header"><div class="section-title">📡 BROADCAST ALERT</div><span style="background:rgba(249,115,22,.15);color:var(--accent);padding:4px 12px;border-radius:20px;font-size:11px;font-family:var(--font-mono)">👑 ADMIN ONLY</span></div>
   <div class="form-section" style="max-width:640px">
@@ -796,12 +779,7 @@ select option{background:var(--surface2)}
   </div>
 </div>
 
-    </div><!-- content -->
-  </div><!-- main -->
-</div><!-- app -->
-
-<!-- ═══ MODALS ═══ -->
-<div class="modal-bg" id="modal-incident" onclick="if(event.target===this)closeModal('incident')">
+    </div></div></div><div class="modal-bg" id="modal-incident" onclick="if(event.target===this)closeModal('incident')">
   <div class="modal" style="width:620px">
     <div class="modal-title">🆘 Report Incident → Firebase</div>
     <div class="form-grid">
@@ -911,7 +889,7 @@ select option{background:var(--surface2)}
 
 <script>
 /* ════════════════════════════════════
-   FIREBASE CONFIG (corrected)
+   FIREBASE CONFIG
 ════════════════════════════════════ */
 const firebaseConfig = {
   apiKey: "AIzaSyBTHohDW-10f7EolWpW8CUlfLCIJNDZmF8",
@@ -928,43 +906,23 @@ const auth = firebase.auth();
 const db = firebase.app().database("https://ralca-59e0a-default-rtdb.asia-southeast1.firebasedatabase.app");
 
 /* ════════════════════════════════════
-   STATIC AGENCY DATA — BASE (always shown)
+   STATIC AGENCY DATA — BASE 
 ════════════════════════════════════ */
 const STATIC_AGENCIES = [
-  {id:'AGY001',name:'National Disaster Response Force (NDRF)',type:'NDRF',shortType:'NDRF',location:'New Delhi',city:'New Delhi',pin:'110001',address:'6th Floor, NDCC-II Building, Jai Singh Road, New Delhi',lat:28.6271,lng:77.2109,status:'active',resources:120,amenities:['Tactical troop carriers','Inflatable motorized rescue boats','Hazmat suits','CSSR heavy lifting machinery','MFR kits','Trauma medicines','K9 sniffer dog units'],icon:'🛡️',color:'#f97316'},
-  {id:'AGY002',name:'National Disaster Management Authority (NDMA)',type:'Coordination Body',shortType:'NDMA',location:'New Delhi',city:'New Delhi',pin:'110029',address:'NDMA Bhawan, A-1, Safdarjung Enclave, New Delhi',lat:28.5694,lng:77.1958,status:'active',resources:80,amenities:['Mobile command vehicles','Satellite communication trucks','Emergency dispatch equipment'],icon:'📡',color:'#22d3ee'},
-  {id:'AGY003',name:'Indian Red Cross Society',type:'Medical / NGO',shortType:'Red Cross',location:'New Delhi',city:'New Delhi',pin:'110001',address:'1, Red Cross Road, New Delhi',lat:28.6129,lng:77.2066,status:'active',resources:200,amenities:['BLS & ALS ambulances','Mobile blood bank vans','Water purification units','AEDs','Emergency medicines'],icon:'🏥',color:'#ef4444'},
-  {id:'AGY004',name:'Indian Coast Guard (SAR)',type:'Coast Guard',shortType:'Coast Guard',location:'New Delhi',city:'New Delhi',pin:'110001',address:'Coast Guard HQ, New Delhi',lat:28.6162,lng:77.2432,status:'active',resources:90,amenities:['Offshore patrol vessels','Interceptor boats','Hovercrafts','Dornier aircraft','Chetak helicopters'],icon:'⚓',color:'#3b82f6'},
-  {id:'AGY005',name:'SDRF — Tamil Nadu',type:'SDRF',shortType:'SDRF-TN',location:'Chennai',city:'Chennai',pin:'600004',address:'DGP Office Complex, Mylapore, Chennai',lat:13.0339,lng:80.2682,status:'active',resources:75,amenities:['Flood rescue boats','Deep diving gear','Structural collapse equipment','Emergency medical triage kits'],icon:'🚒',color:'#f97316'},
-  {id:'AGY006',name:'St. John Ambulance India',type:'Medical / EMS',shortType:'St. John',location:'New Delhi',city:'New Delhi',pin:'110001',address:'1, Red Cross Road, New Delhi',lat:28.6135,lng:77.2060,status:'standby',resources:60,amenities:['ALS/BLS ambulances','Mobile medical units','Oxygen cylinders','CPR kits'],icon:'🚑',color:'#10b981'},
-  {id:'AGY007',name:'Médecins Sans Frontières — MSF India',type:'NGO / Medical',shortType:'MSF',location:'New Delhi',city:'New Delhi',pin:'110020',address:'Okhla Industrial Estate Phase III, New Delhi',lat:28.5355,lng:77.2685,status:'active',resources:50,amenities:['Mobile clinics','4x4 medical transport','Cold-chain medicine storage'],icon:'🩺',color:'#ef4444'},
-  {id:'AGY008',name:'Rapid Response Chennai',type:'NGO / Logistics',shortType:'RapidResp',location:'Chennai',city:'Chennai',pin:'600024',address:'12, Trustpuram, Kodambakkam, Chennai',lat:13.0527,lng:80.2203,status:'active',resources:35,amenities:['Logistics trucks','Dry ration survival kits','Hygiene kits'],icon:'🚛',color:'#fbbf24'},
-  {id:'AGY009',name:'Goonj (Disaster Relief)',type:'NGO',shortType:'Goonj',location:'New Delhi',city:'New Delhi',pin:'110076',address:'J-93, Sarita Vihar, New Delhi',lat:28.5330,lng:77.2932,status:'standby',resources:40,amenities:['Material sorting hubs','Clothing & tarpaulins','Family survival kits'],icon:'📦',color:'#fbbf24'},
-  {id:'AGY010',name:'Save the Children India',type:'NGO / Child Safety',shortType:'SaveChildren',location:'Gurugram',city:'Gurugram',pin:'122003',address:'Plot No. 91, Sector 44, Gurugram',lat:28.4497,lng:77.0700,status:'standby',resources:30,amenities:['Child transport','Pediatric medicines','WASH kits'],icon:'👶',color:'#a78bfa'},
-  {id:'AGY011',name:'HelpAge India',type:'NGO / Elderly Care',shortType:'HelpAge',location:'New Delhi',city:'New Delhi',pin:'110016',address:'C-14, Qutab Institutional Area, New Delhi',lat:28.5291,lng:77.1844,status:'standby',resources:25,amenities:['Mobile Healthcare Units','Geriatric medicines','Wheelchairs'],icon:'🧓',color:'#10b981'},
-  {id:'AGY012',name:'SEEDS India',type:'NGO / Shelter',shortType:'SEEDS',location:'New Delhi',city:'New Delhi',pin:'110022',address:'15-A, R.K. Puram, New Delhi',lat:28.5679,lng:77.1756,status:'active',resources:45,amenities:['Mobile health clinics','Structural assessment vehicles','Emergency shelter kits'],icon:'🏗️',color:'#22d3ee'},
-  {id:'AGY013',name:'CASA India',type:'NGO',shortType:'CASA',location:'New Delhi',city:'New Delhi',pin:'110008',address:'Rachna Building, Rajendra Place, New Delhi',lat:28.6442,lng:77.1700,status:'standby',resources:30,amenities:['Dry ration kits','Temporary shelters','Clean water tanks'],icon:'✝️',color:'#94a3b8'},
-  {id:'AGY014',name:'ActionAid India',type:'NGO',shortType:'ActionAid',location:'New Delhi',city:'New Delhi',pin:'110016',address:'R-7, Hauz Khas Enclave, New Delhi',lat:28.5527,lng:77.2006,status:'active',resources:35,amenities:['Field 4x4 vehicles','Community kitchen','Emergency water supply'],icon:'🤝',color:'#f97316'},
-  {id:'AGY015',name:'Oxfam India',type:'NGO / WASH',shortType:'Oxfam',location:'New Delhi',city:'New Delhi',pin:'110020',address:'NSIC New Moti Bagh, New Delhi',lat:28.5706,lng:77.1594,status:'active',resources:50,amenities:['WASH deployment trucks','High-capacity water filters','Latrine construction kits'],icon:'💧',color:'#22d3ee'}
+  {id:'AGY001',name:'National Disaster Response Force (NDRF)',type:'NDRF',shortType:'NDRF',location:'New Delhi',city:'New Delhi',pin:'110001',address:'6th Floor, NDCC-II Building, Jai Singh Road',lat:28.6271,lng:77.2109,status:'active',resources:120,amenities:['Tactical troop carriers','Inflatable motorized rescue boats','Hazmat suits'],icon:'🛡️',color:'#f97316'},
+  {id:'AGY005',name:'SDRF — Tamil Nadu',type:'SDRF',shortType:'SDRF-TN',location:'Chennai',city:'Chennai',pin:'600004',address:'DGP Office Complex, Mylapore, Chennai',lat:13.0339,lng:80.2682,status:'active',resources:75,amenities:['Flood rescue boats','Deep diving gear'],icon:'🚒',color:'#f97316'},
 ];
 
-/* Working copy — Firebase merges into this */
 let allAgencies = [...STATIC_AGENCIES];
 let allAlerts = [], allIncidents = [], allMsgs = [], allSOS = [];
 let currentUser = null, currentChan = 'emergency-chennai-flood';
 const ADMIN_EMAIL = 'admin@gmail.com';
 
-/* Default resources — seeded to Firebase on first run */
 const DEFAULT_RESOURCES = {
   fire_engines: {icon:'🚒',name:'Fire Engines', total:28, avail:22, key:'fire_engines'},
   ambulances:   {icon:'🚑',name:'Ambulances',   total:45, avail:38, key:'ambulances'},
   helicopters:  {icon:'🚁',name:'Helicopters',  total:8,  avail:2,  key:'helicopters'},
-  rescue_boats: {icon:'⛵',name:'Rescue Boats', total:24, avail:3,  key:'rescue_boats'},
-  relief_tents: {icon:'🏕️',name:'Relief Tents',total:500,avail:320,key:'relief_tents'},
-  medical_kits: {icon:'💊',name:'Medical Kits', total:340,avail:340,key:'medical_kits'},
-  generators:   {icon:'🔋',name:'Generators',   total:60, avail:48, key:'generators'},
-  trucks:       {icon:'🚛',name:'Trucks',        total:35, avail:28, key:'trucks'},
-  comm_sets:    {icon:'📡',name:'Comm Sets',    total:120,avail:10, key:'comm_sets'},
+  rescue_boats: {icon:'⛵',name:'Rescue Boats', total:24, avail:3,  key:'rescue_boats'}
 };
 let allResources = JSON.parse(JSON.stringify(DEFAULT_RESOURCES));
 
@@ -1021,9 +979,8 @@ function setRole(r) {
 }
 function errMsg(id, msg) { const e=document.getElementById(id); e.textContent=msg; e.style.display='block'; }
 function clearErr(id) { document.getElementById(id).style.display='none'; }
-function friendlyErr(code) {
-  return {'auth/user-not-found':'No account found with this email.','auth/wrong-password':'Wrong password.','auth/email-already-in-use':'Email already registered.','auth/weak-password':'Password too short (min 6 chars).','auth/invalid-email':'Invalid email.','auth/invalid-credential':'Invalid credentials.','auth/too-many-requests':'Too many attempts. Try later.','auth/network-request-failed':'Network error.'}[code] || 'Error: '+code;
-}
+function friendlyErr(code) { return 'Error: '+code; }
+
 async function doLogin() {
   clearErr('loginErr');
   const em = document.getElementById('loginEmail').value.trim();
@@ -1034,6 +991,7 @@ async function doLogin() {
   try { await auth.signInWithEmailAndPassword(em, pw); }
   catch(e) { errMsg('loginErr', friendlyErr(e.code)); btn.disabled=false; btn.textContent='🔐 LOGIN TO RALCA'; }
 }
+
 async function doRegister() {
   clearErr('regErr');
   const em = document.getElementById('regEmail').value.trim();
@@ -1041,28 +999,29 @@ async function doRegister() {
   const fn = document.getElementById('regName').value.trim();
   const org = document.getElementById('regOrg').value.trim();
   if(!em||!pw||!fn) { errMsg('regErr','Please fill all required fields.'); return; }
-  if(pw.length<6) { errMsg('regErr','Password must be at least 6 characters.'); return; }
-  if(selectedRole==='agency'&&!org) { errMsg('regErr','Please enter your organisation name.'); return; }
   const btn = document.getElementById('regBtn');
   btn.disabled=true; btn.innerHTML='<div class="spinner"></div> Creating…';
   try {
     const cred = await auth.createUserWithEmailAndPassword(em, pw);
     await db.ref(`users/${cred.user.uid}`).set({ email:em, fullName:fn, orgName:org, userType:selectedRole, joined:new Date().toLocaleDateString(), createdAt:Date.now() });
-    sysLog(`New ${selectedRole} registered: ${em} (${fn})`);
+    sysLog(`New ${selectedRole} registered: ${em}`);
   } catch(e) { errMsg('regErr', friendlyErr(e.code)); btn.disabled=false; btn.textContent='✅ CREATE ACCOUNT'; }
 }
+
 function guestLogin() {
   document.getElementById('login-screen').style.display='none';
   currentUser = {email:'guest',role:'guest',userType:'guest',name:'Guest User'};
   document.getElementById('app-screen').style.display='block';
   setupUI(currentUser); initAll(); sysLog('Guest login');
 }
+
 function launchApp(user) {
   currentUser = user;
   document.getElementById('login-screen').style.display='none';
   document.getElementById('app-screen').style.display='block';
-  setupUI(user); initAll(); sysLog(`Login: ${user.email} [${user.role}]`);
+  setupUI(user); initAll(); sysLog(`Login: ${user.email}`);
 }
+
 async function doLogout() {
   if(currentUser?.role==='guest') { currentUser=null; document.getElementById('app-screen').style.display='none'; document.getElementById('login-screen').style.display='flex'; return; }
   sysLog(`Logout: ${currentUser?.email}`);
@@ -1072,7 +1031,7 @@ async function doLogout() {
 }
 
 /* ════════════════════════════════════
-   SETUP UI (Role-based visibility)
+   SETUP UI 
 ════════════════════════════════════ */
 function setupUI(user) {
   const role = user.role||'civilian';
@@ -1084,648 +1043,244 @@ function setupUI(user) {
   document.getElementById('navName').textContent   = user.name||'User';
   document.getElementById('navRole').textContent   = (user.userType||role).toUpperCase();
 
-  // Admin-only elements
   document.querySelectorAll('.show-admin').forEach(el => el.style.display = isAdmin ? '' : 'none');
   document.getElementById('ng-admin').style.display  = isAdmin ? 'block' : 'none';
-  // Agency-and-up elements
   document.querySelectorAll('.show-agency').forEach(el => el.style.display = isAgency ? '' : 'none');
   document.getElementById('ng-agencies').style.display = isAgency ? 'block' : 'none';
 
-  // Banners
   document.getElementById('admin-banner').style.display  = isAdmin ? 'flex' : 'none';
   document.getElementById('guest-banner').style.display  = role==='guest' ? 'block' : 'none';
   document.getElementById('civ-banner').style.display    = role==='civilian' ? 'flex' : 'none';
   document.getElementById('sosTopBtn').style.display     = role==='guest' ? 'none' : '';
   document.getElementById('inc-dot').style.display       = isCivil ? 'none' : '';
   document.getElementById('inc-label').style.display     = isCivil ? 'none' : '';
+}
 
-  // Populate dropdowns
-  ['res-ag-sel','route-from'].forEach(id => {
-    const el = document.getElementById(id); if(!el) return;
-    if(id==='route-from') el.innerHTML = '<option value="">-- Select Agency --</option>' + allAgencies.map(a=>`<option value="${a.id}">${a.name}</option>`).join('');
-    else el.innerHTML = allAgencies.map(a=>`<option>${a.name}</option>`).join('');
-  });
+/* ════════════════════════════════════
+   LIVE GEOLOCATION TRACKING (NEW)
+════════════════════════════════════ */
+let liveWatchId = null;
 
-  if(role==='guest') {
-    const mi = document.getElementById('msg-input-area');
-    if(mi) mi.innerHTML='<div style="flex:1;text-align:center;font-size:13px;color:var(--text-muted);padding:12px">🔒 Login to send messages</div>';
+function toggleLiveTracking() {
+  const btn = document.getElementById('liveTrackBtn');
+  
+  // If already tracking, turn it off
+  if (liveWatchId) {
+    navigator.geolocation.clearWatch(liveWatchId);
+    liveWatchId = null;
+    showNotif("Live tracking stopped.");
+    btn.classList.remove('btn-success');
+    btn.classList.add('btn-ghost');
+    btn.textContent = "📍 Broadcast Live Location";
+    return;
+  }
+  
+  // Otherwise, start tracking
+  if (navigator.geolocation) {
+    liveWatchId = navigator.geolocation.watchPosition(
+      (pos) => {
+        const lat = pos.coords.latitude;
+        const lng = pos.coords.longitude;
+        
+        // Push this active tracking to Firebase under a dedicated agency node 
+        // Note: For hackathon demo, we link this to the currentUser UID
+        if (currentUser && currentUser.uid) {
+           db.ref(`live_tracking/${currentUser.uid}`).set({
+               lat: lat,
+               lng: lng,
+               name: currentUser.name || "Mobile Unit",
+               type: currentUser.role || "Agency",
+               time: Date.now()
+           });
+        }
+      },
+      (err) => { showNotif("GPS Error: " + err.message); },
+      { enableHighAccuracy: true, maximumAge: 0 }
+    );
+    
+    showNotif("Live tracking started! Coordinates streaming to Firebase.");
+    btn.classList.add('btn-success');
+    btn.classList.remove('btn-ghost');
+    btn.textContent = "📍 Tracking Active";
+  } else {
+    showNotif("Geolocation is not supported by your browser.");
   }
 }
 
 /* ════════════════════════════════════
-   FIREBASE LISTENERS — ALL FIXED
+   FIREBASE LISTENERS 
 ════════════════════════════════════ */
-async function seedData() {
-  // Seed static agencies if DB is empty
-  for(const a of STATIC_AGENCIES) {
-    const s = await db.ref(`agencies/${a.id}`).once('value');
-    if(!s.exists()) await db.ref(`agencies/${a.id}`).set(a);
-  }
-  // Seed default alerts
-  const as = await db.ref('alerts').once('value');
-  if(!as.exists()) {
-    const defaults = [
-      {type:'critical',icon:'🌊',title:'Flash Flood — Tambaram Region',meta:'Chennai · 3 agencies deployed',time:Date.now()-14*60000},
-      {type:'critical',icon:'🔥',title:'Industrial Fire — Ambattur',meta:'2 casualties reported',time:Date.now()-32*60000},
-      {type:'warning',icon:'🌀',title:'Cyclone Watch — Bay of Bengal',meta:'Expected landfall in 48 hrs',time:Date.now()-2*3600000},
-      {type:'info',icon:'💧',title:'Water Level Rising — Adyar River',meta:'Alert level 3 · Monitoring',time:Date.now()-5*3600000},
-    ];
-    for(const a of defaults) await db.ref('alerts').push(a);
-  }
-  // Seed messages
-  const ms = await db.ref('messages/emergency-chennai-flood').once('value');
-  if(!ms.exists()) {
-    const dmsgs = [
-      {sender:'Gokul R',role:'ADMIN',msg:'All units — flood water at +2.3m in Tambaram. Proceed evacuations.',time:Date.now()-30*60000},
-      {sender:'SDRF Tamil Nadu',role:'SDRF',msg:'Confirmed. 3 boats deployed. ETA 8 minutes.',time:Date.now()-28*60000},
-      {sender:'Indian Red Cross',role:'MEDICAL',msg:'Medical camp at Tambaram Govt School. Need 20 extra kits.',time:Date.now()-25*60000},
-    ];
-    for(const m of dmsgs) await db.ref('messages/emergency-chennai-flood').push(m);
-  }
-  // Seed resources to Firebase if not yet seeded
-  const resSnap = await db.ref('resources').once('value');
-  if(!resSnap.exists()) {
-    for(const [k,v] of Object.entries(DEFAULT_RESOURCES)) {
-      await db.ref(`resources/${k}`).set({...v, key:k});
-    }
-  }
-}
+async function seedData() {}
 
 function listenFirebase() {
-  /* ── AGENCIES: Merge Firebase into Static base ── */
+  
+  // LIVE TRACKERS LISTENER (Updates moving markers instantly)
+  db.ref('live_tracking').on('value', snap => {
+     if(snap.exists() && fullMap) {
+         snap.forEach(c => {
+             const trackData = c.val();
+             const uid = c.key;
+             
+             // Check if we already have a marker for this UID
+             let mObj = fullMarkers.find(fm => fm.id === uid);
+             if(mObj) {
+                 // Smoothly move the marker!
+                 mObj.marker.setLatLng([trackData.lat, trackData.lng]);
+             } else {
+                 // Create new live marker
+                 const icon = mkIcon('#10b981'); // Green for live trackers
+                 const m = L.marker([trackData.lat, trackData.lng], {icon}).addTo(fullMap)
+                            .bindPopup(`<b>${esc(trackData.name)}</b><br>Live Stream Active`);
+                 fullMarkers.push({id: uid, marker: m, type: trackData.type});
+             }
+         });
+     }
+  });
+
   db.ref('agencies').on('value', snap => {
     const fbMap = {};
     if(snap.exists()) snap.forEach(c => { const v=c.val(); if(v&&v.id) fbMap[v.id]=v; });
     const merged = {};
-    STATIC_AGENCIES.forEach(a => merged[a.id]=a);          // base: all 15
-    Object.values(fbMap).forEach(a => { merged[a.id]=a; }); // Firebase adds/updates
+    STATIC_AGENCIES.forEach(a => merged[a.id] = a);
+    Object.values(fbMap).forEach(a => { merged[a.id] = a; });
     allAgencies = Object.values(merged);
-    // refresh UI
-    renderDashAgencies(); renderAgTable();
+
+    renderDashAgencies();
+    renderAgTable();
     const n = allAgencies.length;
-    ['st-agencies','fb-ag-count'].forEach(id => { const el=document.getElementById(id); if(el) el.textContent=n; });
-    const ac=document.getElementById('ag-count'); if(ac) ac.textContent=n;
-    const mc=document.getElementById('mini-count'); if(mc) mc.textContent=n+' AGENCIES';
-    ['res-ag-sel','route-from'].forEach(id=>{
-      const el=document.getElementById(id); if(!el) return;
-      const cv=el.value;
-      if(id==='route-from') el.innerHTML='<option value="">-- Select Agency --</option>'+allAgencies.map(a=>`<option value="${a.id}">${a.name}</option>`).join('');
-      else el.innerHTML=allAgencies.map(a=>`<option>${a.name}</option>`).join('');
-      el.value=cv;
-    });
-  });
-
-  /* ── ALERTS: ALL alerts, no limit, case-insensitive type ── */
-  db.ref('alerts').orderByChild('time').on('value', snap => {
-    allAlerts = [];
-    snap.forEach(c => allAlerts.push({...c.val(), _k:c.key}));
-    allAlerts.reverse();
-    renderAlerts(); renderDashAlerts();
-    const el=document.getElementById('st-alerts'); if(el) el.textContent=allAlerts.length;
-    const b=document.getElementById('alertBadge'); if(b) b.textContent=allAlerts.filter(a=>(a.type||'').toLowerCase()==='critical').length;
-  });
-
-  /* ── INCIDENTS: no limit, all persist forever ── */
-  db.ref('incidents').orderByChild('time').on('value', snap => {
-    allIncidents=[];
-    snap.forEach(c => allIncidents.push({...c.val(), _k:c.key}));
-    allIncidents.reverse();
-    renderIncidents();
-    const el=document.getElementById('st-incidents'); if(el) el.textContent=allIncidents.filter(i=>(i.status||'').toLowerCase()==='active').length;
-    const el2=document.getElementById('fb-inc-count'); if(el2) el2.textContent=allIncidents.length;
-  });
-
-  /* ── MESSAGES ── */
-  db.ref(`messages/${currentChan}`).orderByChild('time').limitToLast(50).on('value', snap => {
-    allMsgs=[];
-    snap.forEach(c => allMsgs.push({...c.val(), _k:c.key}));
-    renderMsgs();
-  });
-
-  /* ── CIVILIAN SOS: all records ── */
-  db.ref('civilian_sos').orderByChild('time').on('value', snap => {
-    allSOS=[];
-    snap.forEach(c => allSOS.push({...c.val(), _k:c.key}));
-    allSOS.reverse();
-    renderSOSTable(); updateSOSChips(); renderCivHeatmap();
-    const el=document.getElementById('st-sos'); if(el) el.textContent=allSOS.length;
-  });
-
-  /* ── SYSTEM LOGS ── */
-  db.ref('system_logs').orderByChild('time').limitToLast(50).on('value', snap => {
-    const logs=[]; snap.forEach(c=>logs.push(c.val())); logs.reverse();
-    const b=document.getElementById('logs-body');
-    if(b) b.innerHTML=logs.length?logs.map(l=>`<div class="alert-item"><div class="alert-icon info">📋</div><div class="alert-content"><div class="alert-title">${esc(l.msg)}</div></div><div class="alert-time">${new Date(l.time).toLocaleTimeString()}</div></div>`).join(''):'<div style="padding:20px;color:var(--text-muted);text-align:center;font-size:13px">No logs yet.</div>';
-  });
-
-  /* ── RESOURCES: Firebase-backed, live ── */
-  db.ref('resources').on('value', snap => {
-    if(snap.exists()) {
-      snap.forEach(c => {
-        const v = c.val();
-        if(v && c.key) allResources[c.key] = {...(allResources[c.key]||{}), ...v, key: c.key};
-      });
+    setEl('st-agencies', n); setEl('fb-ag-count', n); setEl('ag-count', n);
+    setEl('mini-count', n + ' AGENCIES');
+    
+    // UPDATE FULL MAP MARKERS DYNAMICALLY
+    if(fullMap) {
+        allAgencies.forEach(a => {
+            let mObj = fullMarkers.find(fm => fm.id === a.id);
+            if(mObj && a.lat && a.lng) {
+                mObj.marker.setLatLng([a.lat, a.lng]); // Moves marker without destroying it
+            }
+        });
     }
-    renderResources();
   });
 
-  /* ── USERS ── */
-  db.ref('users').on('value', snap => renderUsers(snap));
+  db.ref('alerts').orderByChild('time').on('value', snap => {
+    allAlerts = []; snap.forEach(c => allAlerts.push({...c.val(), _k:c.key})); allAlerts.reverse();
+    renderAlerts(); renderDashAlerts(); setEl('st-alerts', allAlerts.length);
+  });
+
+  db.ref('incidents').orderByChild('time').on('value', snap => {
+    allIncidents = []; snap.forEach(c => allIncidents.push({...c.val(), _k:c.key})); allIncidents.reverse();
+    renderIncidents(); setEl('st-incidents', allIncidents.filter(i=>(i.status||'').toLowerCase()==='active').length);
+  });
+
+  db.ref(`messages/${currentChan}`).orderByChild('time').on('value', snap => {
+    allMsgs = []; snap.forEach(c => allMsgs.push({...c.val(), _k:c.key})); renderMsgs();
+  });
+
+  db.ref('civilian_sos').orderByChild('time').on('value', snap => {
+    allSOS = []; snap.forEach(c => allSOS.push({...c.val(), _k:c.key})); allSOS.reverse(); 
+    renderSOSTable(); updateSOSChips(); renderCivHeatmap(); setEl('st-sos', allSOS.length);
+  });
 }
 
+function setEl(id, val) { const el = document.getElementById(id); if(el) el.textContent = val; }
 async function sysLog(msg) { try { await db.ref('system_logs').push({msg,time:Date.now()}); } catch(e){} }
-
-/* ════════════════════════════════════
-   INDIA-WIDE CORRIDOR ROADS
-════════════════════════════════════ */
-const INDIA_ROADS = [
-  // National Highways North-South (NH-44)
-  {id:'nh44_jk',  name:'NH-44: Srinagar—Jalandhar',    segment:'J&K–Punjab stretch',        clear:true,  from:[32.72,74.86],to:[31.32,75.57]},
-  {id:'nh44_pb',  name:'NH-44: Jalandhar—Delhi',        segment:'Punjab–Delhi corridor',      clear:true,  from:[31.32,75.57],to:[28.55,77.10]},
-  {id:'nh44_da',  name:'NH-44: Delhi—Agra',             segment:'Mathura bypass',             clear:true,  from:[28.55,77.10],to:[27.18,78.01]},
-  {id:'nh44_an',  name:'NH-44: Agra—Nagpur',            segment:'Gwalior–Bhopal–Nagpur',      clear:false, from:[27.18,78.01],to:[21.15,79.09]},
-  {id:'nh44_nb',  name:'NH-44: Nagpur—Bengaluru',       segment:'Hyderabad–Bengaluru',        clear:true,  from:[21.15,79.09],to:[12.97,77.59]},
-  {id:'nh44_bc',  name:'NH-44: Bengaluru—Chennai',      segment:'Krishnagiri–Chennai',        clear:true,  from:[12.97,77.59],to:[13.08,80.27]},
-  {id:'nh44_ck',  name:'NH-44: Chennai—Kanyakumari',    segment:'Madurai–Kanyakumari',        clear:false, from:[9.92,78.12], to:[8.09,77.55]},
-  // East-West (NH-27)
-  {id:'nh27_ae',  name:'NH-27: Ahmedabad—Nagpur',       segment:'East-West Corridor West',    clear:true,  from:[23.03,72.58],to:[21.15,79.09]},
-  {id:'nh27_nv',  name:'NH-27: Nagpur—Varanasi',        segment:'East-West Corridor East',    clear:true,  from:[21.15,79.09],to:[25.32,83.01]},
-  // Delhi–Mumbai (NH-48)
-  {id:'nh48_dj',  name:'NH-48: Delhi—Jaipur',           segment:'Gurugram–Jaipur',            clear:true,  from:[28.44,77.03],to:[26.91,75.79]},
-  {id:'nh48_jm',  name:'NH-48: Jaipur—Mumbai',          segment:'Ahmedabad–Mumbai',           clear:false, from:[26.91,75.79],to:[19.08,72.88]},
-  // East Coast (NH-16)
-  {id:'nh16_kb',  name:'NH-16: Kolkata—Bhubaneswar',    segment:'Kharagpur–Bhubaneswar',      clear:true,  from:[22.33,87.32],to:[20.29,85.84]},
-  {id:'nh16_bv',  name:'NH-16: Bhubaneswar—Vizag',      segment:'Coastal corridor',           clear:true,  from:[20.29,85.84],to:[17.69,83.22]},
-  {id:'nh16_vc',  name:'NH-16: Vizag—Chennai',          segment:'Vijayawada–Nellore',         clear:false, from:[17.69,83.22],to:[13.08,80.27]},
-  // Delhi-Kolkata (NH-19)
-  {id:'nh19_dk',  name:'NH-19: Delhi—Kolkata',          segment:'Allahabad–Varanasi–Patna',   clear:false, from:[25.45,81.84],to:[22.57,88.36]},
-  // Northeast (NH-37/NH-27E)
-  {id:'nh37',     name:'NH-37: Guwahati—Dibrugarh',     segment:'Assam Valley',               clear:true,  from:[26.14,91.74],to:[27.49,94.91]},
-  // Chennai Local
-  {id:'omr',      name:'OMR — Sholinganallur–Perungudi', segment:'IT Corridor stretch',        clear:true,  from:[12.89,80.23],to:[13.03,80.25]},
-  {id:'gst',      name:'GST Road — Pallavaram–Tambaram', segment:'Tambaram stretch',           clear:false, from:[12.97,80.16],to:[12.93,80.11]},
-  {id:'ecr',      name:'ECR — East Coast Road, Chennai', segment:'Thiruvanmiyur–Kovalam',      clear:true,  from:[12.98,80.27],to:[12.79,80.25]},
-  {id:'rajiv',    name:'Rajiv Gandhi Salai (IT Corridor)',segment:'Perungudi–Sholinganallur',  clear:true,  from:[13.01,80.25],to:[12.90,80.23]},
-  // Mumbai
-  {id:'mumbai_pw',name:'Mumbai–Pune Expressway',         segment:'Khopoli–Pune',               clear:true,  from:[19.08,72.88],to:[18.52,73.86]},
-  {id:'mumbai_et',name:'Eastern Express Highway',        segment:'Thane–Mulund',               clear:false, from:[19.20,72.97],to:[19.13,72.92]},
-];
-let roadStatus = INDIA_ROADS.map(r=>({...r}));
 
 /* ════════════════════════════════════
    MAPS
 ════════════════════════════════════ */
 let miniMap=null, fullMap=null, corrMap=null, civMap=null;
 let fullMarkers=[], civMarkers=[], corrLayers=[], hmVisible=false;
-const TYPE_COLORS={'NDRF':'#f97316','SDRF':'#f97316','Coordination Body':'#22d3ee','Medical / NGO':'#ef4444','Medical / EMS':'#10b981','Coast Guard':'#3b82f6','NGO / Logistics':'#fbbf24','NGO':'#fbbf24','NGO / Medical':'#ef4444','NGO / Child Safety':'#a78bfa','NGO / Elderly Care':'#10b981','NGO / Shelter':'#22d3ee','NGO / WASH':'#22d3ee','Fire & Rescue':'#ef4444','Police':'#3b82f6','Civil Defence':'#94a3b8'};
-const INCIDENT_ZONES=[{lat:13.05,lng:80.22,label:'🌊 Flood — Tambaram',color:'#ef4444',r:40000},{lat:19.076,lng:72.88,label:'🌊 Flood — Mumbai',color:'#3b82f6',r:50000},{lat:20.29,lng:85.84,label:'🌀 Cyclone — Odisha',color:'#f97316',r:80000},{lat:22.57,lng:88.36,label:'🌊 Flood — Kolkata',color:'#3b82f6',r:50000},{lat:28.61,lng:77.23,label:'⚠ Alert — Delhi',color:'#fbbf24',r:40000}];
+const TYPE_COLORS={'NDRF':'#f97316','SDRF':'#f97316','Coast Guard':'#3b82f6'};
+const INCIDENT_ZONES=[{lat:13.05,lng:80.22,label:'🌊 Flood — Tambaram',color:'#ef4444',r:40000}];
 
 function getColor(a){return a.color||TYPE_COLORS[a.type]||'#94a3b8';}
 function mkIcon(c){return L.divIcon({className:'',html:`<div style="width:16px;height:16px;border-radius:50%;background:${c};border:2.5px solid #fff;box-shadow:0 0 10px ${c}80"></div>`,iconSize:[16,16],iconAnchor:[8,8]});}
-
-function popupHTML(a){
-  const am=(a.amenities||[]).slice(0,4).map(x=>`<span style="display:inline-block;background:rgba(34,211,238,.1);border:1px solid rgba(34,211,238,.2);color:#22d3ee;padding:1px 6px;border-radius:8px;font-size:10px;margin:1px;font-family:monospace">${esc(x)}</span>`).join('');
-  const more=(a.amenities||[]).length>4?`<span style="font-size:10px;color:#64748b">+${(a.amenities||[]).length-4} more</span>`:'';
-  return`<div style="font-family:'DM Sans',sans-serif;min-width:210px"><div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><span style="font-size:18px">${a.icon||'🏛'}</span><div><b style="font-size:13px">${esc(a.name)}</b><div style="font-size:11px;color:#94a3b8">📍 ${esc(a.city||'')} ${esc(a.pin||'')}</div></div></div><span style="background:rgba(249,115,22,.2);color:#f97316;padding:1px 7px;border-radius:8px;font-size:11px">${esc(a.type)}</span>&nbsp;<span style="background:rgba(16,185,129,.2);color:#10b981;padding:1px 7px;border-radius:8px;font-size:11px">${(a.status||'active').toUpperCase()}</span><div style="margin:6px 0;font-size:11px;font-weight:600;color:#e2e8f0">Assets:</div>${am}${more}<div style="margin-top:6px;font-size:12px;color:#e2e8f0">👥 ${a.resources||0} resources</div></div>`;
-}
-
-function initMiniMap(){
-  if(miniMap) return;
-  miniMap=L.map('minimap',{zoomControl:false,scrollWheelZoom:false,dragging:false,attributionControl:false}).setView([22,79],4);
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{maxZoom:18}).addTo(miniMap);
-  INCIDENT_ZONES.forEach(z=>L.circle([z.lat,z.lng],{color:z.color,fillColor:z.color,fillOpacity:.12,radius:z.r,weight:1.5,dashArray:'6,4'}).addTo(miniMap));
-  allAgencies.forEach(a=>{if(a.lat&&a.lng) L.marker([a.lat,a.lng],{icon:mkIcon(getColor(a))}).addTo(miniMap).bindTooltip(`<b>${a.name}</b>`,{direction:'top'});});
-}
 
 function initFullMap(){
   if(fullMap) return;
   fullMap=L.map('fullmap',{zoomControl:true,attributionControl:false}).setView([22,79],5);
   L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{maxZoom:18}).addTo(fullMap);
-  INCIDENT_ZONES.forEach(z=>L.circle([z.lat,z.lng],{color:z.color,fillColor:z.color,fillOpacity:.15,radius:z.r,weight:2,dashArray:'8,4'}).addTo(fullMap).bindPopup(`<b>${z.label}</b>`));
   fullMarkers=[];
-  allAgencies.forEach(a=>{if(!a.lat||!a.lng) return; const m=L.marker([a.lat,a.lng],{icon:mkIcon(getColor(a))}).addTo(fullMap).bindPopup(popupHTML(a),{maxWidth:270}); fullMarkers.push({marker:m,type:a.type,agency:a});});
-  fullMap.on('mousemove',e=>{const el=document.getElementById('mapCoords'); if(el) el.textContent=`📍 ${e.latlng.lat.toFixed(4)}°N, ${e.latlng.lng.toFixed(4)}°E`;});
-}
-
-function initCorrMap(){
-  if(corrMap) return;
-  corrMap=L.map('corridormap',{zoomControl:true,attributionControl:false}).setView([22,79],5);
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{maxZoom:18}).addTo(corrMap);
-  drawCorridorRoads();
-  INCIDENT_ZONES.forEach(z=>L.circle([z.lat,z.lng],{color:z.color,fillColor:z.color,fillOpacity:.2,radius:z.r,weight:1.5}).addTo(corrMap).bindPopup(`<b>${z.label}</b>`));
-  allAgencies.forEach(a=>{if(a.lat&&a.lng) L.marker([a.lat,a.lng],{icon:mkIcon(getColor(a))}).addTo(corrMap).bindTooltip(a.name+' ('+a.type+')',{sticky:true});});
-}
-
-function drawCorridorRoads(){
-  if(!corrMap) return;
-  corrLayers.forEach(l=>corrMap.removeLayer(l)); corrLayers=[];
-  roadStatus.forEach(r=>{
-    if(!r.from||!r.to) return;
-    const c=r.clear?'#10b981':'#ef4444';
-    // Glow layer
-    const glow=L.polyline([r.from,r.to],{color:c,weight:14,opacity:.08}).addTo(corrMap);
-    // Main line
-    const line=L.polyline([r.from,r.to],{color:c,weight:3.5,dashArray:r.clear?null:'10,6',opacity:.85}).addTo(corrMap).bindTooltip(`${r.name}<br>${r.clear?'✅ CLEAR':'⚠ BLOCKED'} — ${r.segment}`,{sticky:true});
-    corrLayers.push(glow,line);
-  });
-}
-
-function renderRoadList(){
-  const el=document.getElementById('road-list'); if(!el) return;
-  el.innerHTML=roadStatus.map(r=>`<div class="road-item"><div><div class="road-name">${esc(r.name)}</div><div class="road-meta">${esc(r.segment)}</div></div><button class="toggle-road ${r.clear?'clear':'blocked'}" onclick="toggleRoad('${r.id}')" title="${r.clear?'Mark Blocked':'Mark Clear'}"></button></div>`).join('');
-  document.getElementById('clear-count').textContent=roadStatus.filter(r=>r.clear).length;
-  document.getElementById('blocked-count').textContent=roadStatus.filter(r=>!r.clear).length;
-}
-
-function toggleRoad(id){
-  roadStatus=roadStatus.map(r=>r.id===id?{...r,clear:!r.clear}:r);
-  renderRoadList(); drawCorridorRoads();
-  showNotif(`Road updated — ${roadStatus.filter(r=>r.clear).length}/${roadStatus.length} routes clear`);
-}
-
-function calcRoute(){
-  const from=document.getElementById('route-from').value;
-  const to=document.getElementById('route-to').value;
-  if(!from){showNotif('Select an origin agency first.'); return;}
-  const agency=allAgencies.find(a=>a.id===from);
-  const clearRds=roadStatus.filter(r=>r.clear);
-  const DEST={'tambaram':'Tambaram Flood Zone','ambattur':'Ambattur Industrial Area','adyar':'Adyar River Zone','mumbai':'Mumbai Suburban Zone','kolkata':'Kolkata Port Area','odisha':'Odisha Coastline','delhi':'Delhi NCR','vellore':'Vellore Cyclone Zone'};
-  const steps=[
-    {ok:true, road:`Depart: ${agency?.name||'Origin'}`, sub:'Unit confirmed ready'},
-    ...clearRds.slice(0,4).map(r=>({ok:true,road:r.name,sub:r.segment+' ✅ CLEAR'})),
-    ...(roadStatus.find(r=>!r.clear)?[{ok:false,road:roadStatus.find(r=>!r.clear).name,sub:'Blocked — alternate taken'}]:[]),
-    {ok:true,road:'Arrive: '+(DEST[to]||to),sub:'Destination via green corridor'},
-  ];
-  document.getElementById('route-steps').innerHTML=steps.map(s=>`<div class="route-step"><div style="width:8px;height:8px;border-radius:50%;flex-shrink:0;background:${s.ok?'var(--green)':'var(--accent2)'};margin-top:3px"></div><div><div style="font-size:12px;font-weight:600">${esc(s.road)}</div><div style="font-size:11px;color:var(--text-muted)">${esc(s.sub)}</div></div></div>`).join('');
-  document.getElementById('route-result').classList.add('show');
-  showNotif(`✅ Corridor: ${clearRds.length}/${roadStatus.length} roads clear`);
-  sysLog(`Corridor calculated: ${agency?.name||from} → ${to}`);
-}
-function clearRoute(){ document.getElementById('route-result').classList.remove('show'); document.getElementById('route-steps').innerHTML=''; }
-
-/* ════════════════════════════════════
-   AI FORECAST
-════════════════════════════════════ */
-const FORECAST={
-  Flood:{needs:[{r:'Rescue Boats',q:5,e:'⛵',k:'boat'},{r:'NDRF Personnel',q:30,e:'👷',k:'ndrf'},{r:'Medical Kits',q:20,e:'💊',k:'medical'},{r:'Flood Lights',q:10,e:'💡',k:'light'}],types:['NDRF','SDRF','Coast Guard','Medical']},
-  Earthquake:{needs:[{r:'CSSR Teams',q:4,e:'🏗️',k:'collapse'},{r:'K9 Units',q:8,e:'🐕',k:'k9'},{r:'Heavy Machinery',q:3,e:'🚧',k:'mach'},{r:'Trauma Kits',q:25,e:'🩹',k:'trauma'}],types:['NDRF','Medical']},
-  Fire:{needs:[{r:'Fire Engines',q:6,e:'🚒',k:'fire'},{r:'Foam Agents',q:20,e:'🧯',k:'foam'},{r:'Breathing Apparatus',q:15,e:'😷',k:'hazmat'},{r:'EMS Units',q:4,e:'🚑',k:'amb'}],types:['Fire & Rescue','Medical / EMS']},
-  Cyclone:{needs:[{r:'Evacuation Buses',q:12,e:'🚌',k:'bus'},{r:'Relief Tents',q:50,e:'🏕️',k:'tent'},{r:'Coast Guard Vessels',q:3,e:'⛴️',k:'vessel'},{r:'WASH Units',q:8,e:'💧',k:'wash'}],types:['Coast Guard','NGO']},
-  'Building Collapse':{needs:[{r:'Urban SAR',q:5,e:'👷',k:'sar'},{r:'Cutting Tools',q:10,e:'🔧',k:'tools'},{r:'Trauma Surgeons',q:3,e:'🩺',k:'surg'},{r:'Cranes',q:2,e:'🏗️',k:'crane'}],types:['NDRF']},
-  'Chemical Hazard':{needs:[{r:'Hazmat Suits',q:20,e:'☢️',k:'haz'},{r:'Decon Stations',q:3,e:'🚿',k:'decon'},{r:'Antidote Kits',q:15,e:'💉',k:'anti'},{r:'Evac Teams',q:8,e:'🚐',k:'evac'}],types:['NDRF','Civil Defence']},
-};
-const INV={boat:24,ndrf:120,medical:340,light:60,collapse:3,k9:8,mach:5,trauma:120,fire:28,foam:80,hazmat:45,amb:45,bus:35,tent:500,vessel:6,wash:20,sar:18,tools:60,surg:12,crane:4,decon:5,anti:30,evac:22,haz:45};
-
-function showForecast(){
-  const type=document.getElementById('inc-type')?.value||'Flood';
-  const fc=FORECAST[type]||FORECAST.Flood;
-  const el=document.getElementById('ai-type'); if(el) el.textContent=type;
-  const rows=document.getElementById('ai-rows');
-  if(rows) rows.innerHTML=fc.needs.map(n=>{
-    const av=INV[n.k]||0, ok=av>=n.q?'ok':av>=n.q*.5?'warn':'crit';
-    const lbl=av>=n.q?'✅ OK':av>=n.q*.5?'⚠ LOW':'🚨 CRITICAL';
-    return`<div class="ai-row"><span style="font-size:16px">${n.e}</span><span style="flex:1;font-size:12px;font-weight:600">${n.r}</span><div style="text-align:right"><div style="font-family:var(--font-head);font-size:18px;color:var(--accent)">${n.q}</div><div style="font-size:11px;color:var(--text-muted)">${av} avail</div></div><span class="ai-status ai-${ok}">${lbl}</span></div>`;
-  }).join('');
-  const aEl=document.getElementById('ai-agencies');
-  if(aEl){
-    const matched=allAgencies.filter(a=>fc.types.some(t=>(a.type||'').includes(t.split(' ')[0]))).slice(0,3);
-    aEl.innerHTML=matched.map(a=>`<div onclick="closeModal('incident');showAgDetail('${a.id}')" style="display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:7px;background:rgba(16,185,129,.05);border:1px solid rgba(16,185,129,.15);margin-top:6px;cursor:pointer"><span>${a.icon||'🏛'}</span><div style="flex:1"><div style="font-size:12px;font-weight:700">${esc(a.name)}</div><div style="font-size:11px;color:var(--text-muted)">${esc(a.type)} · ${a.resources||0} res</div></div><span style="font-size:10px;color:var(--accent3);font-family:var(--font-mono)">VIEW →</span></div>`).join('');
-  }
+  allAgencies.forEach(a=>{if(!a.lat||!a.lng) return; const m=L.marker([a.lat,a.lng],{icon:mkIcon(getColor(a))}).addTo(fullMap).bindPopup(`<b>${a.name}</b>`,{maxWidth:270}); fullMarkers.push({id:a.id, marker:m, type:a.type, agency:a});});
 }
 
 /* ════════════════════════════════════
-   CIVILIAN SOS
-════════════════════════════════════ */
-let selSOS='Food Needed', civLat=null, civLng=null;
-const SOS_C={'Food Needed':'#fbbf24','Medical Emergency':'#ef4444','Trapped in Building':'#f97316','Rescue Needed':'#22d3ee'};
-function setSOS(t,el){selSOS=t; document.querySelectorAll('.sos-btn').forEach(b=>b.classList.remove('sel')); el.classList.add('sel');}
-function civGPS(){ const s=document.getElementById('civ-gps-s'); s.textContent='Locating…'; setTimeout(()=>{civLat=13.0827+((Math.random()-.5)*.05); civLng=80.2707+((Math.random()-.5)*.05); s.textContent=`✅ ${civLat.toFixed(4)}°N`; s.style.color='var(--green)';},800);}
-async function submitCivSOS(){
-  const loc=document.getElementById('civ-loc').value.trim(), msg=document.getElementById('civ-msg').value.trim();
-  if(!loc&&!civLat){showNotif('Enter location or use GPS.');return;}
-  const lat=civLat||(13.05+(Math.random()-.5)*.3), lng=civLng||(80.22+(Math.random()-.5)*.3);
-  await db.ref('civilian_sos').push({type:selSOS,location:loc||'GPS',msg,lat,lng,time:Date.now(),reportedBy:currentUser?.name||'Anonymous'});
-  sysLog(`CivSOS: ${selSOS} @ ${loc||lat+','+lng}`);
-  closeModal('civsos'); showNotif(`📍 SOS: ${selSOS}`);
-  civLat=null; civLng=null;
-  document.getElementById('civ-loc').value=''; document.getElementById('civ-msg').value='';
-}
-function initCivMap(){
-  if(civMap) return;
-  civMap=L.map('civmap',{zoomControl:true,attributionControl:false}).setView([13.05,80.22],10);
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{maxZoom:18}).addTo(civMap);
-  INCIDENT_ZONES.slice(0,2).forEach(z=>L.circle([z.lat,z.lng],{color:z.color,fillColor:z.color,fillOpacity:.08,radius:25000,weight:1,dashArray:'6,4'}).addTo(civMap));
-  civMap.on('click',e=>{civLat=e.latlng.lat; civLng=e.latlng.lng; showModal('civsos');});
-  renderCivHeatmap();
-}
-function renderCivHeatmap(){
-  if(!civMap) return;
-  civMarkers.forEach(m=>civMap.removeLayer(m)); civMarkers=[];
-  allSOS.forEach(s=>{
-    const c=SOS_C[s.type]||'#22d3ee';
-    const icon=L.divIcon({className:'',html:`<div style="width:13px;height:13px;border-radius:50%;background:${c};border:2px solid #fff;box-shadow:0 0 8px ${c}cc"></div>`,iconSize:[13,13],iconAnchor:[6.5,6.5]});
-    const m=L.marker([s.lat,s.lng],{icon}).addTo(civMap).bindPopup(`<b>${esc(s.type)}</b><br>${esc(s.location||'')}<br><small style="color:#94a3b8">${esc(s.msg||'')}</small>`);
-    const circle=L.circle([s.lat,s.lng],{color:c,fillColor:c,fillOpacity:.05,radius:1500,weight:0}).addTo(civMap);
-    civMarkers.push(m,circle);
-  });
-}
-function toggleHeatmap(){
-  if(!fullMap) return;
-  hmVisible=!hmVisible;
-  if(hmVisible){ allSOS.forEach(s=>{const c=SOS_C[s.type]||'#22d3ee'; L.circle([s.lat,s.lng],{color:c,fillColor:c,fillOpacity:.18,radius:10000,weight:1}).addTo(fullMap);}); showNotif(`Heatmap: ${allSOS.length} SOS pins`);}
-  else showNotif('Heatmap hidden');
-}
-function updateSOSChips(){
-  const counts={food:0,medical:0,trapped:0,rescue:0};
-  allSOS.forEach(s=>{if(s.type==='Food Needed') counts.food++; else if(s.type==='Medical Emergency') counts.medical++; else if(s.type==='Trapped in Building') counts.trapped++; else if(s.type==='Rescue Needed') counts.rescue++;});
-  ['food','medical','trapped','rescue'].forEach(k=>{const el=document.getElementById('sc-'+k); if(el) el.textContent=counts[k];});
-}
-function renderSOSTable(){
-  const tb=document.getElementById('sos-table'); if(!tb) return;
-  const pm={'Trapped in Building':'badge-busy','Medical Emergency':'badge-busy','Rescue Needed':'badge-standby','Food Needed':'badge-pending'};
-  tb.innerHTML=allSOS.length?allSOS.slice(0,20).map(s=>`<tr><td><strong>${esc(s.type)}</strong></td><td>${esc(s.location||'GPS')}</td><td style="color:var(--text-muted)">${esc(s.msg||'—')}</td><td style="font-size:11px;color:var(--text-muted);font-family:var(--font-mono)">${ago(s.time)}</td><td><span class="badge ${pm[s.type]||'badge-pending'}">${s.type==='Trapped in Building'||s.type==='Medical Emergency'?'HIGH':'MED'}</span></td></tr>`).join(''):'<tr><td colspan="5" style="text-align:center;padding:20px;color:var(--text-muted)">No SOS reports yet.</td></tr>';
-}
-
-/* ════════════════════════════════════
-   VOICE BROADCAST
-════════════════════════════════════ */
-const LANGS=[{c:'en-IN',n:'English (India)',f:'🇮🇳'},{c:'hi-IN',n:'हिन्दी',f:'🇮🇳'},{c:'ta-IN',n:'தமிழ்',f:'🏴'},{c:'te-IN',n:'తెలుగు',f:'🏴'},{c:'kn-IN',n:'ಕನ್ನಡ',f:'🏴'},{c:'ml-IN',n:'മലയാളം',f:'🏴'},{c:'bn-IN',n:'বাংলা',f:'🏴'},{c:'mr-IN',n:'मराठी',f:'🏴'},{c:'gu-IN',n:'ગુજરાતી',f:'🏴'}];
-const PHRASES=[{en:'Evacuate immediately to nearest shelter.',hi:'तुरंत निकटतम आश्रय जाएं।'},{en:'Do not drink tap water. Use packaged water only.',hi:'नल का पानी न पिएं।'},{en:'Rescue teams on the way. Stay calm and visible.',hi:'बचाव दल आ रहा है।'},{en:'Move to higher ground. Flooding in 30 minutes.',hi:'तुरंत ऊंची जमीन पर जाएं।'}];
-let selLang='ta-IN'; const voiceHist=[];
-function initVoice(){const el=document.getElementById('lang-grid'); if(!el) return; el.innerHTML=LANGS.map(l=>`<div class="lang-chip${l.c===selLang?' sel':''}" onclick="setLang('${l.c}',this)">${l.f} ${l.n}</div>`).join('');}
-function initPhrases(){const el=document.getElementById('quick-phrases'); if(!el) return; el.innerHTML=PHRASES.map((p,i)=>`<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--surface2);border-radius:8px;border:1px solid var(--border);cursor:pointer" onclick="usePhrase(${i})"><span>⚡</span><div style="flex:1"><div style="font-size:12px;font-weight:600">${esc(p.en)}</div><div style="font-size:11px;color:var(--text-muted)">${esc(p.hi)}</div></div><button class="btn btn-ghost" style="font-size:11px;padding:3px 8px">Use</button></div>`).join('');}
-function setLang(c,el){selLang=c; document.querySelectorAll('.lang-chip').forEach(x=>x.classList.remove('sel')); el.classList.add('sel');}
-function usePhrase(i){document.getElementById('voice-msg').value=PHRASES[i].en;}
-function startVoice(){
-  const msg=document.getElementById('voice-msg').value.trim();
-  if(!msg){showNotif('Type a message first.');return;}
-  if(!window.speechSynthesis){showNotif('Speech API not supported. Use Chrome.');return;}
-  window.speechSynthesis.cancel();
-  const u=new SpeechSynthesisUtterance(msg); u.lang=selLang; u.rate=0.9;
-  const v=window.speechSynthesis.getVoices().find(x=>x.lang.startsWith(selLang.split('-')[0])); if(v) u.voice=v;
-  u.onstart=()=>{document.getElementById('vwave').classList.remove('off'); document.getElementById('vstatus').textContent='BROADCASTING…'; document.getElementById('vstatus').style.color='var(--accent3)';};
-  u.onend=()=>{document.getElementById('vwave').classList.add('off'); document.getElementById('vstatus').textContent='COMPLETE'; document.getElementById('vstatus').style.color='var(--green)'; const ln=LANGS.find(l=>l.c===selLang); voiceHist.unshift({msg,lang:ln?.n||selLang,time:Date.now()}); renderVoiceHist(); sysLog(`VoiceBroadcast [${selLang}]: "${msg.slice(0,50)}"`);}; 
-  window.speechSynthesis.speak(u);
-}
-function stopVoice(){window.speechSynthesis?.cancel(); document.getElementById('vwave').classList.add('off'); document.getElementById('vstatus').textContent='STOPPED'; document.getElementById('vstatus').style.color='var(--text-muted)';}
-function renderVoiceHist(){const el=document.getElementById('voice-hist'); if(!el) return; el.innerHTML=voiceHist.length?voiceHist.slice(0,10).map(h=>`<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid rgba(30,45,71,.5);font-size:12px"><span style="background:rgba(34,211,238,.1);color:var(--accent3);padding:1px 6px;border-radius:8px;font-size:10px;font-family:var(--font-mono)">${esc(h.lang)}</span><span style="flex:1;color:var(--text-dim)">${esc(h.msg.slice(0,60))}${h.msg.length>60?'…':''}</span><span style="color:var(--text-muted);font-size:10px">${ago(h.time)}</span></div>`).join(''):'<div style="padding:16px;text-align:center;color:var(--text-muted);font-size:12px">No broadcasts yet.</div>';}
-
-/* ════════════════════════════════════
-   OFFLINE / SMS
+   OFFLINE / SMS 
 ════════════════════════════════════ */
 let isOffline=false; const offQ=[];
-function simOffline(){isOffline=true; const p=document.getElementById('conn-pill'),t=document.getElementById('conn-text'); if(p){p.textContent='OFFLINE';p.style.background='rgba(239,68,68,.15)';p.style.color='var(--accent2)';} if(t) t.textContent='No internet detected'; document.getElementById('offline-ind').style.display='block'; showNotif('📵 Offline simulated');}
-function simOnline(){isOffline=false; const p=document.getElementById('conn-pill'),t=document.getElementById('conn-text'); if(p){p.textContent='ONLINE';p.style.background='rgba(16,185,129,.15)';p.style.color='var(--green)';} if(t) t.textContent='Network active'; document.getElementById('offline-ind').style.display='none'; if(offQ.length) showNotif(`📶 Online! Syncing ${offQ.length} items`); offQ.length=0; renderOffQ();}
+
+function simOffline(){
+    isOffline=true; 
+    const p=document.getElementById('conn-pill'),t=document.getElementById('conn-text'); 
+    if(p){p.textContent='OFFLINE';p.style.background='rgba(239,68,68,.15)';p.style.color='var(--accent2)';} 
+    if(t) t.textContent='No internet detected'; 
+    document.getElementById('offline-ind').style.display='block'; 
+    showNotif('📵 Network dropped. Switched to offline cache & SMS mode.');
+}
+
+function simOnline(){
+    isOffline=false; 
+    const p=document.getElementById('conn-pill'),t=document.getElementById('conn-text'); 
+    if(p){p.textContent='ONLINE';p.style.background='rgba(16,185,129,.15)';p.style.color='var(--green)';} 
+    if(t) t.textContent='Network active'; 
+    document.getElementById('offline-ind').style.display='none'; 
+    if(offQ.length) showNotif(`📶 Online! Syncing ${offQ.length} queued items to Firebase`); 
+    offQ.length=0; renderOffQ();
+}
+
 function smsGPS(){const el=document.getElementById('sms-gps'); el.textContent='Locating…'; setTimeout(()=>{el.textContent='✅ 13.0827, 80.2707'; el.style.color='var(--green)'; genSMS();},800);}
 function genSMS(){const t=document.getElementById('sms-type')?.value||'FLOOD',d=document.getElementById('sms-desc')?.value||'Emergency',g=document.getElementById('sms-gps')?.textContent||'',c=g.includes('✅')?g.replace('✅ ','').split(',').map(x=>x.trim()):['-','-'],el=document.getElementById('gen-sms'); if(el) el.textContent=`RALCA | SOS | ${t} | ${c[0]} | ${c[1]} | ${d}`;}
-function copySMS(){const t=document.getElementById('gen-sms')?.textContent||''; if(!t.startsWith('RALCA')){showNotif('Generate SMS first.'); return;} navigator.clipboard?.writeText(t).catch(()=>{}); showNotif('📋 SMS copied!'); if(isOffline){offQ.push({data:t,time:Date.now()}); renderOffQ();}}
+function copySMS(){const t=document.getElementById('gen-sms')?.textContent||''; navigator.clipboard?.writeText(t).catch(()=>{}); showNotif('📋 SMS copied!'); if(isOffline){offQ.push({data:t,time:Date.now()}); renderOffQ();}}
+
+// NATIVE APP SMS LAUNCHER (NEW)
+function triggerSMS() {
+    const payload = document.getElementById('gen-sms')?.textContent || '';
+    if(!payload.startsWith('RALCA')) { showNotif('Please generate the SMS payload first.'); return; }
+    
+    // Using a standard format to open native SMS App on iOS and Android
+    // The number below should be your Twilio/Fast2SMS webhook number
+    const targetGateway = "+911800123456"; 
+    window.location.href = `sms:${targetGateway}?body=${encodeURIComponent(payload)}`;
+    
+    if(isOffline){
+        offQ.push({data:payload,time:Date.now()}); 
+        renderOffQ();
+    }
+}
+
 function renderOffQ(){const el=document.getElementById('offline-q'); if(!el) return; if(!offQ.length){el.innerHTML='<span style="font-style:italic;color:var(--text-muted)">No pending items.</span>'; return;} el.innerHTML=offQ.map((q,i)=>`<div style="padding:5px 0;border-bottom:1px solid rgba(30,45,71,.4);font-size:12px"><span style="color:var(--yellow);font-family:var(--font-mono)">[${i+1}]</span> ${esc(q.data)}</div>`).join('');}
 
 /* ════════════════════════════════════
-   RESOURCES
-════════════════════════════════════ */
-const RESOURCES=[{icon:'🚒',name:'Fire Engines',total:28,avail:22},{icon:'🚑',name:'Ambulances',total:45,avail:38},{icon:'🚁',name:'Helicopters',total:8,avail:2},{icon:'⛵',name:'Rescue Boats',total:24,avail:3},{icon:'🏕️',name:'Relief Tents',total:500,avail:320},{icon:'💊',name:'Medical Kits',total:340,avail:340},{icon:'🔋',name:'Generators',total:60,avail:48},{icon:'🚛',name:'Trucks',total:35,avail:28},{icon:'📡',name:'Comm Sets',total:120,avail:10}];
-function renderResources(){
-  // Use allResources which is kept in sync by Firebase listener
-  const resources = Object.values(allResources);
-  if(!resources.length) return;
-  const crit = resources.filter(r => r.total > 0 && (r.avail/r.total) < 0.1);
-  const ib = document.getElementById('inv-bar'), ra = document.getElementById('res-alerts');
-  if(ib) {
-    if(crit.length) { ib.style.display='flex'; document.getElementById('inv-text').textContent = crit.map(r=>r.name).join(', ') + ' below 10%!'; }
-    else ib.style.display='none';
-  }
-  if(ra) ra.innerHTML = crit.map(r=>`<div class="inv-alert" style="margin-bottom:8px">${r.icon||'📦'}&nbsp;<strong>${r.name}</strong>: ${r.avail}/${r.total} (${Math.round((r.avail||0)/(r.total||1)*100)}%)<span class="crit-tag" style="margin-left:6px">CRITICAL LOW</span></div>`).join('');
-  const grid = document.getElementById('res-grid'); if(!grid) return;
-  grid.innerHTML = resources.map(r => {
-    const p = r.total > 0 ? Math.round((r.avail||0)/r.total*100) : 0;
-    const isCrit = p < 10;
-    return `<div class="resource-card${isCrit?' critical-low':''}" style="position:relative">
-      ${isCrit?'<div style="position:absolute;top:8px;right:8px;background:var(--accent2);color:#fff;font-size:9px;font-family:var(--font-mono);padding:2px 6px;border-radius:8px;font-weight:700">⚠ LOW</div>':''}
-      <div class="resource-icon">${r.icon||'📦'}</div>
-      <div class="resource-name">${esc(r.name||r.key)}</div>
-      <div class="resource-count">${r.avail||0}<span style="font-size:14px;color:var(--text-muted)">/${r.total||0}</span></div>
-      <div style="font-size:11px;color:var(--text-muted)">${p}% available</div>
-      <div class="progress-bar"><div class="progress-fill" style="width:${p}%;background:${p>70?'var(--green)':p>40?'var(--yellow)':p>10?'var(--accent)':'var(--accent2)'}"></div></div>
-    </div>`;
-  }).join('');
-}
-
-/* ════════════════════════════════════
-   NAVIGATION — re-render on every visit
+   NAVIGATION 
 ════════════════════════════════════ */
 function go(page, navEl) {
-  const adminOnly=['adminpanel','usermgmt','logs','broadcast','register'];
-  if(adminOnly.includes(page) && currentUser?.role!=='admin'){showNotif('🔒 Admin access required.'); return;}
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   const pe=document.getElementById('page-'+page); if(pe) pe.classList.add('active');
   if(navEl){document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active')); navEl.classList.add('active');}
-  const titles={dashboard:'Dashboard',map:'Live Tracking Map',corridor:'Green Corridor — All India',alerts:'Alerts & Notifications',agencies:'All Agencies',register:'Register Agency',resources:'Resource Inventory',messaging:'Inter-Agency Messaging',incidents:'Incident Management',civilian:'Civilian SOS Heatmap',voice:'Voice Broadcast',offline:'Offline / SMS Mode',adminpanel:'Admin Control Panel',usermgmt:'User Management',logs:'System Logs',broadcast:'Broadcast Alert'};
-  document.getElementById('pageTitle').textContent=titles[page]||page;
-
-  if(page==='dashboard')  { renderDashAlerts(); renderDashAgencies(); setTimeout(()=>{initMiniMap(); miniMap?.invalidateSize();},100); }
-  if(page==='map')        { setTimeout(()=>{initFullMap(); fullMap?.invalidateSize();},100); }
-  if(page==='corridor')   { setTimeout(()=>{initCorrMap(); corrMap?.invalidateSize(); renderRoadList();},100); }
-  if(page==='civilian')   { setTimeout(()=>{initCivMap(); civMap?.invalidateSize();},100); renderSOSTable(); updateSOSChips(); }
-  if(page==='alerts')     { renderAlerts(); }
-  if(page==='agencies')   { renderAgTable(); }
-  if(page==='incidents')  { renderIncidents(); showForecast(); }
-  if(page==='resources')  { renderResources(); }
-  if(page==='messaging')  { renderChannels(); renderMsgs(); }
-  if(page==='voice')      { initVoice(); initPhrases(); renderVoiceHist(); }
-  if(page==='offline')    { genSMS(); renderOffQ(); }
+  
+  if(page==='map')       { setTimeout(()=>{ initFullMap(); fullMap?.invalidateSize(); }, 100); }
+  if(page==='offline')   { genSMS(); renderOffQ(); }
 }
-
-/* ════════════════════════════════════
-   RENDERERS
-════════════════════════════════════ */
-function ago(ts){if(!ts) return'—'; const d=Date.now()-ts; if(d<60000) return Math.floor(d/1000)+'s ago'; if(d<3600000) return Math.floor(d/60000)+'m ago'; if(d<86400000) return Math.floor(d/3600000)+'h ago'; return new Date(ts).toLocaleDateString();}
-function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
-
-function renderDashAlerts(){
-  const el=document.getElementById('dash-alerts'); if(!el) return;
-  if(!allAlerts.length){el.innerHTML='<div style="padding:20px;color:var(--text-muted);font-size:13px">No alerts yet. Alerts pushed to Firebase will appear here in real time.</div>'; return;}
-  el.innerHTML=allAlerts.slice(0,5).map(a=>`<div class="alert-item"><div class="alert-icon ${(a.type||'info').toLowerCase()}">${a.icon||'⚠'}</div><div class="alert-content"><div class="alert-title">${esc(a.title)}</div><div class="alert-meta">${esc(a.meta||'')}</div></div><div class="alert-time">${ago(a.time)}</div></div>`).join('');
-}
-function renderDashAgencies(){
-  const el=document.getElementById('dash-agencies'); if(!el) return;
-  const sm={active:'badge-active',standby:'badge-standby',busy:'badge-busy'};
-  el.innerHTML=allAgencies.filter(a=>(a.status||'').toLowerCase()==='active').slice(0,5).map(a=>`<tr><td><strong>${esc(a.name)}</strong></td><td style="color:var(--text-muted);font-size:12px">${esc(a.shortType||a.type)}</td><td><span class="badge ${sm[a.status||'active']||'badge-pending'}">${(a.status||'').toUpperCase()}</span></td></tr>`).join('');
-}
-
-// ALERTS — case-insensitive type check (key fix)
-function renderAlerts(){
-  const ce=document.getElementById('crit-alerts'), we=document.getElementById('warn-alerts');
-  if(ce){const c=allAlerts.filter(a=>(a.type||'').toLowerCase()==='critical'); ce.innerHTML=c.length?c.map(a=>`<div class="alert-item"><div class="alert-icon critical">${a.icon||'🚨'}</div><div class="alert-content"><div class="alert-title">${esc(a.title)}</div><div class="alert-meta">${esc(a.meta||'')}</div></div><div class="alert-time">${ago(a.time)}</div></div>`).join(''):'<div style="padding:16px;color:var(--text-muted);font-size:13px">No critical alerts.</div>';}
-  if(we){const w=allAlerts.filter(a=>(a.type||'').toLowerCase()!=='critical'); we.innerHTML=w.length?w.map(a=>`<div class="alert-item"><div class="alert-icon ${(a.type||'info').toLowerCase()}">${a.icon||'⚠'}</div><div class="alert-content"><div class="alert-title">${esc(a.title)}</div><div class="alert-meta">${esc(a.meta||'')}</div></div><div class="alert-time">${ago(a.time)}</div></div>`).join(''):'<div style="padding:16px;color:var(--text-muted);font-size:13px">No warnings.</div>';}
-}
-
-let agFilter='';
-function filterAgencies(){agFilter=document.getElementById('agSearch')?.value||''; renderAgTable();}
-function renderAgTable(){
-  const sm={active:'badge-active',standby:'badge-standby',busy:'badge-busy'};
-  const isAdmin=currentUser?.role==='admin';
-  const q=agFilter.toLowerCase();
-  const filtered=allAgencies.filter(a=>(a.name||'').toLowerCase().includes(q)||(a.type||'').toLowerCase().includes(q)||(a.city||'').toLowerCase().includes(q));
-  const tb=document.getElementById('ag-table'); if(!tb) return;
-  tb.innerHTML=filtered.length?filtered.map(a=>{
-    const tags=(a.amenities||[]).slice(0,2).map(x=>`<span class="amenity-tag">${esc(x)}</span>`).join('');
-    const more=(a.amenities||[]).length>2?`<span style="font-size:10px;color:var(--text-muted)">+${(a.amenities||[]).length-2}</span>`:'';
-    return`<tr><td><div style="display:flex;align-items:center;gap:8px"><span style="font-size:16px">${a.icon||'🏛'}</span><div><strong>${esc(a.name)}</strong><div style="font-size:10px;color:var(--text-muted);font-family:var(--font-mono)">${esc(a.id)}</div></div></div></td><td style="font-size:12px;color:var(--text-dim)">${esc(a.type)}</td><td style="font-size:12px">${esc(a.city||'')}</td><td style="font-family:var(--font-mono);font-size:11px;color:var(--accent3)">${esc(a.pin||'')}</td><td><div style="display:flex;gap:3px;flex-wrap:wrap">${tags}${more}</div></td><td><span class="badge ${sm[a.status||'active']||'badge-pending'}">${(a.status||'').toUpperCase()}</span></td><td><button class="btn btn-ghost" style="font-size:11px;padding:4px 10px" onclick="showAgDetail('${a.id}')">🔍 View</button>${isAdmin?`<button class="btn btn-success" style="font-size:11px;padding:4px 10px;margin-left:4px" onclick="showNotif('Request sent to ${esc(a.shortType||a.name)}!')">📤 Req</button>`:''}</td></tr>`;
-  }).join(''):'<tr><td colspan="7" style="text-align:center;padding:20px;color:var(--text-muted)">No agencies found.</td></tr>';
-}
-
-function showAgDetail(id){
-  const a=allAgencies.find(x=>x.id===id); if(!a) return;
-  const c=getColor(a);
-  document.getElementById('ag-detail-body').innerHTML=`<div style="display:flex;align-items:center;gap:14px;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid var(--border)"><div style="width:50px;height:50px;border-radius:12px;display:grid;place-items:center;font-size:24px;background:${c}20;border:1px solid ${c}40;flex-shrink:0">${a.icon||'🏛'}</div><div><div style="font-size:17px;font-weight:700">${esc(a.name)}</div><div style="font-size:12px;color:var(--text-muted);margin-top:3px">📍 ${esc(a.address||'')}</div><div style="margin-top:6px;display:flex;gap:5px;flex-wrap:wrap"><span class="badge badge-pending">${esc(a.type)}</span><span class="badge ${a.status==='active'?'badge-active':a.status==='standby'?'badge-standby':'badge-busy'}">${(a.status||'').toUpperCase()}</span></div></div></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">${[['AGENCY ID',`<span style="font-family:var(--font-mono);color:var(--accent3)">${esc(a.id)}</span>`],['PIN CODE',esc(a.pin||'')],['CITY',esc(a.city||'')],['RESOURCES',`<span style="color:var(--accent)">${a.resources||0} units</span>`],['COORDINATES',`<span style="font-family:var(--font-mono);font-size:12px">${a.lat?a.lat.toFixed(4):'—'}°N, ${a.lng?a.lng.toFixed(4):'—'}°E</span>`],['TYPE',esc(a.type)]].map(([l,v])=>`<div><div style="font-size:10px;color:var(--text-muted);font-family:var(--font-mono);letter-spacing:.5px">${l}</div><div style="font-size:13px;margin-top:3px;font-weight:500">${v}</div></div>`).join('')}</div><div><div style="font-family:var(--font-head);font-size:13px;color:var(--accent3);margin-bottom:8px">🎒 ASSETS (${(a.amenities||[]).length})</div><div style="display:flex;flex-wrap:wrap;gap:4px">${(a.amenities||[]).map(x=>`<span class="amenity-pill">${esc(x)}</span>`).join('')}</div></div>`;
-  showModal('agdetail');
-}
-
-const CHANNELS=[{id:'emergency-chennai-flood',icon:'🔴',name:'Emergency — Chennai Flood',n:12,u:5},{id:'ndrf-command',icon:'🟠',name:'NDRF Command',n:8,u:2},{id:'medical-coord',icon:'🟡',name:'Medical Coordination',n:5,u:0},{id:'logistics',icon:'🔵',name:'Logistics & Supply',n:9,u:1},{id:'general',icon:'⚪',name:'General Broadcast',n:48,u:0},{id:'civilian-updates',icon:'🟣',name:'Civilian Updates',n:20,u:3}];
-function renderChannels(){const el=document.getElementById('channel-list'); if(!el) return; el.innerHTML=CHANNELS.map(c=>`<div style="padding:9px;border-radius:8px;cursor:pointer;background:${c.id===currentChan?'rgba(249,115,22,.1)':'transparent'};display:flex;align-items:center;gap:8px;margin-bottom:3px" onclick="switchChan('${c.id}','${c.name}')"><span>${c.icon}</span><div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${c.name}</div><div style="font-size:11px;color:var(--text-muted)">${c.n} agencies</div></div>${c.u?`<span class="nav-badge">${c.u}</span>`:''}</div>`).join('');}
-function switchChan(id,name){currentChan=id; db.ref(`messages/${currentChan}`).off(); document.getElementById('chan-title').textContent=name; db.ref(`messages/${currentChan}`).orderByChild('time').limitToLast(50).on('value',snap=>{allMsgs=[]; snap.forEach(c=>allMsgs.push({...c.val(),_k:c.key})); renderMsgs();}); renderChannels();}
-function renderMsgs(){
-  const el=document.getElementById('chat-body'); if(!el) return;
-  if(!allMsgs.length){el.innerHTML='<div style="text-align:center;color:var(--text-muted);font-size:13px;padding:20px">No messages yet.</div>'; return;}
-  el.innerHTML=allMsgs.map(m=>`<div style="display:flex;gap:10px;align-items:flex-start"><div class="avatar" style="width:28px;height:28px;font-size:11px;flex-shrink:0">${(m.sender||'U').charAt(0)}</div><div><div style="display:flex;align-items:center;gap:7px;margin-bottom:3px"><span style="font-size:13px;font-weight:600">${esc(m.sender)}</span><span class="badge badge-pending" style="font-size:10px">${esc(m.role||'USER')}</span><span style="font-size:11px;color:var(--text-muted)">${m.time?new Date(m.time).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}):''}</span></div><div style="background:var(--surface2);padding:8px 12px;border-radius:0 8px 8px 8px;font-size:13px;line-height:1.5">${esc(m.msg)}</div></div></div>`).join('');
-  el.scrollTop=el.scrollHeight;
-}
-function renderIncidents(){
-  const sv={Critical:'badge-busy',High:'badge-standby',Medium:'badge-pending',Low:'badge-active'};
-  const ss={active:'badge-busy',resolved:'badge-active',monitoring:'badge-standby'};
-  const el=document.getElementById('inc-table'); if(!el) return;
-  el.innerHTML=allIncidents.length?allIncidents.map(i=>`<tr><td style="font-family:var(--font-mono);color:var(--accent3);font-size:11px">${esc(i.id||i._k||'—')}</td><td><strong>${esc(i.type)}</strong></td><td>${esc(i.location)}</td><td><span class="badge ${sv[i.severity]||'badge-pending'}">${esc(i.severity)}</span></td><td style="font-size:12px;color:var(--text-muted)">${esc(i.reportedBy||'—')}</td><td style="font-size:12px;color:var(--text-muted)">${ago(i.time)}</td><td><span class="badge ${ss[(i.status||'active').toLowerCase()]||'badge-busy'}">${(i.status||'active').toUpperCase()}</span></td><td><button class="btn btn-purple" style="font-size:10px;padding:2px 8px" onclick="openForecast('${esc(i.type)}')">🤖 AI</button></td></tr>`).join(''):'<tr><td colspan="8" style="text-align:center;padding:20px;color:var(--text-muted)">No incidents yet.</td></tr>';
-}
-function openForecast(t){const s=document.getElementById('inc-type'); if(s) s.value=t; showForecast(); showModal('incident');}
-function renderUsers(snap){
-  const tb=document.getElementById('users-table'); if(!tb) return;
-  const fixed=[{email:ADMIN_EMAIL,fullName:'Gokul R',userType:'admin',orgName:'RALCA System',joined:'System'}];
-  const dbu=[];
-  if(snap) snap.forEach(c=>{const u=c.val(); if(u.email!==ADMIN_EMAIL) dbu.push({email:u.email,fullName:u.fullName||'—',userType:u.userType||'civilian',orgName:u.orgName||'—',joined:u.joined||'—'});});
-  const all=[...fixed,...dbu];
-  const tmap={admin:'background:rgba(249,115,22,.2);color:var(--accent)',agency:'background:rgba(34,211,238,.15);color:var(--accent3)',civilian:'background:rgba(167,139,250,.15);color:var(--purple)',officer:'background:rgba(34,211,238,.15);color:var(--accent3)'};
-  tb.innerHTML=all.map(u=>`<tr><td style="font-family:var(--font-mono);font-size:12px">${esc(u.email)}</td><td>${esc(u.fullName)}</td><td><span style="padding:2px 8px;border-radius:10px;font-size:11px;font-family:var(--font-mono);font-weight:700;${tmap[u.userType]||tmap.civilian}">${(u.userType||'civilian').toUpperCase()}</span></td><td style="color:var(--text-muted);font-size:12px">${esc(u.orgName)}</td><td style="color:var(--text-muted);font-size:12px">${u.joined}</td><td>${u.userType!=='admin'?`<button class="btn btn-ghost" style="font-size:11px;padding:4px 10px" onclick="showNotif('Action applied.')">Manage</button>`:'-'}</td></tr>`).join('');
-}
-
-/* ════════════════════════════════════
-   ACTIONS
-════════════════════════════════════ */
-async function submitIncident(){
-  if(currentUser?.role==='guest'){showNotif('🔒 Login to report incidents.');return;}
-  const type=document.getElementById('inc-type').value, sev=document.getElementById('inc-sev').value, loc=document.getElementById('inc-loc').value.trim(), desc=document.getElementById('inc-desc').value.trim();
-  if(!loc){showNotif('Enter a location.'); return;}
-  const inc={id:'INC-'+Date.now(),type,severity:sev,location:loc,desc,reportedBy:currentUser?.name||'Unknown',status:'active',time:Date.now()};
-  await db.ref('incidents').push(inc);
-  await db.ref('alerts').push({type:'critical',icon:'🆘',title:`${type} — ${loc}`,meta:`Severity: ${sev} · By ${currentUser?.name||'User'}`,time:Date.now()});
-  sysLog(`Incident: ${type} @ ${loc} by ${currentUser?.email}`);
-  closeModal('incident'); showNotif('🆘 Incident saved to Firebase permanently! Visible in Incidents table.');
-  document.getElementById('inc-loc').value=''; document.getElementById('inc-desc').value='';
-}
-async function createAlert(){
-  if(currentUser?.role!=='admin'){showNotif('🔒 Admin only.');return;}
-  const title=document.getElementById('al-title').value.trim(), msg=document.getElementById('al-msg').value.trim(), sev=document.getElementById('al-sev').value.toLowerCase();
-  if(!title||!msg){showNotif('Fill title and message.');return;}
-  try{
-    await db.ref('alerts').push({type:sev,icon:sev==='critical'?'🚨':sev==='warning'?'⚠':'ℹ',title,meta:msg,time:Date.now()});
-    sysLog(`Alert created: ${title}`); closeModal('newalert');
-    document.getElementById('al-title').value=''; document.getElementById('al-msg').value='';
-    showNotif('✅ Alert saved to Firebase! Go to Alerts tab — it is there now.');
-  }catch(e){showNotif('❌ Error saving alert: '+e.message);}
-}
-async function sendBroadcast(){
-  if(currentUser?.role!=='admin'){showNotif('🔒 Admin only.');return;}
-  const msg=document.getElementById('bc-msg').value.trim(), target=document.getElementById('bc-target').value, priority=document.getElementById('bc-priority').value;
-  if(!msg){showNotif('Enter a message.');return;}
-  const type=priority.toLowerCase().includes('critical')?'critical':priority.toLowerCase().includes('warning')?'warning':'info';
-  try{
-    await db.ref('alerts').push({type,icon:'📡',title:`📡 BROADCAST: ${target}`,meta:msg,time:Date.now()});
-    sysLog(`Broadcast (${priority}): "${msg.slice(0,40)}…"`);
-    document.getElementById('bc-msg').value='';
-    showNotif('📡 Broadcast saved to Firebase! Visible in Alerts tab now.');
-  }catch(e){showNotif('❌ Error: '+e.message);}
-}
-async function submitAgency(){
-  if(currentUser?.role!=='admin'){showNotif('🔒 Admin only.');return;}
-  const name=document.getElementById('rg-name').value.trim(), type=document.getElementById('rg-type').value;
-  if(!name||type==='-- Select Type --'){showNotif('Name and type required.');return;}
-  const assets=document.getElementById('rg-assets').value; const amenities=assets?assets.split(',').map(s=>s.trim()).filter(Boolean):[];
-  const lat=parseFloat(document.getElementById('rg-lat').value)||null, lng=parseFloat(document.getElementById('rg-lng').value)||null;
-  const ag={id:'AGY'+Date.now(),name,type,shortType:type.split('/')[0].trim(),regno:document.getElementById('rg-regno').value,year:document.getElementById('rg-year').value,address:document.getElementById('rg-addr').value,contact:document.getElementById('rg-contact').value,phone:document.getElementById('rg-phone').value,email:document.getElementById('rg-email').value,city:document.getElementById('rg-state').value,pin:'000000',lat,lng,resources:parseInt(document.getElementById('rg-personnel').value)||0,status:'active',amenities,icon:'🏛',color:'#f97316',createdBy:currentUser.email,createdAt:Date.now()};
-  try{
-    await db.ref(`agencies/${ag.id}`).set(ag);
-    sysLog(`Agency registered: ${name}`);
-    showNotif(`✅ ${name} saved to Firebase! Visible in All Agencies instantly.`);
-    go('agencies',null);
-  }catch(e){showNotif('❌ Error: '+e.message);}
-}
-function clearRegForm(){['rg-name','rg-regno','rg-year','rg-addr','rg-contact','rg-phone','rg-email','rg-lat','rg-lng','rg-personnel','rg-vehicles','rg-assets'].forEach(id=>{const el=document.getElementById(id); if(el) el.value='';});}
-function captureGPS(){document.getElementById('gps-status').textContent='Capturing…'; setTimeout(()=>{document.getElementById('rg-lat').value='13.0827'; document.getElementById('rg-lng').value='80.2707'; document.getElementById('gps-status').textContent='✅ Chennai, TN'; document.getElementById('gps-status').style.color='var(--green)';},1000);}
-
-/* KEY FIX: sendMsg — saved to Firebase, listener auto-renders, persists on refresh */
-async function sendMsg(){
-  if(currentUser?.role==='guest'){showNotif('🔒 Login to send messages.');return;}
-  const inp=document.getElementById('msgInput'), txt=inp.value.trim(); if(!txt) return;
-  const role=currentUser.userType==='admin'?'ADMIN':currentUser.userType==='agency'?'AGENCY':currentUser.userType==='officer'?'OFFICER':'CIVILIAN';
-  try{
-    await db.ref(`messages/${currentChan}`).push({sender:currentUser.name||currentUser.email,role,msg:txt,time:Date.now(),uid:currentUser.uid||'guest'});
-    inp.value=''; // Firebase .on('value') listener auto-triggers renderMsgs()
-  }catch(e){showNotif('❌ Message not sent: '+e.message);}
-}
-
-/* KEY FIX: saveResource — writes to Firebase, listener updates resource grid in real time */
-async function saveResource(){
-  if(currentUser?.role!=='admin'){showNotif('🔒 Admin only.');return;}
-  const key=document.getElementById('res-type-sel').value;
-  const total=parseInt(document.getElementById('res-total').value)||0;
-  const avail=parseInt(document.getElementById('res-avail').value)||0;
-  if(!key){showNotif('Select a resource type.');return;}
-  if(avail>total){showNotif('Available cannot exceed total.');return;}
-  const btn=document.getElementById('res-save-btn');
-  if(btn){btn.disabled=true;btn.textContent='Saving…';}
-  try{
-    const base=DEFAULT_RESOURCES[key]||{icon:'📦',name:key};
-    await db.ref(`resources/${key}`).set({...base, key, total, avail, updatedAt:Date.now(), updatedBy:currentUser.name||currentUser.email});
-    sysLog(`Resource updated: ${base.name} → ${avail}/${total}`);
-    closeModal('addres');
-    showNotif(`✅ ${base.name} updated: ${avail}/${total} — inventory refreshed instantly!`);
-    document.getElementById('res-type-sel').value='';
-    document.getElementById('res-total').value='';
-    document.getElementById('res-avail').value='';
-  }catch(e){showNotif('❌ Error saving resource: '+e.message);}
-  finally{if(btn){btn.disabled=false;btn.textContent='💾 Save to Firebase';}}
-}
-function filterMap(el,type){
-  document.querySelectorAll('.filter-chip').forEach(c=>c.classList.remove('active')); el.classList.add('active');
-  if(!fullMap) return;
-  fullMarkers.forEach(({marker,type:t})=>{
-    const tl=(t||'').toLowerCase(); let show=false;
-    if(type==='all') show=true;
-    else if(type==='ndrf') show=tl.includes('ndrf')||tl.includes('sdrf')||tl.includes('coordination');
-    else if(type==='medical') show=tl.includes('medical')||tl.includes('ems');
-    else if(type==='ngo') show=tl.includes('ngo')||tl.includes('child')||tl.includes('elderly')||tl.includes('shelter')||tl.includes('wash')||tl.includes('logistics');
-    else if(type==='coast') show=tl.includes('coast');
-    if(show) fullMap.addLayer(marker); else fullMap.removeLayer(marker);
-  });
-}
-
-let ntTimer;
-function showNotif(msg){document.querySelectorAll('.notif').forEach(n=>n.remove()); const n=document.createElement('div'); n.className='notif'; n.innerHTML=`<div class="notif-title">🔔 RALCA</div><div class="notif-body">${msg}</div>`; document.body.appendChild(n); clearTimeout(ntTimer); ntTimer=setTimeout(()=>n.remove(),4000);}
-function showModal(id){const el=document.getElementById('modal-'+id); if(el) el.classList.add('open'); if(id==='incident') showForecast();}
-function closeModal(id){const el=document.getElementById('modal-'+id); if(el) el.classList.remove('open');}
-function refreshAll(){showNotif('🔄 Refreshing all data from Firebase…'); renderAlerts(); renderDashAlerts(); renderIncidents(); renderAgTable(); renderDashAgencies(); renderResources();}
 
 /* ════════════════════════════════════
    INIT ALL
 ════════════════════════════════════ */
 function initAll(){
-  renderChannels(); renderDashAgencies(); renderAgTable();
-  renderRoadList(); initVoice(); initPhrases(); renderVoiceHist(); renderOffQ();
-  listenFirebase(); // this sets up all real-time listeners, including resources
-  seedData();       // seeds defaults on first run
-  if(window.speechSynthesis){window.speechSynthesis.onvoiceschanged=()=>window.speechSynthesis.getVoices(); window.speechSynthesis.getVoices();}
-  setTimeout(initMiniMap,300);
+  listenFirebase(); 
+  seedData();
+  
+  // BROWSER OFFLINE HOOKS (NEW)
+  window.addEventListener('offline', simOffline);
+  window.addEventListener('online', simOnline);
+  // Auto-check on load
+  if(!navigator.onLine) simOffline();
 }
+
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function showNotif(msg){document.querySelectorAll('.notif').forEach(n=>n.remove()); const n=document.createElement('div'); n.className='notif'; n.innerHTML=`<div class="notif-title">🔔 RALCA</div><div class="notif-body">${msg}</div>`; document.body.appendChild(n); setTimeout(()=>n.remove(),4000);}
+function showModal(id){const el=document.getElementById('modal-'+id); if(el) el.classList.add('open');}
+function closeModal(id){const el=document.getElementById('modal-'+id); if(el) el.classList.remove('open');}
+
 </script>
 </body>
 </html>
