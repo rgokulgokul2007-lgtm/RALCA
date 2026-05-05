@@ -1200,7 +1200,16 @@ async function seedData() {
       await db.ref(`resources/${k}`).set({...v, key:k});
     }
   }
+
+  // Seed corridor roads to Firebase if not yet seeded
+  const rdSnap = await db.ref('corridor_roads').once('value');
+  if(!rdSnap.exists()) {
+    for(const r of INDIA_ROADS) {
+      await db.ref(`corridor_roads/${r.id}`).set(r);
+    }
+  }
 }
+
 
 function listenFirebase() {
 
@@ -1321,7 +1330,54 @@ function listenFirebase() {
   /* ══════════════════════════════════════════════
      USERS — live user management table.
   ══════════════════════════════════════════════ */
+/* ══════════════════════════════════════════════
+     USERS — live user management table.
+  ══════════════════════════════════════════════ */
   db.ref('users').on('value', snap => renderUsers(snap));
+
+  /* ══════════════════════════════════════════════
+     CORRIDOR ROADS — PERSISTENCE FIX
+  ══════════════════════════════════════════════ */
+  db.ref('corridor_roads').on('value', snap => {
+    if(snap.exists()) {
+      const fbData = snap.val();
+      // Merge Firebase status into your local INDIA_ROADS definitions
+      roadStatus = roadStatus.map(localRoad => {
+        if(fbData[localRoad.id]) {
+          return { ...localRoad, clear: fbData[localRoad.id].clear };
+        }
+        return localRoad;
+      });
+      
+      // Instantly update the UI switches and Map
+      renderRoadList();
+      if(corrMap) drawCorridorRoads();
+    }
+  });
+}
+      
+      // Refresh the UI to show the "sticky" toggles
+      renderRoadList();
+      if(corrMap) drawCorridorRoads();
+    }
+  });
+} // <--- Function now ends here
+  db.ref('corridor_roads').on('value', snap => {
+    if(snap.exists()) {
+      const fbData = snap.val();
+      // Merge Firebase states into your existing local road list
+      roadStatus = roadStatus.map(localRoad => {
+        if(fbData[localRoad.id]) {
+          return { ...localRoad, clear: fbData[localRoad.id].clear };
+        }
+        return localRoad;
+      });
+      
+      // Refresh the UI to show the "sticky" toggles
+      renderRoadList();
+      if(corrMap) drawCorridorRoads();
+    }
+  });
 }
 
 /* Helper: safely set textContent of any element by ID */
@@ -1367,7 +1423,9 @@ const INDIA_ROADS = [
   {id:'mumbai_pw',name:'Mumbai–Pune Expressway',         segment:'Khopoli–Pune',               clear:true,  from:[19.08,72.88],to:[18.52,73.86]},
   {id:'mumbai_et',name:'Eastern Express Highway',        segment:'Thane–Mulund',               clear:false, from:[19.20,72.97],to:[19.13,72.92]},
 ];
-let roadStatus = INDIA_ROADS.map(r=>({...r}));
+  // Keep INDIA_ROADS exactly as you have it. 
+// Change only this line to let Firebase populate it:
+let roadStatus = [...INDIA_ROADS];
 
 /* ════════════════════════════════════
    MAPS
@@ -1458,10 +1516,22 @@ function renderRoadList(){
   document.getElementById('blocked-count').textContent=roadStatus.filter(r=>!r.clear).length;
 }
 
-function toggleRoad(id){
-  roadStatus=roadStatus.map(r=>r.id===id?{...r,clear:!r.clear}:r);
-  renderRoadList(); drawCorridorRoads();
-  showNotif(`Road updated — ${roadStatus.filter(r=>r.clear).length}/${roadStatus.length} routes clear`);
+async function toggleRoad(id){
+  if(currentUser?.role==='guest'){showNotif('🔒 Login to update roads.');return;}
+  
+  // Find the road in our local array
+  const roadIndex = roadStatus.findIndex(r => r.id === id);
+  if(roadIndex === -1) return;
+
+  const newStatus = !roadStatus[roadIndex].clear;
+
+  try {
+    // Update Firebase with ONLY the new clear status
+    await db.ref(`corridor_roads/${id}`).update({ clear: newStatus });
+    showNotif(`🚦 Road ${newStatus ? 'Enabled' : 'Disabled'}`);
+  } catch(e) {
+    console.error(e);
+  }
 }
 
 function calcRoute(){
