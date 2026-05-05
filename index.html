@@ -1392,9 +1392,31 @@ function initFullMap(){
   if(fullMap) return;
   fullMap=L.map('fullmap',{zoomControl:true,attributionControl:false}).setView([22,79],5);
   L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{maxZoom:18}).addTo(fullMap);
+  
+  // Draw Incident Zones
   INCIDENT_ZONES.forEach(z=>L.circle([z.lat,z.lng],{color:z.color,fillColor:z.color,fillOpacity:.15,radius:z.r,weight:2,dashArray:'8,4'}).addTo(fullMap).bindPopup(`<b>${z.label}</b>`));
+  
+  // 1. Initialize the Cluster Group
+  markerClusterGroup = L.markerClusterGroup({
+    maxClusterRadius: 40, // Adjust this to make grouping tighter or looser
+    spiderfyOnMaxZoom: true,
+    disableClusteringAtZoom: 12 // Un-cluster everything when zoomed in close
+  });
+
   fullMarkers=[];
-  allAgencies.forEach(a=>{if(!a.lat||!a.lng) return; const m=L.marker([a.lat,a.lng],{icon:mkIcon(getColor(a))}).addTo(fullMap).bindPopup(popupHTML(a),{maxWidth:270}); fullMarkers.push({marker:m,type:a.type,agency:a});});
+  
+  allAgencies.forEach(a=>{
+    if(!a.lat||!a.lng) return; 
+    const m=L.marker([a.lat,a.lng],{icon:mkIcon(getColor(a))}).bindPopup(popupHTML(a),{maxWidth:270}); 
+    
+    // 2. Add marker to the cluster group instead of fullMap
+    markerClusterGroup.addLayer(m); 
+    fullMarkers.push({marker:m,type:a.type,agency:a});
+  });
+  
+  // 3. Add the cluster group to the map
+  fullMap.addLayer(markerClusterGroup);
+
   fullMap.on('mousemove',e=>{const el=document.getElementById('mapCoords'); if(el) el.textContent=`📍 ${e.latlng.lat.toFixed(4)}°N, ${e.latlng.lng.toFixed(4)}°E`;});
 }
 
