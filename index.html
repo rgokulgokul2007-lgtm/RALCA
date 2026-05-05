@@ -1877,15 +1877,12 @@ async function createAlert() {
   renderAlerts(); 
   renderDashAlerts();
 
-  // Close modal & clear form instantly
   closeModal('newalert');
   document.getElementById('al-title').value = '';
   document.getElementById('al-msg').value = '';
 
-  // 🚨 THE CACHE TEST - You MUST see this exact text pop up!
   showNotif('✅ BOOM: Alert forced to screen!');
 
-  // Send to Firebase quietly in the background
   try {
     await db.ref('alerts').push(newAlert);
     sysLog(`Alert created: ${title}`);
