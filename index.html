@@ -104,8 +104,8 @@ a{text-decoration:none;color:inherit}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
 .main{margin-left:240px;min-height:100vh;display:flex;flex-direction:column}
 .topbar{height:56px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 24px;gap:12px;position:sticky;top:0;z-index:50}
-.topbar-title{font-family:var(--font-head);font-size:20px;letter-spacing:.5px;flex:1}
-.topbar-actions{display:flex;align-items:center;gap:8px}
+.topbar-title{font-family:var(--font-head);font-size:20px;letter-spacing:.5px}
+.topbar-actions{display:flex;align-items:center;gap:8px;margin-left:auto}
 .btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;transition:all .15s;border:none;font-family:var(--font-body)}
 .btn-primary{background:var(--accent);color:#fff}
 .btn-primary:hover{background:#ea6c0a}
@@ -1337,7 +1337,7 @@ async function sysLog(msg) { try { await db.ref('system_logs').push({msg,time:Da
 ════════════════════════════════════ */
 const INDIA_ROADS = [
   // National Highways North-South (NH-44)
-  {id:'nh44_jk',  name:'NH-44: Srinagar—Jalandhar',    segment:'J&K–Punjab stretch',        clear:true,  from:[32.72,74.86],to:[31.32,75.57]},
+  {id:'nh44_jk',  name:'NH-44: Srinagar—Jalandhar',   segment:'J&K–Punjab stretch',        clear:true,  from:[32.72,74.86],to:[31.32,75.57]},
   {id:'nh44_pb',  name:'NH-44: Jalandhar—Delhi',        segment:'Punjab–Delhi corridor',      clear:true,  from:[31.32,75.57],to:[28.55,77.10]},
   {id:'nh44_da',  name:'NH-44: Delhi—Agra',             segment:'Mathura bypass',             clear:true,  from:[28.55,77.10],to:[27.18,78.01]},
   {id:'nh44_an',  name:'NH-44: Agra—Nagpur',            segment:'Gwalior–Bhopal–Nagpur',      clear:false, from:[27.18,78.01],to:[21.15,79.09]},
@@ -1372,12 +1372,9 @@ let roadStatus = INDIA_ROADS.map(r=>({...r}));
 /* ════════════════════════════════════
    MAPS
 ════════════════════════════════════ */
-/* ════════════════════════════════════
-   MAPS
-════════════════════════════════════ */
 let miniMap=null, fullMap=null, corrMap=null, civMap=null;
 let fullMarkers=[], civMarkers=[], corrLayers=[], hmVisible=false;
-let markerClusterGroup; // <-- You are dropping the new variable right here
+let markerClusterGroup; 
 const TYPE_COLORS={'NDRF':'#f97316','SDRF':'#f97316', /* ... */};
 const INCIDENT_ZONES=[{lat:13.05,lng:80.22,label:'🌊 Flood — Tambaram',color:'#ef4444',r:40000},{lat:19.076,lng:72.88,label:'🌊 Flood — Mumbai',color:'#3b82f6',r:50000},{lat:20.29,lng:85.84,label:'🌀 Cyclone — Odisha',color:'#f97316',r:80000},{lat:22.57,lng:88.36,label:'🌊 Flood — Kolkata',color:'#3b82f6',r:50000},{lat:28.61,lng:77.23,label:'⚠ Alert — Delhi',color:'#fbbf24',r:40000}];
 
@@ -1429,23 +1426,6 @@ function initFullMap(){
       fullMarkers.push({marker:m,type:a.type,agency:a});
     });
   }
-}
-
-  fullMarkers=[];
-  
-  allAgencies.forEach(a=>{
-    if(!a.lat||!a.lng) return; 
-    const m=L.marker([a.lat,a.lng],{icon:mkIcon(getColor(a))}).bindPopup(popupHTML(a),{maxWidth:270}); 
-    
-    // 2. Add marker to the cluster group instead of fullMap
-    markerClusterGroup.addLayer(m); 
-    fullMarkers.push({marker:m,type:a.type,agency:a});
-  });
-  
-  // 3. Add the cluster group to the map
-  fullMap.addLayer(markerClusterGroup);
-
-  fullMap.on('mousemove',e=>{const el=document.getElementById('mapCoords'); if(el) el.textContent=`📍 ${e.latlng.lat.toFixed(4)}°N, ${e.latlng.lng.toFixed(4)}°E`;});
 }
 
 function initCorrMap(){
@@ -1704,7 +1684,7 @@ function go(page, navEl) {
     setEl('st-sos', allSOS.length);
     setTimeout(()=>{ initMiniMap(); miniMap?.invalidateSize(); }, 100);
   }
-  if(page==='map')       { setTimeout(()=>{ initFullMap(); fullMap?.invalidateSize(); }, 100); }
+  if(page==='map')        { setTimeout(()=>{ initFullMap(); fullMap?.invalidateSize(); }, 100); }
   if(page==='corridor')  { setTimeout(()=>{ initCorrMap(); corrMap?.invalidateSize(); renderRoadList(); }, 100); }
   if(page==='alerts')    { renderAlerts(); }
   if(page==='agencies')  { renderAgTable(); }
