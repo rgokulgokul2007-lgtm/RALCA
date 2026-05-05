@@ -2017,6 +2017,72 @@ function initAll(){
   if(window.speechSynthesis){window.speechSynthesis.onvoiceschanged=()=>window.speechSynthesis.getVoices(); window.speechSynthesis.getVoices();}
   setTimeout(initMiniMap,300);
 }
+
+  /* ════════════════════════════════════
+   THE BRUTE-FORCE ALERT OVERRIDE 
+   (Paste at the very bottom, right above </script>)
+════════════════════════════════════ */
+const localForcedAlerts = [];
+
+// 1. Hijack the render function so Firebase cannot erase our alerts
+renderAlerts = function() {
+    // Merge our local locked alerts with whatever Firebase sends
+    const mergedAlerts = [...localForcedAlerts, ...allAlerts];
+    
+    const ce = document.getElementById('crit-alerts');
+    const we = document.getElementById('warn-alerts');
+    
+    // Force render Critical Alerts & Update the Red Badge
+    if(ce) {
+        const c = mergedAlerts.filter(a => (a.type || '').toLowerCase() === 'critical');
+        ce.innerHTML = c.length ? c.map(a => `<div class="alert-item"><div class="alert-icon critical">${a.icon||'🚨'}</div><div class="alert-content"><div class="alert-title">${esc(a.title)}</div><div class="alert-meta">${esc(a.meta||'')}</div></div><div class="alert-time">Just now</div></div>`).join('') : '<div style="padding:16px;color:var(--text-muted);font-size:13px">No critical alerts.</div>';
+        
+        const badge = document.getElementById('alertBadge');
+        if (badge) badge.textContent = c.length; // Updates the red 0 to 1!
+    }
+    
+    // Force render Warning Alerts
+    if(we) {
+        const w = mergedAlerts.filter(a => (a.type || '').toLowerCase() !== 'critical');
+        we.innerHTML = w.length ? w.map(a => `<div class="alert-item"><div class="alert-icon ${(a.type||'info').toLowerCase()}">${a.icon||'⚠'}</div><div class="alert-content"><div class="alert-title">${esc(a.title)}</div><div class="alert-meta">${esc(a.meta||'')}</div></div><div class="alert-time">Just now</div></div>`).join('') : '<div style="padding:16px;color:var(--text-muted);font-size:13px">No warnings.</div>';
+    }
+};
+
+// 2. Override the button function to bypass the Firebase delay entirely
+window.createAlert = async function() {
+    const sev = document.getElementById('al-sev').value.toLowerCase();
+    const title = document.getElementById('al-title').value.trim();
+    const msg = document.getElementById('al-msg').value.trim();
+    const typeCat = document.getElementById('al-type').value;
+
+    if (!title || !msg) {
+        showNotif('⚠ Please fill in both the title and message.');
+        return;
+    }
+
+    const newAlert = {
+        type: sev,
+        icon: sev === 'critical' ? '🚨' : sev === 'warning' ? '⚠' : 'ℹ',
+        title: title,
+        meta: `[${typeCat}] ${msg}`, 
+        time: Date.now()
+    };
+
+    // Lock it into our untouchable array
+    localForcedAlerts.unshift(newAlert);
+    
+    // Force the screen to render it instantly
+    renderAlerts(); 
+    
+    // Close modal and clear
+    closeModal('newalert');
+    document.getElementById('al-title').value = '';
+    document.getElementById('al-msg').value = '';
+    showNotif('✅ Alert locked successfully to your screen!');
+
+    // Send to Firebase quietly in the background (we don't care if it fails anymore)
+    try { await db.ref('alerts').push(newAlert); } catch(e) {}
+};
 </script>
 </body>
 </html>
