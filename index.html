@@ -1849,50 +1849,53 @@ async function submitIncident(){
   document.getElementById('inc-loc').value=''; document.getElementById('inc-desc').value='';
 }
 async function createAlert() {
-  console.log("1. Button clicked! Function started.");
-
   // 1. Verify Admin Status
   if (currentUser?.role !== 'admin') {
-    console.log("⛔ Blocked: User is not admin. Current role:", currentUser?.role);
     showNotif('🔒 Admin access required to create alerts.');
     return;
   }
 
-  // 2. Grab fields
-  const typeCategory = document.getElementById('al-type').value;
+  // 2. Grab ALL fields from the modal
+  const typeCategory = document.getElementById('al-type').value; 
   const sev = document.getElementById('al-sev').value.toLowerCase();
   const title = document.getElementById('al-title').value.trim();
   const msg = document.getElementById('al-msg').value.trim();
 
-  console.log("2. Form Data Captured:", { typeCategory, sev, title, msg });
-
   // 3. Validation
   if (!title || !msg) {
-    console.log("⛔ Blocked: Title or Message is empty.");
     showNotif('⚠ Please fill in both the title and message.');
     return;
   }
 
-  try {
-    console.log("3. Attempting to push to Firebase...");
-    
-    await db.ref('alerts').push({
-      type: sev,
-      icon: sev === 'critical' ? '🚨' : sev === 'warning' ? '⚠' : 'ℹ',
-      title: title,
-      meta: `[${typeCategory}] ${msg}`, 
-      time: Date.now()
-    });
+  // 4. Construct the exact Alert Object
+  const newAlert = {
+    type: sev,
+    icon: sev === 'critical' ? '🚨' : sev === 'warning' ? '⚠' : 'ℹ',
+    title: title,
+    meta: `[${typeCategory}] ${msg}`, 
+    time: Date.now()
+  };
 
-    console.log("4. ✅ Firebase push successful!");
+  try {
+    // 🔥 THE FIX: Force the UI to update INSTANTLY before waiting for the server
+    allAlerts.unshift(newAlert);
+    renderAlerts(); 
+    renderDashAlerts();
+
+    // 5. Push to Firebase silently in the background
+    await db.ref('alerts').push(newAlert);
+
     sysLog(`Alert created: ${title}`);
     closeModal('newalert');
+
+    // 6. Clear form for next time
     document.getElementById('al-title').value = '';
     document.getElementById('al-msg').value = '';
-    showNotif('✅ Alert saved to Firebase and published live!');
+
+    showNotif('✅ Alert instantly published and saved!');
     
   } catch (error) {
-    console.error("5. ❌ Firebase Write Error:", error);
+    console.error("Firebase Write Error:", error);
     showNotif('❌ Error saving alert. Check console.');
   }
 }
