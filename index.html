@@ -1836,7 +1836,7 @@ function renderAlerts() {
       <div class="alert-time">${ago(a.time)}</div>
     </div>
   `).join('') : '<div style="padding:16px;color:var(--text-muted);font-size:13px">No warnings or info alerts.</div>';
-}
+
 
 function showAgDetail(id){
   const a=allAgencies.find(x=>x.id===id); if(!a) return;
