@@ -1848,16 +1848,50 @@ async function submitIncident(){
   closeModal('incident'); showNotif('🆘 Incident saved to Firebase permanently! Visible in Incidents table.');
   document.getElementById('inc-loc').value=''; document.getElementById('inc-desc').value='';
 }
-async function createAlert(){
-  if(currentUser?.role!=='admin'){showNotif('🔒 Admin only.');return;}
-  const title=document.getElementById('al-title').value.trim(), msg=document.getElementById('al-msg').value.trim(), sev=document.getElementById('al-sev').value.toLowerCase();
-  if(!title||!msg){showNotif('Fill title and message.');return;}
-  try{
-    await db.ref('alerts').push({type:sev,icon:sev==='critical'?'🚨':sev==='warning'?'⚠':'ℹ',title,meta:msg,time:Date.now()});
-    sysLog(`Alert created: ${title}`); closeModal('newalert');
-    document.getElementById('al-title').value=''; document.getElementById('al-msg').value='';
-    showNotif('✅ Alert saved to Firebase! Go to Alerts tab — it is there now.');
-  }catch(e){showNotif('❌ Error saving alert: '+e.message);}
+async function createAlert() {
+  // 1. Verify Admin Status
+  if (currentUser?.role !== 'admin') {
+    showNotif('🔒 Admin access required to create alerts.');
+    return;
+  }
+
+  // 2. Grab ALL fields from the modal
+  const typeCategory = document.getElementById('al-type').value; // Was missing in original code
+  const sev = document.getElementById('al-sev').value.toLowerCase();
+  const title = document.getElementById('al-title').value.trim();
+  const msg = document.getElementById('al-msg').value.trim();
+
+  // 3. Validation
+  if (!title || !msg) {
+    showNotif('⚠ Please fill in both the title and message.');
+    return;
+  }
+
+  try {
+    // 4. Push to Firebase
+    // We combine the category and message into the 'meta' field for a cleaner UI display
+    await db.ref('alerts').push({
+      type: sev,
+      icon: sev === 'critical' ? '🚨' : sev === 'warning' ? '⚠' : 'ℹ',
+      title: title,
+      meta: `[${typeCategory}] ${msg}`, 
+      time: Date.now()
+    });
+
+    sysLog(`Alert created: ${title}`);
+    closeModal('newalert');
+
+    // 5. Clear form for next time
+    document.getElementById('al-title').value = '';
+    document.getElementById('al-msg').value = '';
+
+    showNotif('✅ Alert saved to Firebase and published live!');
+    
+  } catch (error) {
+    // 6. Catch and display any Firebase permission errors
+    showNotif('❌ Error saving alert. Check console.');
+    console.error("Firebase Write Error:", error);
+  }
 }
 async function sendBroadcast(){
   if(currentUser?.role!=='admin'){showNotif('🔒 Admin only.');return;}
