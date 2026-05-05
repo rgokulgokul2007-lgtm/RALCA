@@ -1366,9 +1366,13 @@ let roadStatus = INDIA_ROADS.map(r=>({...r}));
 /* ════════════════════════════════════
    MAPS
 ════════════════════════════════════ */
+/* ════════════════════════════════════
+   MAPS
+════════════════════════════════════ */
 let miniMap=null, fullMap=null, corrMap=null, civMap=null;
 let fullMarkers=[], civMarkers=[], corrLayers=[], hmVisible=false;
-const TYPE_COLORS={'NDRF':'#f97316','SDRF':'#f97316','Coordination Body':'#22d3ee','Medical / NGO':'#ef4444','Medical / EMS':'#10b981','Coast Guard':'#3b82f6','NGO / Logistics':'#fbbf24','NGO':'#fbbf24','NGO / Medical':'#ef4444','NGO / Child Safety':'#a78bfa','NGO / Elderly Care':'#10b981','NGO / Shelter':'#22d3ee','NGO / WASH':'#22d3ee','Fire & Rescue':'#ef4444','Police':'#3b82f6','Civil Defence':'#94a3b8'};
+let markerClusterGroup; // <-- You are dropping the new variable right here
+const TYPE_COLORS={'NDRF':'#f97316','SDRF':'#f97316', /* ... */};
 const INCIDENT_ZONES=[{lat:13.05,lng:80.22,label:'🌊 Flood — Tambaram',color:'#ef4444',r:40000},{lat:19.076,lng:72.88,label:'🌊 Flood — Mumbai',color:'#3b82f6',r:50000},{lat:20.29,lng:85.84,label:'🌀 Cyclone — Odisha',color:'#f97316',r:80000},{lat:22.57,lng:88.36,label:'🌊 Flood — Kolkata',color:'#3b82f6',r:50000},{lat:28.61,lng:77.23,label:'⚠ Alert — Delhi',color:'#fbbf24',r:40000}];
 
 function getColor(a){return a.color||TYPE_COLORS[a.type]||'#94a3b8';}
