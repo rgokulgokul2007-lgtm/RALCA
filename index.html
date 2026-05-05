@@ -1775,13 +1775,40 @@ function renderDashAgencies(){
   el.innerHTML=allAgencies.filter(a=>(a.status||'').toLowerCase()==='active').slice(0,5).map(a=>`<tr><td><strong>${esc(a.name)}</strong></td><td style="color:var(--text-muted);font-size:12px">${esc(a.shortType||a.type)}</td><td><span class="badge ${sm[a.status||'active']||'badge-pending'}">${(a.status||'').toUpperCase()}</span></td></tr>`).join('');
 }
 
-// ALERTS — case-insensitive type check (key fix)
 function renderAlerts() {
   const ce = document.getElementById('crit-alerts');
   const we = document.getElementById('warn-alerts');
   
   if (!ce || !we) return;
 
+  // Filter the arrays based on the type saved in Firebase
+  const criticals = allAlerts.filter(a => String(a.type).toLowerCase() === 'critical');
+  const warnings = allAlerts.filter(a => String(a.type).toLowerCase() !== 'critical');
+
+  // Render the Critical section
+  ce.innerHTML = criticals.length > 0 ? criticals.map(a => `
+    <div class="alert-item">
+      <div class="alert-icon critical">${a.icon || '🚨'}</div>
+      <div class="alert-content">
+        <div class="alert-title">${esc(a.title)}</div>
+        <div class="alert-meta">${esc(a.meta || '')}</div>
+      </div>
+      <div class="alert-time">${ago(a.time)}</div>
+    </div>
+  `).join('') : '<div style="padding:16px;color:var(--text-muted);font-size:13px">No critical alerts.</div>';
+
+  // Render the Warning/Info section
+  we.innerHTML = warnings.length > 0 ? warnings.map(a => `
+    <div class="alert-item">
+      <div class="alert-icon ${String(a.type).toLowerCase() === 'warning' ? 'warning' : 'info'}">${a.icon || '⚠'}</div>
+      <div class="alert-content">
+        <div class="alert-title">${esc(a.title)}</div>
+        <div class="alert-meta">${esc(a.meta || '')}</div>
+      </div>
+      <div class="alert-time">${ago(a.time)}</div>
+    </div>
+  `).join('') : '<div style="padding:16px;color:var(--text-muted);font-size:13px">No warnings or info alerts.</div>';
+}
   // 1. Filter the arrays
   const criticals = allAlerts.filter(a => String(a.type).toLowerCase() === 'critical');
   const warnings = allAlerts.filter(a => String(a.type).toLowerCase() !== 'critical');
