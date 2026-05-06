@@ -287,9 +287,9 @@ body{font-family:var(--font-body);background:var(--gray-50);color:var(--gray-900
     <div class="login-headline">Coordinating Relief.<br><span>Saving Lives.</span></div>
     <div class="login-desc">A unified command platform for all rescue and relief agencies. Register, coordinate, report and respond — all in one place during natural or man-made calamities.</div>
     <div class="login-stats">
-      <div class="ls"><div class="ls-num" id="lsStat1">142</div><div class="ls-lbl">Agencies</div></div>
-      <div class="ls"><div class="ls-num" id="lsStat2">38</div><div class="ls-lbl">Active Now</div></div>
-      <div class="ls"><div class="ls-num" id="lsStat3">12</div><div class="ls-lbl">Incidents</div></div>
+      <div class="ls"><div class="ls-num" id="lsStat1">0</div><div class="ls-lbl">Agencies</div></div>
+      <div class="ls"><div class="ls-num" id="lsStat2">0</div><div class="ls-lbl">Active Now</div></div>
+      <div class="ls"><div class="ls-num" id="lsStat3">0</div><div class="ls-lbl">Incidents</div></div>
     </div>
   </div>
   <div class="login-right">
@@ -371,7 +371,7 @@ body{font-family:var(--font-body);background:var(--gray-50);color:var(--gray-900
       </div>
       <span class="topnav-brand">RescueNet</span>
     </div>
-    <div class="alert-pill"><div class="alert-dot"></div>ACTIVE ALERT: Flood — Zone 4B, Tamil Nadu</div>
+    <div class="alert-pill"><div class="alert-dot"></div>ACTIVE ALERT: Firebase System Linked Successfully</div>
     <div class="nav-links">
       <button class="nav-link active" onclick="showPage('dashboard',this)">
         <svg viewBox="0 0 24 24"><path d="M3 3h8v8H3zm10 0h8v8h-8zM3 13h8v8H3zm10 0h8v8h-8z"/></svg>Dashboard
@@ -791,7 +791,25 @@ body{font-family:var(--font-body);background:var(--gray-50);color:var(--gray-900
 <!-- TOAST -->
 <div class="toast" id="toast"></div>
 
-<script>
+<!-- FIREBASE INTEGRATION SCRIPT -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+import { getDatabase, ref, onValue, push, set, update, remove } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
+
+// Your Firebase Config
+const firebaseConfig = {
+  apiKey: "AIzaSyBTHohDW-10f7EolWpW8CUlfLCIJNDZmF8",
+  authDomain: "ralca-59e0a.firebaseapp.com",
+  databaseURL: "https://ralca-59e0a-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "ralca-59e0a",
+  storageBucket: "ralca-59e0a.firebasestorage.app",
+  messagingSenderId: "48983338103",
+  appId: "1:48983338103:web:56e63507811b1c0cca6a72"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
 // ─── DATA ───────────────────────────────────────────
 const TYPE_META = {
   'Fire & Rescue':      { emoji:'🔴', bg:'#FADBD8', color:'#922B21' },
@@ -805,28 +823,55 @@ const TYPE_META = {
 const STATUS_COLOR = { active:'#1E8449', standby:'#E67E22', deployed:'#C0392B' };
 const STATUS_BG    = { active:'#D5F5E3', standby:'#FDEBD0', deployed:'#FADBD8' };
 
-let agencies = [
-  {id:1,name:'TN Fire Services — Madurai',type:'Fire & Rescue',district:'Madurai',contact:'+91 94430 12345',email:'tnfire.mdu@gov.in',personnel:62,vehicles:8,status:'deployed',equipment:'Hydraulic cutters, Fire tenders, Rescue boats',registered:'2024-03-12',x:330,y:290},
-  {id:2,name:'NDRF Unit 7 — Chennai',type:'Disaster Management',district:'Chennai',contact:'+91 98450 67890',email:'ndrf7@ndrf.gov.in',personnel:120,vehicles:15,status:'active',equipment:'Search cameras, Sniffer dogs, Medical kits',registered:'2023-11-05',x:390,y:120},
-  {id:3,name:'Tamil Nadu EMS — Coimbatore',type:'Medical / EMS',district:'Coimbatore',contact:'+91 96770 11223',email:'tnems.cbe@gov.in',personnel:48,vehicles:12,status:'standby',equipment:'Ambulances, ICU equipment, Blood bank',registered:'2024-01-18',x:140,y:200},
-  {id:4,name:'Flood Relief Cell — Thanjavur',type:'Flood Response',district:'Thanjavur',contact:'+91 94000 33445',email:'flood.tanjore@gov.in',personnel:35,vehicles:6,status:'deployed',equipment:'Rescue boats, Pumping sets, Life jackets',registered:'2024-06-02',x:400,y:240},
-  {id:5,name:'Search & Rescue — Trichy',type:'Search & Rescue',district:'Trichy',contact:'+91 95550 77889',email:'sar.trichy@gov.in',personnel:27,vehicles:5,status:'active',equipment:'Drones, Rope kits, Thermal cameras',registered:'2024-02-28',x:320,y:215},
-  {id:6,name:'Coast Guard — Rameswaram',type:'Coast Guard',district:'Rameswaram',contact:'+91 91110 55667',email:'cg.rameswaram@gov.in',personnel:80,vehicles:10,status:'active',equipment:'Patrol vessels, Divers, Radar systems',registered:'2023-09-10',x:440,y:340},
-  {id:7,name:'TN Fire Services — Salem',type:'Fire & Rescue',district:'Salem',contact:'+91 90040 22334',email:'tnfire.salem@gov.in',personnel:40,vehicles:7,status:'standby',equipment:'Fire tenders, Aerial platforms, Rescue kits',registered:'2024-04-15',x:225,y:160},
-  {id:8,name:'Medical First Response — Vellore',type:'Medical / EMS',district:'Vellore',contact:'+91 93810 44556',email:'mfr.vellore@gov.in',personnel:30,vehicles:8,status:'active',equipment:'Ambulances, Emergency kits, Ventilators',registered:'2024-05-20',x:340,y:145},
-];
-
-let incidents = [
-  {id:1,title:'Major Flooding — Cauvery Delta',type:'Flood',severity:'high',district:'Thanjavur',area:'Papanasam',desc:'Severe flooding affecting 3,000+ residents. Several villages submerged. Immediate evacuation needed.',affected:3200,agency:'Flood Relief Cell — Thanjavur',status:'active',time:'2 hrs ago',reporter:'Admin'},
-  {id:2,title:'Industrial Fire — SIPCOT Estate',type:'Fire',severity:'high',district:'Cuddalore',area:'SIPCOT Industrial Area',desc:'Chemical fire at manufacturing unit. Toxic fumes spreading. Evacuation of 500m radius initiated.',affected:800,agency:'TN Fire Services — Madurai',status:'active',time:'4 hrs ago',reporter:'Agency User'},
-  {id:3,title:'Cyclone Damage — Coastal Villages',type:'Cyclone',severity:'medium',district:'Nagapattinam',area:'Coastal belt',desc:'Multiple fishing villages affected by cyclone. Roof collapses reported. 200 families need shelter.',affected:1000,agency:'Coast Guard — Rameswaram',status:'monitoring',time:'Yesterday',reporter:'Admin'},
-  {id:4,title:'Road Accident — NH44',type:'Road Accident',severity:'medium',district:'Krishnagiri',area:'Bargur bypass',desc:'Multi-vehicle accident involving bus and trucks. 15 injured, 3 critical. Medical assistance needed.',affected:15,agency:'Medical First Response — Vellore',status:'resolved',time:'Yesterday',reporter:'Agency User'},
-  {id:5,title:'Missing Trekkers — Kodaikanal',type:'Search & Rescue',severity:'low',district:'Dindigul',area:'Kodaikanal hills',desc:'Group of 8 trekkers reported missing in forest area. Last seen near Silver Cascade.',affected:8,agency:'Search & Rescue — Trichy',status:'active',time:'3 hrs ago',reporter:'Admin'},
-];
-
+let agencies = [];
+let incidents = [];
 let currentUser = null;
 let selectedSeverity = 'high';
 let sidebarFilter = 'all';
+
+// ─── FIREBASE LISTENERS ──────────────────────────────
+const agenciesRef = ref(db, 'agencies');
+onValue(agenciesRef, (snapshot) => {
+  agencies = []; 
+  snapshot.forEach((childSnapshot) => {
+    agencies.push({
+      id: childSnapshot.key,
+      ...childSnapshot.val()
+    });
+  });
+  
+  // Re-render UI Elements
+  if (document.getElementById('appScreen').classList.contains('active')) {
+      renderSidebar();
+      renderAgenciesGrid();
+      renderMapPins();
+      updateStats();
+      renderResourcesTable();
+      populateIncidentAgencySelect();
+  }
+  document.getElementById('lsStat1').textContent = agencies.length;
+  document.getElementById('lsStat2').textContent = agencies.filter(a=>a.status==='active').length;
+});
+
+const incidentsRef = ref(db, 'incidents');
+onValue(incidentsRef, (snapshot) => {
+  incidents = [];
+  snapshot.forEach((childSnapshot) => {
+    incidents.push({
+      id: childSnapshot.key,
+      ...childSnapshot.val()
+    });
+  });
+  
+  incidents.reverse(); 
+  if (document.getElementById('appScreen').classList.contains('active')) {
+      renderIncidentsList();
+      renderRpIncidents();
+      updateStats();
+      document.getElementById('incidentReportCount').textContent = incidents.length + ' total incidents';
+  }
+  document.getElementById('lsStat3').textContent = incidents.length;
+});
 
 // ─── AUTH ────────────────────────────────────────────
 const CREDS = {
@@ -866,22 +911,25 @@ function doRegister() {
   const n=document.getElementById('regAgName').value.trim();
   const d=document.getElementById('regAgDistrict').value.trim();
   if(!n||!d){showToast('Please fill required fields','error');return;}
+  
   const newAg = {
-    id: Date.now(), name:n, type:document.getElementById('regAgType').value,
+    name:n, type:document.getElementById('regAgType').value,
     district:d, contact:document.getElementById('regAgPhone').value,
     email:document.getElementById('regAgEmail').value,
     personnel:30, vehicles:4, status:'standby', equipment:'Standard kit',
     registered:new Date().toISOString().slice(0,10),
     x:120+Math.random()*400, y:80+Math.random()*300
   };
-  agencies.push(newAg);
-  showToast('Agency registered! Please wait for approval.','success');
-  currentUser={role:'agency',email:newAg.email||'new@agency.com',name:newAg.name};
-  document.getElementById('userName').textContent=newAg.name.slice(0,20);
-  document.getElementById('userAvatar').textContent=getInitials(newAg.name);
-  document.getElementById('loginScreen').classList.remove('active');
-  document.getElementById('appScreen').classList.add('active');
-  initApp();
+
+  push(ref(db, 'agencies'), newAg).then(() => {
+    showToast('Agency registered! Pending admin approval.','success');
+    currentUser={role:'agency',email:newAg.email||'new@agency.com',name:newAg.name};
+    document.getElementById('userName').textContent=newAg.name.slice(0,20);
+    document.getElementById('userAvatar').textContent=getInitials(newAg.name);
+    document.getElementById('loginScreen').classList.remove('active');
+    document.getElementById('appScreen').classList.add('active');
+    initApp();
+  }).catch(e => showToast('Error saving to Firebase: '+e.message, 'error'));
 }
 
 function doLogout() {
@@ -937,7 +985,7 @@ function renderSidebar() {
   if(sidebarFilter!=='all') filtered=agencies.filter(a=>a.type.includes(sidebarFilter));
   list.innerHTML=filtered.map(ag=>{
     const tm=TYPE_META[ag.type]||TYPE_META['Fire & Rescue'];
-    return `<div class="agency-card-mini" onclick="openAgencyDrawer(${ag.id})">
+    return `<div class="agency-card-mini" onclick="openAgencyDrawer('${ag.id}')">
       <div class="acm-top">
         <div class="acm-icon" style="background:${tm.bg};color:${tm.color}">${tm.emoji}</div>
         <div><div class="acm-name">${ag.name}</div><div class="acm-type">${ag.type}</div></div>
@@ -968,6 +1016,7 @@ function renderMapPins() {
   if(!g) return;
   g.innerHTML='';
   agencies.forEach(ag=>{
+    if(!ag.x || !ag.y) return; // safeguard
     const col=STATUS_COLOR[ag.status];
     const grp=document.createElementNS('http://www.w3.org/2000/svg','g');
     grp.style.cursor='pointer';
@@ -1015,12 +1064,9 @@ function renderRpIncidents() {
 }
 function renderRpActivity() {
   const acts=[
-    {icon:'✅',text:'NDRF Unit 7 marked active',time:'10 min ago'},
-    {icon:'📋',text:'New incident: Flooding in Thanjavur',time:'2 hrs ago'},
-    {icon:'🚀',text:'TN Fire Services deployed to Madurai',time:'3 hrs ago'},
-    {icon:'➕',text:'Coast Guard registered new patrol vessel',time:'5 hrs ago'},
-    {icon:'⚠️',text:'Alert issued: Flood warning Zone 4B',time:'6 hrs ago'},
-    {icon:'✅',text:'Incident #4 marked resolved',time:'Yesterday'},
+    {icon:'✅',text:'System Linked with Firebase',time:'Just now'},
+    {icon:'⚠️',text:'Alert issued: Flood warning Zone 4B',time:'2 hrs ago'},
+    {icon:'🚀',text:'Platform ready for cross-agency comms',time:'3 hrs ago'}
   ];
   document.getElementById('rpBody').innerHTML=acts.map(a=>`
     <div style="display:flex;gap:10px;padding:9px 0;border-bottom:1px solid #F1F3F4">
@@ -1041,7 +1087,7 @@ function renderAgenciesGrid() {
   document.getElementById('agenciesCount').textContent=`${filtered.length} of ${agencies.length} agencies`;
   document.getElementById('agenciesGrid').innerHTML=filtered.map(ag=>{
     const tm=TYPE_META[ag.type]||TYPE_META['Fire & Rescue'];
-    return `<div class="ag-card" onclick="openAgencyDrawer(${ag.id})">
+    return `<div class="ag-card" onclick="openAgencyDrawer('${ag.id}')">
       <div class="ag-card-top">
         <div class="ag-icon" style="background:${tm.bg};color:${tm.color};font-size:22px">${tm.emoji}</div>
         <div class="ag-info">
@@ -1080,31 +1126,38 @@ function openAgencyDrawer(id) {
     </div>`;
   document.getElementById('ddActions').innerHTML=`
     <button class="dd-action-btn primary-action" onclick="callAgency('${ag.contact}')">📞 Contact Agency</button>
-    <button class="dd-action-btn" onclick="changeStatus(${ag.id})">🔄 Change Status</button>
-    <button class="dd-action-btn" onclick="exportSingleAgency(${ag.id})">📥 Export Details</button>
-    <button class="dd-action-btn danger" onclick="removeAgency(${ag.id})">🗑 Remove Agency</button>`;
+    <button class="dd-action-btn" onclick="changeStatus('${ag.id}')">🔄 Change Status</button>
+    <button class="dd-action-btn" onclick="exportSingleAgency('${ag.id}')">📥 Export Details</button>
+    <button class="dd-action-btn danger" onclick="removeAgency('${ag.id}')">🗑 Remove Agency</button>`;
   document.getElementById('detailDrawer').classList.add('open');
 }
 function closeDrawer(){document.getElementById('detailDrawer').classList.remove('open')}
 function callAgency(c){showToast('Calling: '+c,'success')}
+
 function changeStatus(id) {
   const ag=agencies.find(a=>a.id===id);
   const opts=['active','standby','deployed'].filter(s=>s!==ag.status);
   const ns=prompt(`Change status for ${ag.name}\nOptions: ${opts.join(', ')}`);
   if(ns&&['active','standby','deployed'].includes(ns.toLowerCase())) {
-    ag.status=ns.toLowerCase();
-    renderSidebar();renderAgenciesGrid();renderMapPins();updateStats();renderResourcesTable();
-    showToast('Status updated to: '+ag.status,'success');
-    openAgencyDrawer(id);
+    update(ref(db, 'agencies/' + id), { status: ns.toLowerCase() })
+        .then(() => {
+            showToast('Status updated to: '+ ns.toLowerCase(),'success');
+            openAgencyDrawer(id); // refresh drawer visual
+        })
+        .catch(e => showToast('Error updating status: ' + e.message, 'error'));
   }
 }
+
 function removeAgency(id) {
-  if(!confirm('Remove this agency from the registry?')) return;
-  agencies=agencies.filter(a=>a.id!==id);
-  closeDrawer();
-  renderSidebar();renderAgenciesGrid();renderMapPins();updateStats();renderResourcesTable();
-  showToast('Agency removed','error');
+  if(!confirm('Remove this agency from the Firebase registry? This cannot be undone.')) return;
+  remove(ref(db, 'agencies/' + id))
+      .then(() => {
+          closeDrawer();
+          showToast('Agency removed successfully','error');
+      })
+      .catch(e => showToast('Error removing agency: ' + e.message, 'error'));
 }
+
 function exportSingleAgency(id) {
   const ag=agencies.find(a=>a.id===id);
   const csv=`Agency Name,Type,District,Contact,Email,Personnel,Vehicles,Status,Equipment,Registered\n"${ag.name}","${ag.type}","${ag.district}","${ag.contact}","${ag.email||''}",${ag.personnel},${ag.vehicles||0},${ag.status},"${ag.equipment||''}",${ag.registered}`;
@@ -1117,8 +1170,9 @@ function registerAgencyFull() {
   const n=document.getElementById('mRegName').value.trim();
   const d=document.getElementById('mRegDistrict').value.trim();
   if(!n||!d){showToast('Name and district are required','error');return;}
+  
   const newAg={
-    id:Date.now(), name:n, type:document.getElementById('mRegType').value,
+    name:n, type:document.getElementById('mRegType').value,
     district:d, contact:document.getElementById('mRegPhone').value,
     email:document.getElementById('mRegEmail').value,
     personnel:parseInt(document.getElementById('mRegPersonnel').value)||20,
@@ -1128,42 +1182,48 @@ function registerAgencyFull() {
     registered:new Date().toISOString().slice(0,10),
     x:120+Math.random()*400, y:80+Math.random()*300
   };
-  agencies.push(newAg);
-  closeModal('registerModal');
-  renderSidebar();renderAgenciesGrid();renderMapPins();updateStats();renderResourcesTable();populateIncidentAgencySelect();
-  showToast('Agency registered successfully!','success');
-  ['mRegName','mRegDistrict','mRegPhone','mRegEmail','mRegPersonnel','mRegVehicles','mRegEquip'].forEach(id=>{
-    const el=document.getElementById(id); if(el) el.value='';
-  });
+
+  push(ref(db, 'agencies'), newAg).then(() => {
+      closeModal('registerModal');
+      showToast('Agency registered on Firebase successfully!','success');
+      ['mRegName','mRegDistrict','mRegPhone','mRegEmail','mRegPersonnel','mRegVehicles','mRegEquip'].forEach(id=>{
+        const el=document.getElementById(id); if(el) el.value='';
+      });
+  }).catch(e => showToast('Error saving agency: ' + e.message, 'error'));
 }
 
 // ─── INCIDENTS ───────────────────────────────────────
 function populateIncidentAgencySelect() {
   const sel=document.getElementById('incAgency');
   if(!sel) return;
-  sel.innerHTML=agencies.map(a=>`<option>${a.name}</option>`).join('');
+  sel.innerHTML=agencies.map(a=>`<option value="${a.name}">${a.name}</option>`).join('');
 }
 function setSeverity(s,el) {
   selectedSeverity=s;
   document.querySelectorAll('.sev-pill').forEach(p=>{p.className='sev-pill';});
   el.className='sev-pill active-'+( s==='high'?'high':s==='medium'?'med':'low' );
 }
+
 function submitIncident() {
   const title=document.getElementById('incTitle').value.trim();
   const dist=document.getElementById('incDistrict').value.trim();
   if(!title||!dist){showToast('Title and district are required','error');return;}
+  
   const newInc={
-    id:Date.now(), title, type:document.getElementById('incType').value,
+    title, type:document.getElementById('incType').value,
     severity:selectedSeverity, district:dist, area:document.getElementById('incArea').value,
     desc:document.getElementById('incDesc').value, affected:parseInt(document.getElementById('incAffected').value)||0,
-    agency:document.getElementById('incAgency').value, status:'active', time:'Just now', reporter:currentUser?.name||'User'
+    agency:document.getElementById('incAgency').value, status:'active', 
+    time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}), 
+    reporter:currentUser?.name||'User'
   };
-  incidents.unshift(newInc);
-  renderIncidentsList();updateStats();renderRpIncidents();
-  document.getElementById('incidentReportCount').textContent=incidents.length+' total incidents';
-  ['incTitle','incDistrict','incArea','incDesc','incAffected'].forEach(id=>{document.getElementById(id).value='';});
-  showToast('Incident reported successfully!','success');
+
+  push(ref(db, 'incidents'), newInc).then(() => {
+      ['incTitle','incDistrict','incArea','incDesc','incAffected'].forEach(id=>{document.getElementById(id).value='';});
+      showToast('Incident reported to Firebase successfully!','success');
+  }).catch(e => showToast('Error saving incident: ' + e.message, 'error'));
 }
+
 function renderIncidentsList() {
   const el=document.getElementById('incidentsList');
   el.innerHTML=incidents.map(inc=>`
@@ -1183,13 +1243,18 @@ function renderIncidentsList() {
           <span>👥 ${inc.affected} affected</span>
           <span>🕐 ${inc.time}</span>
         </div>
-        <button class="ic-footer-btn" onclick="resolveIncident(${inc.id},this)">${inc.status==='resolved'?'✅ Resolved':'Mark Resolved'}</button>
+        <button class="ic-footer-btn" onclick="resolveIncident('${inc.id}',this)">${inc.status==='resolved'?'✅ Resolved':'Mark Resolved'}</button>
       </div>
     </div>`).join('');
 }
+
 function resolveIncident(id,btn) {
   const inc=incidents.find(i=>i.id===id);
-  if(inc) { inc.status='resolved'; renderIncidentsList(); updateStats(); showToast('Incident marked resolved','success'); }
+  if(inc && inc.status !== 'resolved') { 
+      update(ref(db, 'incidents/' + id), { status: 'resolved' })
+          .then(() => showToast('Incident marked resolved in Firebase','success'))
+          .catch(e => showToast('Error updating incident: ' + e.message, 'error'));
+  }
 }
 
 // ─── RESOURCES TABLE ─────────────────────────────────
@@ -1259,6 +1324,30 @@ function exportData(type) {
   showToast('Report downloaded: '+filename,'success');
 }
 function generateFullReport(){exportData('full')}
+
+// ─── EXPOSE TO WINDOW FOR INLINE HTML CLICKS ──────────
+window.switchLoginTab = switchLoginTab;
+window.doLogin = doLogin;
+window.doRegister = doRegister;
+window.doLogout = doLogout;
+window.showPage = showPage;
+window.filterSidebar = filterSidebar;
+window.openAgencyDrawer = openAgencyDrawer;
+window.closeDrawer = closeDrawer;
+window.changeStatus = changeStatus;
+window.removeAgency = removeAgency;
+window.exportSingleAgency = exportSingleAgency;
+window.callAgency = callAgency;
+window.openModal = openModal;
+window.closeModal = closeModal;
+window.openRegisterModal = openRegisterModal;
+window.registerAgencyFull = registerAgencyFull;
+window.setSeverity = setSeverity;
+window.submitIncident = submitIncident;
+window.resolveIncident = resolveIncident;
+window.exportData = exportData;
+window.generateFullReport = generateFullReport;
+window.switchRpTab = switchRpTab;
 </script>
 </body>
 </html>
