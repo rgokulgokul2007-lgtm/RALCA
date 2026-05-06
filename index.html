@@ -850,7 +850,7 @@ onValue(agenciesRef, (snapshot) => {
       populateIncidentAgencySelect();
   }
   document.getElementById('lsStat1').textContent = agencies.length;
-  document.getElementById('lsStat2').textContent = agencies.filter(a=>a.status==='active').length;
+  document.getElementById('lsStat2').textContent = agencies.filter(a=>(a.status || 'standby')==='active').length;
 });
 
 const incidentsRef = ref(db, 'incidents');
@@ -982,18 +982,18 @@ function filterSidebar(f,el) {
 function renderSidebar() {
   const list=document.getElementById('sidebarList');
   let filtered=agencies;
-  if(sidebarFilter!=='all') filtered=agencies.filter(a=>a.type.includes(sidebarFilter));
+  if(sidebarFilter!=='all') filtered=agencies.filter(a=>(a.type || '').includes(sidebarFilter));
   list.innerHTML=filtered.map(ag=>{
     const tm=TYPE_META[ag.type]||TYPE_META['Fire & Rescue'];
     return `<div class="agency-card-mini" onclick="openAgencyDrawer('${ag.id}')">
       <div class="acm-top">
         <div class="acm-icon" style="background:${tm.bg};color:${tm.color}">${tm.emoji}</div>
-        <div><div class="acm-name">${ag.name}</div><div class="acm-type">${ag.type}</div></div>
+        <div><div class="acm-name">${ag.name || 'Unnamed Agency'}</div><div class="acm-type">${ag.type || 'Unspecified'}</div></div>
       </div>
       <div class="acm-meta">
-        <span><span class="status-dot" style="background:${STATUS_COLOR[ag.status]}"></span>${ag.status}</span>
-        <span>📍${ag.district}</span>
-        <span>👥${ag.personnel}</span>
+        <span><span class="status-dot" style="background:${STATUS_COLOR[ag.status || 'standby']}"></span>${(ag.status || 'Standby').charAt(0).toUpperCase() + (ag.status || 'standby').slice(1)}</span>
+        <span>📍${ag.district || 'N/A'}</span>
+        <span>👥${ag.personnel || 'N/A'}</span>
       </div>
     </div>`;
   }).join('');
@@ -1002,10 +1002,10 @@ function renderSidebar() {
 // ─── DASHBOARD ───────────────────────────────────────
 function updateStats() {
   document.getElementById('ds1').textContent=agencies.length;
-  document.getElementById('ds2').textContent=agencies.filter(a=>a.status==='active').length;
-  document.getElementById('ds3').textContent=agencies.filter(a=>a.status==='deployed').length;
+  document.getElementById('ds2').textContent=agencies.filter(a=>(a.status || 'standby')==='active').length;
+  document.getElementById('ds3').textContent=agencies.filter(a=>(a.status || 'standby')==='deployed').length;
   document.getElementById('ds4').textContent=incidents.filter(i=>i.status==='active').length;
-  document.getElementById('ds5').textContent=agencies.reduce((s,a)=>s+a.personnel,0);
+  document.getElementById('ds5').textContent=agencies.reduce((s,a)=>s+(Number(a.personnel)||0),0);
 }
 function renderDashboard() {
   renderMapPins();
@@ -1017,7 +1017,7 @@ function renderMapPins() {
   g.innerHTML='';
   agencies.forEach(ag=>{
     if(!ag.x || !ag.y) return; // safeguard
-    const col=STATUS_COLOR[ag.status];
+    const col=STATUS_COLOR[ag.status || 'standby'];
     const grp=document.createElementNS('http://www.w3.org/2000/svg','g');
     grp.style.cursor='pointer';
     grp.onclick=()=>openAgencyDrawer(ag.id);
@@ -1027,7 +1027,7 @@ function renderMapPins() {
     const dot=document.createElementNS('http://www.w3.org/2000/svg','circle');
     dot.setAttribute('cx',ag.x);dot.setAttribute('cy',ag.y);dot.setAttribute('r','8');
     dot.setAttribute('fill',col);dot.setAttribute('stroke','white');dot.setAttribute('stroke-width','2.5');
-    if(ag.status==='deployed'){
+    if((ag.status || 'standby')==='deployed'){
       const ring=document.createElementNS('http://www.w3.org/2000/svg','circle');
       ring.setAttribute('cx',ag.x);ring.setAttribute('cy',ag.y);ring.setAttribute('r','14');
       ring.setAttribute('fill','none');ring.setAttribute('stroke',col);ring.setAttribute('stroke-width','1.5');
@@ -1038,7 +1038,7 @@ function renderMapPins() {
     lbl.setAttribute('x',ag.x);lbl.setAttribute('y',ag.y+22);
     lbl.setAttribute('text-anchor','middle');lbl.setAttribute('font-size','9');
     lbl.setAttribute('fill','#3C4043');lbl.setAttribute('font-family','sans-serif');
-    const short=ag.district;
+    const short=ag.district || 'N/A';
     lbl.textContent=short;
     grp.appendChild(pulse);grp.appendChild(dot);grp.appendChild(lbl);
     g.appendChild(grp);
@@ -1055,11 +1055,11 @@ function renderRpIncidents() {
   body.innerHTML=incidents.slice(0,6).map(inc=>`
     <div class="incident-item">
       <div class="ii-top">
-        <div class="ii-title">${inc.title}</div>
-        <span class="severity sev-${inc.severity==='high'?'high':inc.severity==='medium'?'med':'low'}">${inc.severity.toUpperCase()}</span>
+        <div class="ii-title">${inc.title || 'Untitled Incident'}</div>
+        <span class="severity sev-${(inc.severity||'low')==='high'?'high':(inc.severity||'low')==='medium'?'med':'low'}">${(inc.severity||'low').toUpperCase()}</span>
       </div>
-      <div class="ii-loc">📍 ${inc.district}, ${inc.area}</div>
-      <div class="ii-time">🕐 ${inc.time} &nbsp;·&nbsp; ${inc.type}</div>
+      <div class="ii-loc">📍 ${inc.district || 'N/A'}, ${inc.area || 'N/A'}</div>
+      <div class="ii-time">🕐 ${inc.time || 'Unknown'} &nbsp;·&nbsp; ${inc.type || 'N/A'}</div>
     </div>`).join('');
 }
 function renderRpActivity() {
@@ -1080,7 +1080,7 @@ function renderAgenciesGrid() {
   const q=(document.getElementById('agencySearch')?.value||'').toLowerCase();
   const sf=document.getElementById('agencyStatusFilter')?.value||'';
   let filtered=agencies.filter(a=>{
-    const match=!q||(a.name+a.district+a.type).toLowerCase().includes(q);
+    const match=!q||(a.name+(a.district||'')+a.type).toLowerCase().includes(q);
     const sm=!sf||a.status===sf;
     return match&&sm;
   });
@@ -1091,16 +1091,16 @@ function renderAgenciesGrid() {
       <div class="ag-card-top">
         <div class="ag-icon" style="background:${tm.bg};color:${tm.color};font-size:22px">${tm.emoji}</div>
         <div class="ag-info">
-          <div class="ag-name">${ag.name}</div>
-          <div class="ag-type">${ag.type}</div>
+          <div class="ag-name">${ag.name || 'Unnamed Agency'}</div>
+          <div class="ag-type">${ag.type || 'Unspecified'}</div>
         </div>
       </div>
-      <div class="ag-status-badge" style="background:${STATUS_BG[ag.status]};color:${STATUS_COLOR[ag.status]}">${ag.status.charAt(0).toUpperCase()+ag.status.slice(1)}</div>
+      <div class="ag-status-badge" style="background:${STATUS_BG[ag.status || 'standby']};color:${STATUS_COLOR[ag.status || 'standby']}">${(ag.status || 'Standby').charAt(0).toUpperCase()+(ag.status || 'standby').slice(1)}</div>
       <div class="ag-details">
-        <div class="ag-detail-item"><div class="ag-detail-lbl">District</div><div class="ag-detail-val">${ag.district}</div></div>
-        <div class="ag-detail-item"><div class="ag-detail-lbl">Personnel</div><div class="ag-detail-val">${ag.personnel}</div></div>
-        <div class="ag-detail-item"><div class="ag-detail-lbl">Vehicles</div><div class="ag-detail-val">${ag.vehicles||'–'}</div></div>
-        <div class="ag-detail-item"><div class="ag-detail-lbl">Registered</div><div class="ag-detail-val">${ag.registered}</div></div>
+        <div class="ag-detail-item"><div class="ag-detail-lbl">District</div><div class="ag-detail-val">${ag.district || 'N/A'}</div></div>
+        <div class="ag-detail-item"><div class="ag-detail-lbl">Personnel</div><div class="ag-detail-val">${ag.personnel || 'N/A'}</div></div>
+        <div class="ag-detail-item"><div class="ag-detail-lbl">Vehicles</div><div class="ag-detail-val">${ag.vehicles || '–'}</div></div>
+        <div class="ag-detail-item"><div class="ag-detail-lbl">Registered</div><div class="ag-detail-val">${ag.registered || 'N/A'}</div></div>
       </div>
     </div>`;
   }).join('');
@@ -1113,31 +1113,35 @@ function openAgencyDrawer(id) {
   const tm=TYPE_META[ag.type]||TYPE_META['Fire & Rescue'];
   document.getElementById('ddBody').innerHTML=`
     <div class="dd-avatar" style="background:${tm.bg};color:${tm.color};font-size:24px">${tm.emoji}</div>
-    <div class="dd-name">${ag.name}</div>
-    <div class="dd-sub">${ag.type} &nbsp;·&nbsp; <span style="color:${STATUS_COLOR[ag.status]};font-weight:600">${ag.status}</span></div>
+    <div class="dd-name">${ag.name || 'Unnamed Agency'}</div>
+    <div class="dd-sub">${ag.type || 'Unspecified'} &nbsp;·&nbsp; <span style="color:${STATUS_COLOR[ag.status || 'standby']};font-weight:600">${(ag.status || 'Standby').charAt(0).toUpperCase()+(ag.status || 'standby').slice(1)}</span></div>
     <div class="info-grid">
-      <div class="info-row"><span class="ir-label">District</span><span class="ir-val">${ag.district}</span></div>
-      <div class="info-row"><span class="ir-label">Contact</span><span class="ir-val">${ag.contact}</span></div>
-      <div class="info-row"><span class="ir-label">Email</span><span class="ir-val" style="font-size:11px">${ag.email||'—'}</span></div>
-      <div class="info-row"><span class="ir-label">Personnel</span><span class="ir-val">${ag.personnel}</span></div>
-      <div class="info-row"><span class="ir-label">Vehicles</span><span class="ir-val">${ag.vehicles||0}</span></div>
-      <div class="info-row"><span class="ir-label">Equipment</span><span class="ir-val" style="font-size:11px;text-align:right;max-width:160px">${ag.equipment||'Standard kit'}</span></div>
-      <div class="info-row"><span class="ir-label">Registered</span><span class="ir-val">${ag.registered}</span></div>
+      <div class="info-row"><span class="ir-label">District</span><span class="ir-val">${ag.district || 'N/A'}</span></div>
+      <div class="info-row"><span class="ir-label">Contact</span><span class="ir-val">${ag.contact || 'N/A'}</span></div>
+      <div class="info-row"><span class="ir-label">Email</span><span class="ir-val" style="font-size:11px">${ag.email || '—'}</span></div>
+      <div class="info-row"><span class="ir-label">Personnel</span><span class="ir-val">${ag.personnel || 'N/A'}</span></div>
+      <div class="info-row"><span class="ir-label">Vehicles</span><span class="ir-val">${ag.vehicles || 0}</span></div>
+      <div class="info-row"><span class="ir-label">Equipment</span><span class="ir-val" style="font-size:11px;text-align:right;max-width:160px">${ag.equipment || 'Not specified'}</span></div>
+      <div class="info-row"><span class="ir-label">Registered</span><span class="ir-val">${ag.registered || 'N/A'}</span></div>
     </div>`;
   document.getElementById('ddActions').innerHTML=`
-    <button class="dd-action-btn primary-action" onclick="callAgency('${ag.contact}')">📞 Contact Agency</button>
+    <button class="dd-action-btn primary-action" onclick="callAgency('${ag.contact || ''}')">📞 Contact Agency</button>
     <button class="dd-action-btn" onclick="changeStatus('${ag.id}')">🔄 Change Status</button>
     <button class="dd-action-btn" onclick="exportSingleAgency('${ag.id}')">📥 Export Details</button>
     <button class="dd-action-btn danger" onclick="removeAgency('${ag.id}')">🗑 Remove Agency</button>`;
   document.getElementById('detailDrawer').classList.add('open');
 }
 function closeDrawer(){document.getElementById('detailDrawer').classList.remove('open')}
-function callAgency(c){showToast('Calling: '+c,'success')}
+function callAgency(c){
+    if(c && c !== 'N/A') showToast('Calling: '+c,'success');
+    else showToast('No contact number available', 'error');
+}
 
 function changeStatus(id) {
   const ag=agencies.find(a=>a.id===id);
-  const opts=['active','standby','deployed'].filter(s=>s!==ag.status);
-  const ns=prompt(`Change status for ${ag.name}\nOptions: ${opts.join(', ')}`);
+  const currentStatus = ag.status || 'standby';
+  const opts=['active','standby','deployed'].filter(s=>s!==currentStatus);
+  const ns=prompt(`Change status for ${ag.name || 'this agency'}\nOptions: ${opts.join(', ')}`);
   if(ns&&['active','standby','deployed'].includes(ns.toLowerCase())) {
     update(ref(db, 'agencies/' + id), { status: ns.toLowerCase() })
         .then(() => {
@@ -1160,8 +1164,8 @@ function removeAgency(id) {
 
 function exportSingleAgency(id) {
   const ag=agencies.find(a=>a.id===id);
-  const csv=`Agency Name,Type,District,Contact,Email,Personnel,Vehicles,Status,Equipment,Registered\n"${ag.name}","${ag.type}","${ag.district}","${ag.contact}","${ag.email||''}",${ag.personnel},${ag.vehicles||0},${ag.status},"${ag.equipment||''}",${ag.registered}`;
-  downloadCSV(csv, ag.name.replace(/[^a-z0-9]/gi,'_')+'_details.csv');
+  const csv=`Agency Name,Type,District,Contact,Email,Personnel,Vehicles,Status,Equipment,Registered\n"${ag.name||'N/A'}","${ag.type||'N/A'}","${ag.district||'N/A'}","${ag.contact||'N/A'}","${ag.email||''}",${ag.personnel||0},${ag.vehicles||0},${ag.status||'standby'},"${ag.equipment||''}",${ag.registered||'N/A'}`;
+  downloadCSV(csv, (ag.name||'Agency').replace(/[^a-z0-9]/gi,'_')+'_details.csv');
   showToast('Exported agency details','success');
 }
 
@@ -1196,7 +1200,7 @@ function registerAgencyFull() {
 function populateIncidentAgencySelect() {
   const sel=document.getElementById('incAgency');
   if(!sel) return;
-  sel.innerHTML=agencies.map(a=>`<option value="${a.name}">${a.name}</option>`).join('');
+  sel.innerHTML=agencies.map(a=>`<option value="${a.name || 'Unknown'}">${a.name || 'Unnamed Agency'}</option>`).join('');
 }
 function setSeverity(s,el) {
   selectedSeverity=s;
@@ -1227,21 +1231,21 @@ function submitIncident() {
 function renderIncidentsList() {
   const el=document.getElementById('incidentsList');
   el.innerHTML=incidents.map(inc=>`
-    <div class="incident-card ${inc.severity}">
+    <div class="incident-card ${inc.severity || 'low'}">
       <div class="ic-top">
-        <div class="ic-title">${inc.title}</div>
-        <span class="severity sev-${inc.severity==='high'?'high':inc.severity==='medium'?'med':'low'}">${inc.severity.toUpperCase()}</span>
+        <div class="ic-title">${inc.title || 'Untitled Incident'}</div>
+        <span class="severity sev-${(inc.severity||'low')==='high'?'high':(inc.severity||'low')==='medium'?'med':'low'}">${(inc.severity||'low').toUpperCase()}</span>
       </div>
       <div class="ic-badges">
-        <span class="ic-badge" style="background:#EDE7F6;color:#4527A0">${inc.type}</span>
-        <span class="ic-badge" style="background:${inc.status==='active'?'#FADBD8':inc.status==='resolved'?'#D5F5E3':'#FEF9E7'};color:${inc.status==='active'?'#922B21':inc.status==='resolved'?'#1E8449':'#784212'}">${inc.status}</span>
+        <span class="ic-badge" style="background:#EDE7F6;color:#4527A0">${inc.type || 'N/A'}</span>
+        <span class="ic-badge" style="background:${inc.status==='active'?'#FADBD8':inc.status==='resolved'?'#D5F5E3':'#FEF9E7'};color:${inc.status==='active'?'#922B21':inc.status==='resolved'?'#1E8449':'#784212'}">${inc.status || 'active'}</span>
       </div>
-      <div class="ic-desc">${inc.desc}</div>
+      <div class="ic-desc">${inc.desc || 'No description provided.'}</div>
       <div class="ic-footer">
         <div class="ic-meta">
-          <span>📍 ${inc.district}</span>
-          <span>👥 ${inc.affected} affected</span>
-          <span>🕐 ${inc.time}</span>
+          <span>📍 ${inc.district || 'N/A'}</span>
+          <span>👥 ${inc.affected || 0} affected</span>
+          <span>🕐 ${inc.time || 'Unknown time'}</span>
         </div>
         <button class="ic-footer-btn" onclick="resolveIncident('${inc.id}',this)">${inc.status==='resolved'?'✅ Resolved':'Mark Resolved'}</button>
       </div>
@@ -1262,19 +1266,21 @@ function renderResourcesTable() {
   const body=document.getElementById('resourcesBody');
   if(!body) return;
   body.innerHTML=agencies.map(ag=>{
-    const pct=Math.min(100,Math.round(ag.personnel/150*100));
-    const vpct=Math.min(100,Math.round((ag.vehicles||0)/20*100));
+    const personnelNum = Number(ag.personnel) || 0;
+    const vehiclesNum = Number(ag.vehicles) || 0;
+    const pct=Math.min(100,Math.round(personnelNum/150*100));
+    const vpct=Math.min(100,Math.round(vehiclesNum/20*100));
     const pCol=pct>70?'#1E8449':pct>40?'#E67E22':'#C0392B';
     const vCol=vpct>70?'#1E8449':vpct>40?'#E67E22':'#C0392B';
     const tm=TYPE_META[ag.type]||TYPE_META['Fire & Rescue'];
     return `<tr>
-      <td><div style="display:flex;align-items:center;gap:8px"><span style="font-size:16px">${tm.emoji}</span><span style="font-weight:500;font-size:12px">${ag.name}</span></div></td>
-      <td style="font-size:11px">${ag.type}</td>
-      <td><div style="display:flex;align-items:center;gap:8px"><span style="font-size:12px;font-weight:500">${ag.vehicles||0}</span><div class="progress-bar"><div class="progress-fill" style="width:${vpct}%;background:${vCol}"></div></div></div></td>
-      <td><div style="display:flex;align-items:center;gap:8px"><span style="font-size:12px;font-weight:500">${ag.personnel}</span><div class="progress-bar"><div class="progress-fill" style="width:${pct}%;background:${pCol}"></div></div></div></td>
-      <td style="font-size:11px;color:#80868B;max-width:150px">${(ag.equipment||'Standard kit').split(',')[0]}...</td>
-      <td><span style="font-size:10px;padding:3px 8px;border-radius:20px;font-weight:600;background:${STATUS_BG[ag.status]};color:${STATUS_COLOR[ag.status]}">${ag.status}</span></td>
-      <td style="font-size:12px">${ag.district}</td>
+      <td><div style="display:flex;align-items:center;gap:8px"><span style="font-size:16px">${tm.emoji}</span><span style="font-weight:500;font-size:12px">${ag.name || 'Unnamed Agency'}</span></div></td>
+      <td style="font-size:11px">${ag.type || 'Unspecified'}</td>
+      <td><div style="display:flex;align-items:center;gap:8px"><span style="font-size:12px;font-weight:500">${vehiclesNum || 0}</span><div class="progress-bar"><div class="progress-fill" style="width:${vpct}%;background:${vCol}"></div></div></div></td>
+      <td><div style="display:flex;align-items:center;gap:8px"><span style="font-size:12px;font-weight:500">${ag.personnel || 'N/A'}</span><div class="progress-bar"><div class="progress-fill" style="width:${pct}%;background:${pCol}"></div></div></div></td>
+      <td style="font-size:11px;color:#80868B;max-width:150px">${(ag.equipment||'Not specified').split(',')[0]}...</td>
+      <td><span style="font-size:10px;padding:3px 8px;border-radius:20px;font-weight:600;background:${STATUS_BG[ag.status || 'standby']};color:${STATUS_COLOR[ag.status || 'standby']}">${(ag.status || 'Standby').charAt(0).toUpperCase()+(ag.status || 'standby').slice(1)}</span></td>
+      <td style="font-size:12px">${ag.district || 'N/A'}</td>
     </tr>`;
   }).join('');
 }
@@ -1291,33 +1297,33 @@ function exportData(type) {
   const now=new Date().toISOString().slice(0,10);
   if(type==='agencies') {
     csv='ID,Name,Type,District,Contact,Email,Personnel,Vehicles,Status,Equipment,Registered\n'+
-      agencies.map(a=>`${a.id},"${a.name}","${a.type}","${a.district}","${a.contact}","${a.email||''}",${a.personnel},${a.vehicles||0},${a.status},"${a.equipment||''}",${a.registered}`).join('\n');
+      agencies.map(a=>`${a.id},"${a.name||'N/A'}","${a.type||'N/A'}","${a.district||'N/A'}","${a.contact||'N/A'}","${a.email||''}",${a.personnel||0},${a.vehicles||0},${a.status||'standby'},"${a.equipment||''}",${a.registered||'N/A'}`).join('\n');
     filename=`RescueNet_Agencies_${now}.csv`;
   } else if(type==='incidents') {
     csv='ID,Title,Type,Severity,District,Area,Affected,Agency,Status,Reporter,Time\n'+
-      incidents.map(i=>`${i.id},"${i.title}","${i.type}",${i.severity},"${i.district}","${i.area||''}",${i.affected},"${i.agency}",${i.status},"${i.reporter}","${i.time}"`).join('\n');
+      incidents.map(i=>`${i.id},"${i.title||'N/A'}","${i.type||'N/A'}",${i.severity||'low'},"${i.district||'N/A'}","${i.area||''}",${i.affected||0},"${i.agency||'N/A'}",${i.status||'active'},"${i.reporter||'Unknown'}","${i.time||'N/A'}"`).join('\n');
     filename=`RescueNet_Incidents_${now}.csv`;
   } else if(type==='resources') {
     csv='Agency,Type,District,Personnel,Vehicles,Equipment,Status\n'+
-      agencies.map(a=>`"${a.name}","${a.type}","${a.district}",${a.personnel},${a.vehicles||0},"${a.equipment||''}",${a.status}`).join('\n');
+      agencies.map(a=>`"${a.name||'N/A'}","${a.type||'N/A'}","${a.district||'N/A'}",${a.personnel||0},${a.vehicles||0},"${a.equipment||''}",${a.status||'standby'}`).join('\n');
     filename=`RescueNet_Resources_${now}.csv`;
   } else if(type==='summary') {
-    const active=agencies.filter(a=>a.status==='active').length;
-    const deployed=agencies.filter(a=>a.status==='deployed').length;
-    const openInc=incidents.filter(i=>i.status==='active').length;
-    const totalPersonnel=agencies.reduce((s,a)=>s+a.personnel,0);
-    csv='RescueNet Executive Summary Report\nGenerated:,'+now+'\n\nMetric,Value\nTotal Agencies,'+agencies.length+'\nActive Agencies,'+active+'\nDeployed Agencies,'+deployed+'\nOpen Incidents,'+openInc+'\nTotal Personnel,'+totalPersonnel+'\n\nIncident Breakdown\nHigh Severity,'+incidents.filter(i=>i.severity==='high').length+'\nMedium Severity,'+incidents.filter(i=>i.severity==='medium').length+'\nLow Severity,'+incidents.filter(i=>i.severity==='low').length;
+    const active=agencies.filter(a=>(a.status||'standby')==='active').length;
+    const deployed=agencies.filter(a=>(a.status||'standby')==='deployed').length;
+    const openInc=incidents.filter(i=>(i.status||'active')==='active').length;
+    const totalPersonnel=agencies.reduce((s,a)=>s+(Number(a.personnel)||0),0);
+    csv='RescueNet Executive Summary Report\nGenerated:,'+now+'\n\nMetric,Value\nTotal Agencies,'+agencies.length+'\nActive Agencies,'+active+'\nDeployed Agencies,'+deployed+'\nOpen Incidents,'+openInc+'\nTotal Personnel,'+totalPersonnel+'\n\nIncident Breakdown\nHigh Severity,'+incidents.filter(i=>(i.severity||'low')==='high').length+'\nMedium Severity,'+incidents.filter(i=>(i.severity||'low')==='medium').length+'\nLow Severity,'+incidents.filter(i=>(i.severity||'low')==='low').length;
     filename=`RescueNet_Summary_${now}.csv`;
   } else if(type==='deployment') {
     csv='Agency,Type,District,Status,Personnel,Vehicles,Deployed Since\n'+
-      agencies.filter(a=>a.status==='deployed').map(a=>`"${a.name}","${a.type}","${a.district}",Deployed,${a.personnel},${a.vehicles||0},"${a.registered}"`).join('\n');
+      agencies.filter(a=>(a.status||'standby')==='deployed').map(a=>`"${a.name||'N/A'}","${a.type||'N/A'}","${a.district||'N/A'}",Deployed,${a.personnel||0},${a.vehicles||0},"${a.registered||'N/A'}"`).join('\n');
     filename=`RescueNet_Deployment_${now}.csv`;
   } else if(type==='full') {
     csv='=== RescueNet Full Operations Report ===\nGenerated: '+now+'\n\n--- AGENCIES ---\n'+
       'Name,Type,District,Status,Personnel,Vehicles\n'+
-      agencies.map(a=>`"${a.name}","${a.type}","${a.district}",${a.status},${a.personnel},${a.vehicles||0}`).join('\n')+
+      agencies.map(a=>`"${a.name||'N/A'}","${a.type||'N/A'}","${a.district||'N/A'}",${a.status||'standby'},${a.personnel||0},${a.vehicles||0}`).join('\n')+
       '\n\n--- INCIDENTS ---\nTitle,Type,Severity,District,Affected,Status\n'+
-      incidents.map(i=>`"${i.title}","${i.type}",${i.severity},"${i.district}",${i.affected},${i.status}`).join('\n');
+      incidents.map(i=>`"${i.title||'N/A'}","${i.type||'N/A'}",${i.severity||'low'},"${i.district||'N/A'}",${i.affected||0},${i.status||'active'}`).join('\n');
     filename=`RescueNet_Full_Report_${now}.csv`;
   }
   downloadCSV(csv,filename);
