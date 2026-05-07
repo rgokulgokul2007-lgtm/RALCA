@@ -1,9 +1,928 @@
-<script type="module">
-// Import Firebase core and Realtime Database functions
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-import { getDatabase, ref, onValue, push, set, update, remove } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>RALCA v2 – Rescue Agency Locator & Coordination</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet"/>
 
-// Your Firebase configuration
+<!-- 1. Main Leaflet MUST be first -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+
+<!-- 2. MarkerCluster MUST be second -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.css"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.Default.css"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/leaflet.markercluster.js"></script>
+
+<!-- 3. Firebase MUST be third -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+<style>
+:root{
+  --bg:#0a0e1a;--surface:#111827;--surface2:#1a2335;--border:#1e2d47;
+  --accent:#f97316;--accent2:#ef4444;--accent3:#22d3ee;--green:#10b981;--yellow:#fbbf24;--purple:#a78bfa;
+  --text:#e2e8f0;--text-muted:#64748b;--text-dim:#94a3b8;
+  --font-head:'Bebas Neue',sans-serif;--font-body:'DM Sans',sans-serif;--font-mono:'JetBrains Mono',monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:var(--font-body);min-height:100vh;overflow-x:hidden}
+a{text-decoration:none;color:inherit}
+#loading-screen{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:9999;flex-direction:column;gap:16px}
+.load-title{font-family:var(--font-head);font-size:40px;letter-spacing:2px}.load-title span{color:var(--accent)}
+.load-ring{width:38px;height:38px;border:3px solid rgba(249,115,22,.2);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite}
+.load-sub{font-size:12px;color:var(--text-muted);font-family:var(--font-mono);letter-spacing:1px}
+@keyframes spin{to{transform:rotate(360deg)}}
+/* LOGIN */
+#login-screen{display:none;min-height:100vh;flex-direction:row}
+.left{width:55%;position:relative;background:#060b14;overflow:hidden;display:flex;flex-direction:column;justify-content:flex-end;padding:48px}
+.bg-grid{position:absolute;inset:0;background-image:linear-gradient(rgba(30,45,71,.35) 1px,transparent 1px),linear-gradient(90deg,rgba(30,45,71,.35) 1px,transparent 1px);background-size:50px 50px}
+.bg-glow{position:absolute;top:-20%;left:-10%;width:600px;height:600px;background:radial-gradient(circle,rgba(249,115,22,.12) 0%,transparent 70%);animation:glow 6s ease-in-out infinite}
+@keyframes glow{0%,100%{opacity:.6;transform:scale(1)}50%{opacity:1;transform:scale(1.1)}}
+.left-brand{position:relative;z-index:2}
+.brand-title{font-family:var(--font-head);font-size:52px;letter-spacing:2px;line-height:1}
+.brand-title span{color:var(--accent)}
+.brand-sub{font-size:15px;color:var(--text-dim);margin-top:8px;line-height:1.6}
+.brand-features{margin-top:28px;display:flex;flex-direction:column;gap:10px;position:relative;z-index:2}
+.feat-row{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--text-dim)}
+.feat-dot{width:6px;height:6px;border-radius:50%;background:var(--accent);flex-shrink:0}
+.right{width:45%;display:flex;align-items:center;justify-content:center;background:var(--surface);border-left:1px solid var(--border);padding:40px;overflow-y:auto}
+.login-box{width:100%;max-width:420px}
+.login-logo{display:flex;align-items:center;gap:12px;margin-bottom:20px}
+.login-logo-icon{width:44px;height:44px;background:var(--accent);border-radius:10px;display:grid;place-items:center;font-size:22px}
+.login-logo-text{font-family:var(--font-head);font-size:28px;letter-spacing:1px}
+.auth-tabs{display:flex;margin-bottom:20px;border:1px solid var(--border);border-radius:8px;overflow:hidden}
+.auth-tab{flex:1;padding:9px;text-align:center;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;color:var(--text-muted);font-family:var(--font-mono)}
+.auth-tab.active{background:var(--accent);color:#fff}
+.login-title{font-family:var(--font-head);font-size:28px;letter-spacing:.5px;margin-bottom:4px}
+.login-desc{font-size:13px;color:var(--text-dim);margin-bottom:16px}
+.form-group-l{margin-bottom:14px}
+.form-label-l{font-size:11px;font-family:var(--font-mono);color:var(--text-muted);letter-spacing:1px;margin-bottom:5px;display:block}
+.form-input-l{width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:10px 14px;border-radius:8px;font-size:14px;font-family:var(--font-body);outline:none;transition:all .2s}
+.form-input-l:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(249,115,22,.1)}
+.btn-login{width:100%;padding:12px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;font-family:var(--font-body);cursor:pointer;transition:all .2s;margin-top:6px;display:flex;align-items:center;justify-content:center;gap:8px}
+.btn-login:hover{background:#ea6c0a;transform:translateY(-1px)}
+.btn-login:disabled{background:#555;cursor:not-allowed;transform:none}
+.btn-login.secondary{background:transparent;border:1px solid var(--border);color:var(--text-dim);margin-top:0}
+.btn-login.secondary:hover{background:var(--surface2);color:var(--text);transform:none}
+.error-msg-l{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:var(--accent2);padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:12px;display:none}
+.divider{display:flex;align-items:center;gap:10px;margin:14px 0;color:var(--text-muted);font-size:12px}
+.divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--border)}
+.spinner{display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite}
+/* ROLE PICKER */
+.role-picker{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
+.role-card{padding:12px 6px;border-radius:8px;border:2px solid var(--border);background:var(--surface2);cursor:pointer;text-align:center;transition:all .2s;color:var(--text-muted)}
+.role-card .rc-icon{font-size:22px;display:block;margin-bottom:4px}
+.role-card .rc-label{font-size:11px;font-weight:700;font-family:var(--font-mono)}
+.role-card.active{border-color:var(--accent);background:rgba(249,115,22,.1);color:var(--text)}
+.role-card.active .rc-label{color:var(--accent)}
+/* APP */
+#app-screen{display:none}
+.sidebar{position:fixed;top:0;left:0;width:240px;height:100vh;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;z-index:100;overflow:hidden}
+.logo{padding:20px 20px 16px;border-bottom:1px solid var(--border);flex-shrink:0}
+.logo-badge{display:flex;align-items:center;gap:10px}
+.logo-icon{width:36px;height:36px;background:var(--accent);border-radius:8px;display:grid;place-items:center;font-size:18px}
+.logo-text{font-family:var(--font-head);font-size:22px;letter-spacing:1px}
+.logo-sub{font-size:10px;color:var(--text-muted);font-family:var(--font-mono);margin-top:2px;letter-spacing:1px}
+.nav{flex:1;padding:12px 10px;overflow-y:auto}
+.nav-group{margin-bottom:20px}
+.nav-label{font-size:10px;font-family:var(--font-mono);color:var(--text-muted);padding:0 10px;margin-bottom:6px;letter-spacing:2px}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;cursor:pointer;transition:all .15s;font-size:14px;font-weight:500;color:var(--text-dim)}
+.nav-item:hover{background:var(--surface2);color:var(--text)}
+.nav-item.active{background:rgba(249,115,22,.12);color:var(--accent)}
+.nav-item .icon{font-size:16px;width:20px;text-align:center}
+.nav-badge{margin-left:auto;background:var(--accent2);color:#fff;font-size:10px;padding:1px 6px;border-radius:10px;font-family:var(--font-mono)}
+.sidebar-footer{padding:14px;border-top:1px solid var(--border);flex-shrink:0}
+.user-card{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.avatar{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:grid;place-items:center;font-weight:700;font-size:13px;flex-shrink:0}
+.user-info{flex:1;min-width:0}
+.user-name{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.user-role{font-size:11px;color:var(--accent);font-family:var(--font-mono)}
+.status-dot{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green);animation:pulse 2s infinite;flex-shrink:0}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.main{margin-left:240px;min-height:100vh;display:flex;flex-direction:column}
+.topbar{height:56px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 24px;gap:12px;position:sticky;top:0;z-index:50}
+.topbar-title{font-family:var(--font-head);font-size:20px;letter-spacing:.5px}
+.topbar-actions{display:flex;align-items:center;gap:8px;margin-left:auto}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;transition:all .15s;border:none;font-family:var(--font-body)}
+.btn-primary{background:var(--accent);color:#fff}
+.btn-primary:hover{background:#ea6c0a}
+.btn-ghost{background:transparent;color:var(--text-dim);border:1px solid var(--border)}
+.btn-ghost:hover{background:var(--surface2);color:var(--text)}
+.btn-danger{background:rgba(239,68,68,.15);color:var(--accent2);border:1px solid rgba(239,68,68,.3)}
+.btn-success{background:rgba(16,185,129,.15);color:var(--green);border:1px solid rgba(16,185,129,.3)}
+.btn-purple{background:rgba(167,139,250,.15);color:var(--purple);border:1px solid rgba(167,139,250,.3)}
+.live-badge{display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--green);font-family:var(--font-mono);background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.3);padding:2px 8px;border-radius:10px}
+.alert-pulse{width:10px;height:10px;border-radius:50%;background:var(--accent2);box-shadow:0 0 8px var(--accent2);animation:pulse 1s infinite}
+.content{flex:1;padding:24px}
+.page{display:none}
+.page.active{display:block;animation:fadeIn .2s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px 20px;position:relative;overflow:hidden}
+.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+.stat-card.orange::before{background:var(--accent)}
+.stat-card.red::before{background:var(--accent2)}
+.stat-card.cyan::before{background:var(--accent3)}
+.stat-card.green::before{background:var(--green)}
+.stat-card.purple::before{background:var(--purple)}
+.stat-label{font-size:11px;font-family:var(--font-mono);color:var(--text-muted);letter-spacing:1px;margin-bottom:8px}
+.stat-value{font-family:var(--font-head);font-size:36px;letter-spacing:1px;line-height:1}
+.stat-sub{font-size:12px;color:var(--text-muted);margin-top:6px}
+.map-container{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:24px}
+.map-header{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--border)}
+.map-title{font-family:var(--font-head);font-size:18px;letter-spacing:.5px}
+.map-filters{display:flex;gap:8px;flex-wrap:wrap}
+.filter-chip{padding:4px 12px;border-radius:20px;font-size:12px;cursor:pointer;border:1px solid var(--border);color:var(--text-dim);transition:all .15s;font-weight:500}
+.filter-chip.active,.filter-chip:hover{border-color:var(--accent);color:var(--accent);background:rgba(249,115,22,.08)}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px}
+.card-header{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--border)}
+.card-title{font-family:var(--font-head);font-size:17px;letter-spacing:.5px}
+.card-body{padding:0}
+table{width:100%;border-collapse:collapse}
+th{text-align:left;font-size:11px;font-family:var(--font-mono);color:var(--text-muted);padding:10px 16px;letter-spacing:1px;border-bottom:1px solid var(--border)}
+td{padding:11px 16px;font-size:13px;border-bottom:1px solid rgba(30,45,71,.5)}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(255,255,255,.02)}
+.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600;font-family:var(--font-mono)}
+.badge-active{background:rgba(16,185,129,.15);color:var(--green)}
+.badge-standby{background:rgba(251,191,36,.15);color:var(--yellow)}
+.badge-busy{background:rgba(239,68,68,.15);color:var(--accent2)}
+.badge-pending{background:rgba(34,211,238,.15);color:var(--accent3)}
+.alert-list{padding:8px 0}
+.alert-item{display:flex;align-items:flex-start;gap:12px;padding:12px 18px;border-bottom:1px solid rgba(30,45,71,.5);cursor:pointer;transition:background .12s}
+.alert-item:hover{background:rgba(255,255,255,.02)}
+.alert-item:last-child{border-bottom:none}
+.alert-icon{width:36px;height:36px;border-radius:8px;display:grid;place-items:center;font-size:16px;flex-shrink:0}
+.alert-icon.critical{background:rgba(239,68,68,.15)}
+.alert-icon.warning{background:rgba(251,191,36,.15)}
+.alert-icon.info{background:rgba(34,211,238,.15)}
+.alert-content{flex:1}
+.alert-title{font-size:13px;font-weight:600;margin-bottom:3px}
+.alert-meta{font-size:11px;color:var(--text-muted);font-family:var(--font-mono)}
+.alert-time{font-size:11px;color:var(--text-muted);white-space:nowrap;font-family:var(--font-mono)}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.form-group{display:flex;flex-direction:column;gap:6px}
+.form-group.full{grid-column:1/-1}
+label{font-size:12px;font-family:var(--font-mono);color:var(--text-muted);letter-spacing:.5px}
+input,select,textarea{background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:9px 12px;border-radius:8px;font-size:13px;font-family:var(--font-body);outline:none;transition:border-color .15s;width:100%}
+input:focus,select:focus,textarea:focus{border-color:var(--accent)}
+textarea{resize:vertical;min-height:80px}
+select option{background:var(--surface2)}
+.form-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:8px;grid-column:1/-1}
+.form-section{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:16px}
+.form-section-title{font-family:var(--font-head);font-size:18px;letter-spacing:.5px;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.step-badge{background:var(--accent);color:#fff;width:24px;height:24px;border-radius:50%;display:grid;place-items:center;font-size:12px;font-family:var(--font-mono);font-weight:700}
+.section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.section-title{font-family:var(--font-head);font-size:20px;letter-spacing:.5px}
+.resource-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.resource-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px;position:relative;overflow:hidden;transition:border-color .2s}
+.resource-card.critical-low{border-color:rgba(239,68,68,.5);animation:rPulse 1.5s infinite}
+@keyframes rPulse{0%,100%{box-shadow:0 0 0 0 rgba(239,68,68,.3)}50%{box-shadow:0 0 0 6px transparent}}
+.resource-icon{font-size:28px;margin-bottom:8px}
+.resource-name{font-size:13px;font-weight:600;margin-bottom:4px}
+.resource-count{font-family:var(--font-head);font-size:28px;color:var(--accent)}
+.progress-bar{height:4px;background:var(--border);border-radius:2px;margin-top:8px}
+.progress-fill{height:100%;border-radius:2px;transition:width .5s}
+.notif{position:fixed;top:70px;right:20px;background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--accent);border-radius:10px;padding:12px 16px;max-width:320px;z-index:9999;animation:slideIn .3s ease;box-shadow:0 8px 32px rgba(0,0,0,.4)}
+@keyframes slideIn{from{transform:translateX(120%)}to{transform:translateX(0)}}
+.notif-title{font-size:13px;font-weight:600;margin-bottom:4px}
+.notif-body{font-size:12px;color:var(--text-muted)}
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:200;display:none;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+.modal-bg.open{display:flex}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:24px;width:560px;max-width:92vw;max-height:88vh;overflow-y:auto;animation:fadeIn .2s ease}
+.modal-title{font-family:var(--font-head);font-size:22px;margin-bottom:20px}
+.fb-status{position:fixed;bottom:16px;right:16px;display:flex;align-items:center;gap:6px;background:rgba(10,14,26,.9);border:1px solid var(--border);border-radius:20px;padding:6px 12px;font-size:11px;font-family:var(--font-mono);color:var(--text-muted);z-index:500}
+.fb-dot{width:7px;height:7px;border-radius:50%;background:var(--green);animation:pulse 2s infinite}
+.fb-dot.offline{background:var(--accent2);animation:none}
+.amenity-tag{background:rgba(34,211,238,.08);border:1px solid rgba(34,211,238,.2);color:var(--accent3);padding:2px 7px;border-radius:10px;font-size:10px;font-family:var(--font-mono)}
+.amenity-pill{background:rgba(34,211,238,.08);border:1px solid rgba(34,211,238,.2);color:var(--accent3);padding:4px 10px;border-radius:20px;font-size:11px;font-family:var(--font-mono);display:inline-block;margin:2px}
+.inv-alert{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-radius:8px;padding:8px 14px;display:flex;align-items:center;gap:8px;font-size:12px;margin-bottom:12px}
+.crit-tag{background:var(--accent2);color:#fff;padding:1px 8px;border-radius:10px;font-size:10px;font-family:var(--font-mono);font-weight:700}
+/* CORRIDOR */
+.road-item{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(30,45,71,.5)}
+.road-item:last-child{border-bottom:none}
+.road-name{font-size:12px;font-weight:600}
+.road-meta{font-size:10px;color:var(--text-muted)}
+.toggle-road{width:36px;height:20px;border-radius:10px;cursor:pointer;border:none;position:relative;transition:background .2s;flex-shrink:0}
+.toggle-road.clear{background:var(--green)}
+.toggle-road.blocked{background:var(--accent2)}
+.toggle-road::after{content:'';position:absolute;width:14px;height:14px;border-radius:50%;background:#fff;top:3px;transition:left .2s}
+.toggle-road.clear::after{left:19px}
+.toggle-road.blocked::after{left:3px}
+.corridor-stat{display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border-radius:20px;font-size:12px;font-family:var(--font-mono);font-weight:600}
+.cs-clear{background:rgba(16,185,129,.15);color:var(--green)}
+.cs-blocked{background:rgba(239,68,68,.15);color:var(--accent2)}
+.route-result{background:rgba(16,185,129,.05);border:1px solid rgba(16,185,129,.2);border-radius:8px;padding:12px;margin-top:12px;display:none}
+.route-result.show{display:block}
+.route-step{display:flex;align-items:flex-start;gap:8px;padding:5px 0;font-size:12px}
+/* AI FORECAST */
+.ai-panel{background:linear-gradient(135deg,rgba(167,139,250,.08),rgba(249,115,22,.06));border:1px solid rgba(167,139,250,.3);border-radius:12px;padding:16px;margin-top:16px}
+.ai-row{display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--surface2);border-radius:8px;margin-bottom:6px;border:1px solid var(--border)}
+.ai-status{font-size:11px;font-weight:600;padding:2px 8px;border-radius:10px}
+.ai-ok{background:rgba(16,185,129,.15);color:var(--green)}
+.ai-warn{background:rgba(251,191,36,.15);color:var(--yellow)}
+.ai-crit{background:rgba(239,68,68,.15);color:var(--accent2)}
+/* SOS */
+.sos-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.sos-btn{padding:14px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);cursor:pointer;text-align:center;transition:all .2s;font-size:13px;font-weight:600}
+.sos-btn:hover,.sos-btn.sel{border-color:var(--accent2);background:rgba(239,68,68,.1);color:var(--accent2)}
+.sos-icon{font-size:22px;display:block;margin-bottom:5px}
+.heat-legend{display:flex;align-items:center;gap:14px;padding:10px 16px;background:rgba(10,14,26,.7);border-top:1px solid var(--border);font-size:11px;font-family:var(--font-mono)}
+.hdot{width:11px;height:11px;border-radius:50%;flex-shrink:0}
+.sos-chips{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+.sos-chip{display:flex;align-items:center;gap:5px;padding:5px 12px;border-radius:20px;font-size:12px;font-weight:600;font-family:var(--font-mono)}
+/* VOICE */
+.voice-wave{display:flex;align-items:center;gap:3px;height:28px}
+.vbar{width:4px;border-radius:2px;background:var(--accent3);animation:vw .8s ease-in-out infinite}
+.vbar:nth-child(1){animation-delay:0s}.vbar:nth-child(2){animation-delay:.1s}.vbar:nth-child(3){animation-delay:.2s}.vbar:nth-child(4){animation-delay:.3s}.vbar:nth-child(5){animation-delay:.4s}
+@keyframes vw{0%,100%{height:6px}50%{height:22px}}
+.voice-wave.off .vbar{animation:none;height:4px}
+.lang-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:10px 0}
+.lang-chip{padding:8px;border:1px solid var(--border);border-radius:8px;text-align:center;cursor:pointer;font-size:12px;transition:all .15s;background:var(--surface2)}
+.lang-chip:hover,.lang-chip.sel{border-color:var(--accent3);background:rgba(34,211,238,.08);color:var(--accent3)}
+/* OFFLINE */
+.sms-box{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px;font-family:var(--font-mono);font-size:12px;color:var(--accent3);margin:8px 0;letter-spacing:.5px}
+.sms-step{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;background:var(--surface2);border-radius:8px;border:1px solid var(--border);margin-bottom:8px}
+.sms-num{width:22px;height:22px;border-radius:50%;background:var(--accent);color:#fff;font-size:11px;font-weight:700;display:grid;place-items:center;flex-shrink:0;font-family:var(--font-mono)}
+/* ADMIN */
+.admin-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:20px}
+.admin-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px;cursor:pointer;transition:all .2s;position:relative;overflow:hidden}
+.admin-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--accent)}
+.admin-card:hover{border-color:var(--accent);transform:translateY(-2px)}
+.admin-card-icon{font-size:28px;margin-bottom:8px}
+.admin-card-title{font-family:var(--font-head);font-size:15px;letter-spacing:.5px;margin-bottom:3px}
+.admin-card-desc{font-size:11px;color:var(--text-muted)}
+/* CIVILIAN BANNER */
+.civ-banner{background:linear-gradient(135deg,rgba(167,139,250,.1),rgba(34,211,238,.06));border:1px solid rgba(167,139,250,.3);border-radius:12px;padding:14px 18px;margin-bottom:18px;display:flex;align-items:center;gap:14px}
+/* SCROLLBAR */
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+</style>
+</head>
+<body>
+
+<!-- LOADING -->
+<div id="loading-screen">
+  <div class="load-title">R<span>A</span>LCA</div>
+  <div class="load-ring"></div>
+  <div class="load-sub">VERIFYING SESSION…</div>
+</div>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="left">
+    <div class="bg-grid"></div><div class="bg-glow"></div>
+    <div class="left-brand">
+      <div class="brand-title">R<span>A</span>LCA <span style="font-size:22px;color:var(--accent3)">v2</span></div>
+      <div class="brand-sub">Rescue Agency Locator &amp; Coordination Application<br>Disaster Management · Firebase Realtime</div>
+    </div>
+    <div class="brand-features">
+      <div class="feat-row"><div class="feat-dot"></div>👑 Admin · 🏛 Agency · 👤 Civilian — 3-Role System</div>
+      <div class="feat-row"><div class="feat-dot"></div>Real-time tracking across India (15+ agencies)</div>
+      <div class="feat-row"><div class="feat-dot"></div>🤖 AI-Powered Resource Forecasting</div>
+      <div class="feat-row"><div class="feat-dot"></div>👥 Civilian SOS Crowdsourced Heatmap</div>
+      <div class="feat-row"><div class="feat-dot"></div>🟢 India-Wide Green Corridor Routing</div>
+      <div class="feat-row"><div class="feat-dot"></div>🎙 Multi-Lingual Voice Broadcast</div>
+      <div class="feat-row"><div class="feat-dot"></div>📵 SMS Offline Mode</div>
+    </div>
+  </div>
+  <div class="right">
+    <div class="login-box">
+      <div class="login-logo"><div class="login-logo-icon">🚨</div><div class="login-logo-text">RALCA v2</div></div>
+      <div class="auth-tabs">
+        <div class="auth-tab active" id="tab-login" onclick="switchTab('login')">LOGIN</div>
+        <div class="auth-tab" id="tab-reg" onclick="switchTab('reg')">REGISTER</div>
+      </div>
+      <!-- LOGIN PANEL -->
+      <div id="panel-login">
+        <div class="login-title">SECURE LOGIN</div>
+        <div class="login-desc">Access the emergency coordination platform</div>
+        <div class="error-msg-l" id="loginErr"></div>
+        <div class="form-group-l"><label class="form-label-l">EMAIL</label><input type="email" class="form-input-l" id="loginEmail" placeholder="your@email.com" onkeydown="if(event.key==='Enter')doLogin()"/></div>
+        <div class="form-group-l"><label class="form-label-l">PASSWORD</label><input type="password" class="form-input-l" id="loginPass" placeholder="Password" onkeydown="if(event.key==='Enter')doLogin()"/></div>
+        <button class="btn-login" id="loginBtn" onclick="doLogin()">🔐 LOGIN TO RALCA</button>
+        <div class="divider">OR</div>
+        <button class="btn-login secondary" onclick="guestLogin()">👤 Guest Mode (View Only)</button>
+        <div style="margin-top:12px;padding:10px;background:rgba(249,115,22,.05);border:1px solid var(--border);border-radius:8px;font-size:11px;color:var(--text-muted);line-height:1.7;font-family:var(--font-mono)">
+          👑 ADMIN: admin@gmail.com<br>🏛 AGENCY: Register → Agency tab<br>👤 CIVILIAN: Register → Civilian tab
+        </div>
+      </div>
+      <!-- REGISTER PANEL -->
+      <div id="panel-reg" style="display:none">
+        <div class="login-title">CREATE ACCOUNT</div>
+        <div class="login-desc">Select your account type</div>
+        <div class="error-msg-l" id="regErr"></div>
+        <div class="form-group-l">
+          <label class="form-label-l">ACCOUNT TYPE *</label>
+          <div class="role-picker">
+            <div class="role-card active" id="rc-agency" onclick="setRole('agency')"><span class="rc-icon">🏛</span><span class="rc-label">AGENCY</span></div>
+            <div class="role-card" id="rc-civilian" onclick="setRole('civilian')"><span class="rc-icon">👤</span><span class="rc-label">CIVILIAN</span></div>
+            <div class="role-card" id="rc-officer" onclick="setRole('officer')"><span class="rc-icon">🪖</span><span class="rc-label">OFFICER</span></div>
+          </div>
+        </div>
+        <div id="org-field" class="form-group-l"><label class="form-label-l">ORGANISATION NAME *</label><input type="text" class="form-input-l" id="regOrg" placeholder="e.g. TN Fire & Rescue Dept"/></div>
+        <div class="form-group-l"><label class="form-label-l">FULL NAME *</label><input type="text" class="form-input-l" id="regName" placeholder="Your full name"/></div>
+        <div class="form-group-l"><label class="form-label-l">EMAIL *</label><input type="email" class="form-input-l" id="regEmail" placeholder="your@email.com"/></div>
+        <div class="form-group-l"><label class="form-label-l">PASSWORD *</label><input type="password" class="form-input-l" id="regPass" placeholder="Min 6 characters"/></div>
+        <button class="btn-login" id="regBtn" onclick="doRegister()">✅ CREATE ACCOUNT</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app-screen">
+  <nav class="sidebar">
+    <div class="logo">
+      <div class="logo-badge">
+        <div class="logo-icon">🚨</div>
+        <div><div class="logo-text">RALCA v2</div><div class="logo-sub">DISASTER MGMT</div></div>
+      </div>
+    </div>
+    <div class="nav">
+      <div class="nav-group" id="ng-command">
+        <div class="nav-label">COMMAND</div>
+        <div class="nav-item active" onclick="go('dashboard',this)"><span class="icon">📊</span>Dashboard</div>
+        <div class="nav-item show-agency" onclick="go('map',this)"><span class="icon">🗺️</span>Live Map</div>
+        <div class="nav-item show-agency" onclick="go('corridor',this)"><span class="icon">🟢</span>Green Corridor</div>
+        <div class="nav-item show-agency" onclick="go('alerts',this)"><span class="icon">🚨</span>Alerts<span class="nav-badge" id="alertBadge">0</span></div>
+      </div>
+      <div class="nav-group show-agency" id="ng-agencies">
+        <div class="nav-label">AGENCIES</div>
+        <div class="nav-item show-agency" onclick="go('agencies',this)"><span class="icon">🏛️</span>All Agencies</div>
+        <div class="nav-item show-admin" onclick="go('register',this)"><span class="icon">➕</span>Register Agency</div>
+        <div class="nav-item show-agency" onclick="go('resources',this)"><span class="icon">🎒</span>Resources</div>
+      </div>
+      <div class="nav-group">
+        <div class="nav-label">COMMS</div>
+        <div class="nav-item" onclick="go('messaging',this)"><span class="icon">💬</span>Messaging<span class="nav-badge" id="msgBadge" style="background:var(--green)">●</span></div>
+        <div class="nav-item" onclick="go('incidents',this)"><span class="icon">⚡</span>Incidents</div>
+        <div class="nav-item" onclick="go('civilian',this)"><span class="icon">👥</span>Civilian SOS</div>
+        <div class="nav-item" onclick="go('voice',this)"><span class="icon">🎙</span>Voice Broadcast</div>
+        <div class="nav-item" onclick="go('offline',this)"><span class="icon">📵</span>Offline / SMS</div>
+      </div>
+      <div class="nav-group show-admin" id="ng-admin">
+        <div class="nav-label">SYSTEM (ADMIN)</div>
+        <div class="nav-item" onclick="go('adminpanel',this)"><span class="icon">⚙️</span>Control Panel</div>
+        <div class="nav-item" onclick="go('usermgmt',this)"><span class="icon">👥</span>User Management</div>
+        <div class="nav-item" onclick="go('logs',this)"><span class="icon">📝</span>System Logs</div>
+        <div class="nav-item" onclick="go('broadcast',this)"><span class="icon">📡</span>Broadcast Alert</div>
+      </div>
+    </div>
+    <div class="sidebar-footer">
+      <div class="user-card">
+        <div class="avatar" id="navAvatar">U</div>
+        <div class="user-info"><div class="user-name" id="navName">Loading…</div><div class="user-role" id="navRole">USER</div></div>
+        <div class="status-dot"></div>
+      </div>
+      <button class="btn btn-ghost" style="width:100%;justify-content:center" onclick="doLogout()">🚪 Logout</button>
+    </div>
+  </nav>
+
+  <div class="main">
+    <div class="topbar">
+      <div class="topbar-title" id="pageTitle">Dashboard</div>
+      <div class="topbar-actions">
+        <div class="live-badge"><div style="width:7px;height:7px;border-radius:50%;background:var(--green);animation:pulse 2s infinite"></div>FIREBASE LIVE</div>
+        <span id="offline-ind" style="display:none;background:rgba(239,68,68,.15);color:var(--accent2);padding:2px 10px;border-radius:20px;font-size:11px;font-family:var(--font-mono);font-weight:700">OFFLINE MODE</span>
+        <div class="alert-pulse" id="inc-dot"></div>
+        <span id="inc-label" style="font-size:13px;color:var(--accent2);font-weight:600">ACTIVE INCIDENT</span>
+        <button class="btn btn-danger" id="sosTopBtn" onclick="showModal('incident')">🆘 SOS</button>
+        <button class="btn btn-primary" onclick="refreshAll()">🔔</button>
+      </div>
+    </div>
+    <div class="content">
+
+<!-- ═══ DASHBOARD ═══ -->
+<div class="page active" id="page-dashboard">
+  <div id="guest-banner" style="display:none;background:rgba(249,115,22,.15);border:1px solid var(--accent);color:var(--accent);padding:12px 16px;border-radius:8px;margin-bottom:16px;font-size:13px;font-weight:500">
+    👋 Guest Mode — Read Only. <a onclick="doLogout()" style="text-decoration:underline;cursor:pointer;font-weight:700">Login / Register</a> to interact.
+  </div>
+  <div id="civ-banner" class="civ-banner" style="display:none">
+    <span style="font-size:28px">👤</span>
+    <div><div style="font-family:var(--font-head);font-size:16px;color:var(--purple);letter-spacing:.5px">CIVILIAN PORTAL</div><div style="font-size:12px;color:var(--text-muted);margin-top:2px">Report emergencies, drop SOS pins, send messages & use voice broadcast.</div></div>
+  </div>
+  <div id="admin-banner" style="display:none;background:linear-gradient(135deg,rgba(249,115,22,.15),rgba(239,68,68,.1));border:1px solid rgba(249,115,22,.3);border-radius:10px;padding:14px 18px;margin-bottom:18px;display:flex;align-items:center;gap:12px">
+    <span style="font-size:24px">👑</span><div><div style="font-family:var(--font-head);font-size:16px;color:var(--accent)">ADMIN DASHBOARD</div><div style="font-size:12px;color:var(--text-muted);margin-top:2px">Full system access — manage users, agencies, alerts & logs.</div></div>
+  </div>
+  <div id="inv-bar" class="inv-alert" style="display:none"><span>⚠</span><span id="inv-text">Critical inventory</span><span class="crit-tag">CRITICAL LOW</span><button class="btn btn-ghost" style="margin-left:auto;font-size:11px;padding:3px 10px" onclick="go('resources',null)">View →</button></div>
+  <div class="stats-grid">
+    <div class="stat-card orange"><div class="stat-label">AGENCIES</div><div class="stat-value" id="st-agencies" style="color:var(--accent)">0</div><div class="stat-sub">Registered in DB</div></div>
+    <div class="stat-card red"><div class="stat-label">ACTIVE INCIDENTS</div><div class="stat-value" id="st-incidents" style="color:var(--accent2)">0</div><div class="stat-sub" style="color:var(--accent2)">LIVE</div></div>
+    <div class="stat-card cyan"><div class="stat-label">TOTAL ALERTS</div><div class="stat-value" id="st-alerts" style="color:var(--accent3)">0</div><div class="stat-sub">All time</div></div>
+    <div class="stat-card purple"><div class="stat-label">CIVILIAN SOS</div><div class="stat-value" id="st-sos" style="color:var(--purple)">0</div><div class="stat-sub" style="color:var(--purple)">CROWDSOURCED</div></div>
+  </div>
+  <div class="map-container">
+    <div class="map-header">
+      <div class="map-title">🗺 LIVE AGENCY MAP</div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <span style="font-size:12px;color:var(--accent3);font-family:var(--font-mono)" id="mini-count">0 AGENCIES</span>
+        <button class="btn btn-ghost" onclick="go('map',null)" style="font-size:11px">Full Map →</button>
+      </div>
+    </div>
+    <div id="minimap" style="height:260px"></div>
+  </div>
+  <div class="two-col">
+    <div class="card">
+      <div class="card-header"><div class="card-title">⚠ RECENT ALERTS</div><div class="live-badge" style="font-size:10px">● LIVE</div></div>
+      <div class="alert-list" id="dash-alerts"><div style="padding:20px;color:var(--text-muted);font-size:13px">Loading alerts from Firebase…</div></div>
+    </div>
+    <div class="card">
+      <div class="card-header"><div class="card-title">🏛 AGENCIES</div><button class="btn btn-ghost" onclick="go('agencies',null)" style="font-size:11px">View All</button></div>
+      <div class="card-body"><table><thead><tr><th>AGENCY</th><th>TYPE</th><th>STATUS</th></tr></thead><tbody id="dash-agencies"></tbody></table></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ LIVE MAP ═══ -->
+<div class="page" id="page-map">
+  <div class="section-header">
+    <div class="section-title">🗺 LIVE TRACKING MAP</div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-ghost" onclick="toggleHeatmap()">🌡 Heatmap</button>
+      <button class="btn btn-primary" onclick="showModal('incident')">Report Incident</button>
+    </div>
+  </div>
+  <div class="map-container">
+    <div class="map-header">
+      <div class="map-filters">
+        <div class="filter-chip active" onclick="filterMap(this,'all')">All</div>
+        <div class="filter-chip" onclick="filterMap(this,'ndrf')">NDRF/Govt</div>
+        <div class="filter-chip" onclick="filterMap(this,'medical')">Medical</div>
+        <div class="filter-chip" onclick="filterMap(this,'ngo')">NGO</div>
+        <div class="filter-chip" onclick="filterMap(this,'coast')">Coast Guard</div>
+      </div>
+      <span style="font-size:11px;color:var(--text-muted);font-family:var(--font-mono)" id="mapCoords">📍 India</span>
+    </div>
+    <div id="fullmap" style="height:520px"></div>
+  </div>
+</div>
+
+<!-- ═══ GREEN CORRIDOR ═══ -->
+<div class="page" id="page-corridor">
+  <div class="section-header">
+    <div class="section-title">🟢 GREEN CORRIDOR — ALL INDIA</div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-success" onclick="calcRoute()">🗺 Calculate Route</button>
+      <button class="btn btn-danger" onclick="clearRoute()">✕ Clear</button>
+    </div>
+  </div>
+  <div style="display:grid;grid-template-columns:320px 1fr;gap:16px">
+    <div>
+      <div class="card" style="margin-bottom:12px">
+        <div class="card-header"><div class="card-title" style="font-size:15px">🚦 Road Status</div></div>
+        <div style="padding:12px;max-height:320px;overflow-y:auto"><div id="road-list"></div></div>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-title" style="font-size:15px">📍 Route Planner</div></div>
+        <div style="padding:12px">
+          <div class="form-group" style="margin-bottom:10px"><label>FROM (AGENCY)</label><select id="route-from"><option value="">-- Select Agency --</option></select></div>
+          <div class="form-group" style="margin-bottom:10px"><label>TO (INCIDENT ZONE)</label>
+            <select id="route-to">
+              <option value="tambaram">🌊 Flood — Tambaram, Chennai</option>
+              <option value="ambattur">🔥 Fire — Ambattur Industrial</option>
+              <option value="adyar">💧 Flood — Adyar River</option>
+              <option value="mumbai">🌊 Flood — Mumbai</option>
+              <option value="kolkata">🌀 Cyclone — Kolkata</option>
+              <option value="odisha">🌊 Cyclone — Odisha Coast</option>
+              <option value="delhi">⚠ Multi-Hazard — Delhi NCR</option>
+              <option value="vellore">🌀 Cyclone — Vellore</option>
+            </select>
+          </div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">
+            <div class="corridor-stat cs-clear">● CLEAR: <span id="clear-count">0</span></div>
+            <div class="corridor-stat cs-blocked">⚠ BLOCKED: <span id="blocked-count">0</span></div>
+          </div>
+          <div class="route-result" id="route-result">
+            <div style="font-family:var(--font-head);font-size:14px;color:var(--green);margin-bottom:8px">✅ CORRIDOR CALCULATED</div>
+            <div id="route-steps"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="map-container" style="margin-bottom:0">
+      <div class="map-header"><div class="map-title">CORRIDOR MAP — INDIA</div></div>
+      <div id="corridormap" style="height:500px"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ ALERTS ═══ -->
+<div class="page" id="page-alerts">
+  <div class="section-header">
+    <div class="section-title">🚨 ALERTS & NOTIFICATIONS</div>
+    <button class="btn btn-primary show-admin" onclick="showModal('newalert')">+ New Alert</button>
+  </div>
+  <div class="card" style="margin-bottom:14px">
+    <div class="card-header"><div class="card-title" style="color:var(--accent2)">🔴 CRITICAL</div><div class="live-badge" style="font-size:10px">● LIVE</div></div>
+    <div class="alert-list" id="crit-alerts"><div style="padding:16px;color:var(--text-muted);font-size:13px">Loading…</div></div>
+  </div>
+  <div class="card">
+    <div class="card-header"><div class="card-title" style="color:var(--yellow)">🟡 WARNING / INFO</div></div>
+    <div class="alert-list" id="warn-alerts"><div style="padding:16px;color:var(--text-muted);font-size:13px">Loading…</div></div>
+  </div>
+</div>
+
+<!-- ═══ AGENCIES ═══ -->
+<div class="page" id="page-agencies">
+  <div class="section-header">
+    <div class="section-title">🏛 ALL AGENCIES (<span id="ag-count">0</span>)</div>
+    <div style="display:flex;gap:8px">
+      <input type="text" placeholder="🔍 Search…" id="agSearch" oninput="filterAgencies()" style="width:200px"/>
+      <button class="btn btn-primary show-admin" onclick="go('register',null)">+ Register</button>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-body">
+      <table><thead><tr><th>AGENCY</th><th>TYPE</th><th>LOCATION</th><th>PIN</th><th>KEY ASSETS</th><th>STATUS</th><th>ACTION</th></tr></thead>
+      <tbody id="ag-table"></tbody></table>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ REGISTER AGENCY ═══ -->
+<div class="page" id="page-register">
+  <div class="section-title" style="margin-bottom:18px">➕ REGISTER NEW AGENCY → Firebase</div>
+  <div class="form-section">
+    <div class="form-section-title"><div class="step-badge">1</div>Organisation Details</div>
+    <div class="form-grid">
+      <div class="form-group"><label>AGENCY NAME *</label><input id="rg-name" placeholder="e.g. TN NDRF Battalion 7"/></div>
+      <div class="form-group"><label>AGENCY TYPE *</label>
+        <select id="rg-type"><option>-- Select Type --</option><option>NDRF</option><option>SDRF</option><option>Fire & Rescue</option><option>Medical / EMS</option><option>Police</option><option>NGO</option><option>Civil Defence</option><option>Coast Guard</option><option>Coordination Body</option></select>
+      </div>
+      <div class="form-group"><label>REGISTRATION NUMBER</label><input id="rg-regno"/></div>
+      <div class="form-group"><label>YEAR ESTABLISHED</label><input type="number" id="rg-year"/></div>
+      <div class="form-group full"><label>HEAD OFFICE ADDRESS *</label><input id="rg-addr"/></div>
+    </div>
+  </div>
+  <div class="form-section">
+    <div class="form-section-title"><div class="step-badge">2</div>Contact & Location</div>
+    <div class="form-grid">
+      <div class="form-group"><label>CONTACT NAME *</label><input id="rg-contact"/></div>
+      <div class="form-group"><label>PHONE *</label><input type="tel" id="rg-phone"/></div>
+      <div class="form-group"><label>EMAIL</label><input type="email" id="rg-email"/></div>
+      <div class="form-group"><label>STATE</label>
+        <select id="rg-state"><option>-- Select State --</option><option>Tamil Nadu</option><option>Delhi</option><option>Maharashtra</option><option>Gujarat</option><option>West Bengal</option><option>Odisha</option><option>Andhra Pradesh</option><option>Karnataka</option><option>Kerala</option><option>Rajasthan</option><option>Uttar Pradesh</option><option>Haryana</option><option>Punjab</option><option>Assam</option><option>Bihar</option><option>Jharkhand</option></select>
+      </div>
+      <div class="form-group"><label>GPS LATITUDE</label><input id="rg-lat" placeholder="13.0827"/></div>
+      <div class="form-group"><label>GPS LONGITUDE</label><input id="rg-lng" placeholder="80.2707"/></div>
+      <div class="form-group full" style="flex-direction:row;align-items:center;gap:10px">
+        <button class="btn btn-ghost" onclick="captureGPS()">📍 Auto GPS</button>
+        <span id="gps-status" style="font-size:12px;color:var(--text-muted)"></span>
+      </div>
+    </div>
+  </div>
+  <div class="form-section">
+    <div class="form-section-title"><div class="step-badge">3</div>Resources & Capabilities</div>
+    <div class="form-grid">
+      <div class="form-group"><label>PERSONNEL</label><input type="number" id="rg-personnel"/></div>
+      <div class="form-group"><label>VEHICLES</label><input type="number" id="rg-vehicles"/></div>
+      <div class="form-group"><label>SPECIALIZATION</label>
+        <select id="rg-spec"><option>Search & Rescue</option><option>Flood Relief</option><option>Earthquake Response</option><option>Fire Fighting</option><option>Medical Aid</option><option>Logistics</option></select>
+      </div>
+      <div class="form-group"><label>RESPONSE TIME</label>
+        <select id="rg-resp"><option>&lt;30 min</option><option>30–60 min</option><option>1–2 hrs</option></select>
+      </div>
+      <div class="form-group full"><label>ASSETS & AMENITIES (comma-separated)</label><textarea id="rg-assets" placeholder="Rescue boats, Medical kits, Hazmat suits…"></textarea></div>
+      <div class="form-actions">
+        <button class="btn btn-ghost" onclick="clearRegForm()">Clear</button>
+        <button class="btn btn-primary" onclick="submitAgency()">✅ Register → Firebase</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ RESOURCES ═══ -->
+<div class="page" id="page-resources">
+  <div class="section-header">
+    <div class="section-title">🎒 RESOURCE INVENTORY</div>
+    <button class="btn btn-primary show-admin" onclick="showModal('addres')">+ Add Resource</button>
+  </div>
+  <div id="res-alerts"></div>
+  <div class="stats-grid" style="margin-bottom:20px">
+    <div class="stat-card orange"><div class="stat-label">TOTAL VEHICLES</div><div class="stat-value" id="rs-vehicles" style="color:var(--accent)">86</div><div class="stat-sub" id="rs-vehicles-s">72 available</div></div>
+    <div class="stat-card cyan"><div class="stat-label">PERSONNEL</div><div class="stat-value" id="rs-personnel" style="color:var(--accent3)">1,240</div><div class="stat-sub" id="rs-personnel-s">890 on standby</div></div>
+    <div class="stat-card green"><div class="stat-label">MEDICAL KITS</div><div class="stat-value" id="rs-medkits" style="color:var(--green)">340</div><div class="stat-sub" id="rs-medkits-s">100% stocked</div></div>
+    <div class="stat-card red"><div class="stat-label">RESCUE BOATS</div><div class="stat-value" id="rs-boats" style="color:var(--accent2)">24</div><div class="stat-sub" id="rs-boats-s" style="color:var(--accent2)">6 deployed</div></div>
+  </div>
+  <div class="resource-grid" id="res-grid"></div>
+</div>
+
+<!-- ═══ MESSAGING ═══ -->
+<div class="page" id="page-messaging">
+  <div style="margin-bottom:16px;display:flex;align-items:center;gap:10px">
+    <div class="section-title">💬 INTER-AGENCY MESSAGING</div>
+    <div class="live-badge" style="font-size:10px">● FIREBASE LIVE</div>
+  </div>
+  <div style="display:grid;grid-template-columns:240px 1fr;gap:16px;height:500px">
+    <div class="card" style="display:flex;flex-direction:column;overflow:hidden">
+      <div class="card-header"><div class="card-title" style="font-size:14px">Channels</div></div>
+      <div style="flex:1;overflow-y:auto;padding:8px" id="channel-list"></div>
+    </div>
+    <div class="card" style="display:flex;flex-direction:column;overflow:hidden">
+      <div class="card-header">
+        <div><div class="card-title" style="font-size:14px" id="chan-title">🔴 Emergency — Chennai Flood</div><div style="font-size:11px;color:var(--text-muted)">Firebase Realtime</div></div>
+      </div>
+      <div style="flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px" id="chat-body"></div>
+      <div style="padding:10px;border-top:1px solid var(--border);display:flex;gap:8px" id="msg-input-area">
+        <input id="msgInput" placeholder="Type message… (Enter to send)" style="flex:1" onkeydown="if(event.key==='Enter')sendMsg()"/>
+        <button class="btn btn-primary" onclick="sendMsg()">Send</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ INCIDENTS ═══ -->
+<div class="page" id="page-incidents">
+  <div class="section-header">
+    <div class="section-title">⚡ INCIDENT MANAGEMENT <span class="live-badge" style="font-size:10px;margin-left:8px">● LIVE</span></div>
+    <button class="btn btn-danger" onclick="showModal('incident')">🆘 New Incident</button>
+  </div>
+  <div class="card">
+    <div class="card-body">
+      <table><thead><tr><th>ID</th><th>TYPE</th><th>LOCATION</th><th>SEVERITY</th><th>REPORTED BY</th><th>TIME</th><th>STATUS</th><th>AI FORECAST</th></tr></thead>
+      <tbody id="inc-table"><tr><td colspan="8" style="text-align:center;padding:20px;color:var(--text-muted)">Loading…</td></tr></tbody></table>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ CIVILIAN SOS ═══ -->
+<div class="page" id="page-civilian">
+  <div class="section-header">
+    <div class="section-title">👥 CIVILIAN SOS — LIVE HEATMAP</div>
+    <button class="btn btn-danger" onclick="showModal('civsos')">📍 Report SOS</button>
+  </div>
+  <div class="sos-chips" id="sos-chips">
+    <div class="sos-chip" style="background:rgba(251,191,36,.15);color:var(--yellow)">🍱 Food: <span id="sc-food">0</span></div>
+    <div class="sos-chip" style="background:rgba(239,68,68,.15);color:var(--accent2)">💉 Medical: <span id="sc-medical">0</span></div>
+    <div class="sos-chip" style="background:rgba(249,115,22,.15);color:var(--accent)">🏚 Trapped: <span id="sc-trapped">0</span></div>
+    <div class="sos-chip" style="background:rgba(34,211,238,.15);color:var(--accent3)">🆘 Rescue: <span id="sc-rescue">0</span></div>
+  </div>
+  <div class="map-container">
+    <div class="map-header"><div class="map-title">📍 SOS HEATMAP</div><span style="font-size:12px;color:var(--text-dim);font-family:var(--font-mono)">Click map to drop pin</span></div>
+    <div id="civmap" style="height:380px"></div>
+    <div class="heat-legend">
+      <div class="hdot" style="background:#ef4444"></div>Trapped/Rescue &nbsp;
+      <div class="hdot" style="background:#f97316"></div>Medical &nbsp;
+      <div class="hdot" style="background:#fbbf24"></div>Food &nbsp;
+      <div class="hdot" style="background:#22d3ee"></div>Other
+    </div>
+  </div>
+  <div class="card" style="margin-top:14px">
+    <div class="card-header"><div class="card-title">📋 RECENT REPORTS</div><div class="live-badge" style="font-size:10px">● LIVE</div></div>
+    <div class="card-body"><table><thead><tr><th>TYPE</th><th>LOCATION</th><th>MESSAGE</th><th>TIME</th><th>PRIORITY</th></tr></thead><tbody id="sos-table"></tbody></table></div>
+  </div>
+</div>
+
+<!-- ═══ VOICE BROADCAST ═══ -->
+<div class="page" id="page-voice">
+  <div class="section-header"><div class="section-title">🎙 VOICE BROADCAST</div><div class="live-badge">● WEB SPEECH API</div></div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+    <div>
+      <div class="form-section">
+        <div class="form-section-title"><div class="step-badge">1</div>Select Language</div>
+        <div class="lang-grid" id="lang-grid"></div>
+      </div>
+      <div class="form-section">
+        <div class="form-section-title"><div class="step-badge">2</div>Compose Message</div>
+        <div class="form-group" style="margin-bottom:10px"><label>MESSAGE</label><textarea id="voice-msg" style="min-height:90px" placeholder="Type emergency message…"></textarea></div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <button class="btn btn-primary" onclick="startVoice()">🔊 Broadcast</button>
+          <button class="btn btn-ghost" onclick="stopVoice()">⏹ Stop</button>
+          <div class="voice-wave off" id="vwave"><div class="vbar"></div><div class="vbar"></div><div class="vbar"></div><div class="vbar"></div><div class="vbar"></div></div>
+          <span id="vstatus" style="font-size:11px;color:var(--text-muted);font-family:var(--font-mono)">IDLE</span>
+        </div>
+      </div>
+      <div class="form-section">
+        <div class="form-section-title" style="font-size:15px">⚡ Quick Phrases</div>
+        <div id="quick-phrases" style="display:flex;flex-direction:column;gap:6px"></div>
+      </div>
+    </div>
+    <div>
+      <div class="card"><div class="card-header"><div class="card-title" style="font-size:14px">📋 Broadcast History</div></div><div id="voice-hist" style="padding:8px 0"></div></div>
+      <div class="card" style="margin-top:12px">
+        <div class="card-header"><div class="card-title" style="font-size:14px">ℹ How It Works</div></div>
+        <div style="padding:14px;font-size:12px;color:var(--text-dim);line-height:1.7">Uses the browser's <b style="color:var(--accent3)">Web Speech API</b> to speak typed text in the selected language. Works offline once page is loaded.<div style="margin-top:8px;padding:8px;background:rgba(34,211,238,.05);border:1px solid rgba(34,211,238,.15);border-radius:6px;font-size:11px;color:var(--accent3)">ℹ Best in Chrome/Edge for Indian language voices.</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ OFFLINE / SMS ═══ -->
+<div class="page" id="page-offline">
+  <div class="section-header"><div class="section-title">📵 OFFLINE / SMS MODE</div><div class="live-badge">● CONNECTIVITY AWARE</div></div>
+  <div style="display:flex;align-items:center;gap:10px;padding:12px 16px;background:rgba(239,68,68,.05);border:1px solid rgba(239,68,68,.2);border-radius:10px;margin-bottom:16px">
+    <span id="conn-pill" style="background:rgba(16,185,129,.15);color:var(--green);padding:2px 10px;border-radius:20px;font-size:11px;font-family:var(--font-mono);font-weight:700">ONLINE</span>
+    <span id="conn-text" style="font-size:13px;font-weight:600">Network active</span>
+    <div style="margin-left:auto;display:flex;gap:8px">
+      <button class="btn btn-ghost" onclick="simOffline()">📵 Simulate Offline</button>
+      <button class="btn btn-success" onclick="simOnline()">📶 Restore</button>
+    </div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+    <div>
+      <div class="form-section">
+        <div class="form-section-title"><div class="step-badge">!</div>SMS Emergency Format</div>
+        <div style="font-size:13px;color:var(--text-dim);margin-bottom:10px">When internet fails, SMS this format to our gateway:</div>
+        <div class="sms-box">RALCA | SOS | &lt;TYPE&gt; | &lt;LAT&gt; | &lt;LNG&gt; | &lt;DESC&gt;</div>
+        <div class="sms-box" style="color:var(--green)">RALCA | SOS | FLOOD | 13.08 | 80.27 | Road submerged need boats</div>
+        <div class="sms-step"><div class="sms-num">1</div><div><div style="font-size:13px">SMS to <b style="color:var(--accent)">+91-1800-RALCA-0</b></div><div style="font-size:11px;color:var(--text-muted);margin-top:2px">Toll-free gateway</div></div></div>
+        <div class="sms-step"><div class="sms-num">2</div><div><div style="font-size:13px">Gateway posts to Firebase</div><div style="font-size:11px;color:var(--text-muted);margin-top:2px">All coordinators notified instantly</div></div></div>
+        <div class="sms-step"><div class="sms-num">3</div><div><div style="font-size:13px">Incident created on dashboard</div><div style="font-size:11px;color:var(--text-muted);margin-top:2px">Auto-appears in Incidents table</div></div></div>
+      </div>
+    </div>
+    <div>
+      <div class="form-section">
+        <div class="form-section-title" style="font-size:15px">📤 Compose Offline SOS</div>
+        <div class="form-group" style="margin-bottom:10px"><label>TYPE</label><select id="sms-type" oninput="genSMS()"><option>FLOOD</option><option>FIRE</option><option>EARTHQUAKE</option><option>CYCLONE</option><option>COLLAPSE</option><option>MEDICAL</option></select></div>
+        <div class="form-group" style="margin-bottom:10px"><label>DESCRIPTION (max 50 chars)</label><input id="sms-desc" maxlength="50" placeholder="Brief description" oninput="genSMS()"/></div>
+        <div style="display:flex;gap:8px;margin-bottom:10px">
+          <button class="btn btn-ghost" onclick="smsGPS()">📍 Use GPS</button>
+          <span id="sms-gps" style="font-size:11px;color:var(--text-muted);align-self:center"></span>
+        </div>
+        <div class="sms-box" id="gen-sms" style="color:var(--yellow);min-height:36px">Fill fields above →</div>
+        <button class="btn btn-primary" onclick="copySMS()" style="margin-top:10px;width:100%;justify-content:center">📋 Copy SMS</button>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-title" style="font-size:14px">📊 Offline Queue</div></div>
+        <div style="padding:12px"><div id="offline-q" style="font-size:13px;color:var(--text-muted);font-style:italic">No pending items.</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ ADMIN PANEL ═══ -->
+<div class="page" id="page-adminpanel">
+  <div class="section-header"><div class="section-title">🛡️ ADMIN CONTROL PANEL</div><span style="background:rgba(249,115,22,.15);color:var(--accent);padding:4px 12px;border-radius:20px;font-size:11px;font-family:var(--font-mono)">👑 ADMIN</span></div>
+  <div class="admin-grid">
+    <div class="admin-card" onclick="go('usermgmt',null)"><div class="admin-card-icon">👥</div><div class="admin-card-title">USER MANAGEMENT</div><div class="admin-card-desc">View all registered users by role.</div></div>
+    <div class="admin-card" onclick="go('broadcast',null)"><div class="admin-card-icon">📡</div><div class="admin-card-title">BROADCAST ALERT</div><div class="admin-card-desc">Push alerts to all users via Firebase.</div></div>
+    <div class="admin-card" onclick="go('register',null)"><div class="admin-card-icon">➕</div><div class="admin-card-title">REGISTER AGENCY</div><div class="admin-card-desc">Add agencies to Firebase DB.</div></div>
+    <div class="admin-card" onclick="go('logs',null)"><div class="admin-card-icon">📋</div><div class="admin-card-title">SYSTEM LOGS</div><div class="admin-card-desc">Audit all events from Firebase.</div></div>
+    <div class="admin-card" onclick="showModal('newalert')"><div class="admin-card-icon">🚨</div><div class="admin-card-title">CREATE ALERT</div><div class="admin-card-desc">Push critical alerts immediately.</div></div>
+    <div class="admin-card" onclick="go('voice',null)"><div class="admin-card-icon">🎙</div><div class="admin-card-title">VOICE BROADCAST</div><div class="admin-card-desc">Multi-lingual audio broadcast.</div></div>
+  </div>
+  <div class="card">
+    <div class="card-header"><div class="card-title">📊 FIREBASE STATUS</div></div>
+    <div style="padding:20px;display:grid;grid-template-columns:repeat(3,1fr);gap:16px;text-align:center">
+      <div><div style="font-family:var(--font-head);font-size:28px;color:var(--green)" id="fb-status">ONLINE</div><div style="font-size:11px;color:var(--text-muted);font-family:var(--font-mono)">CONNECTION</div></div>
+      <div><div style="font-family:var(--font-head);font-size:28px;color:var(--accent3)" id="fb-ag-count">0</div><div style="font-size:11px;color:var(--text-muted);font-family:var(--font-mono)">AGENCIES</div></div>
+      <div><div style="font-family:var(--font-head);font-size:28px;color:var(--accent)" id="fb-inc-count">0</div><div style="font-size:11px;color:var(--text-muted);font-family:var(--font-mono)">INCIDENTS</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ USER MGMT ═══ -->
+<div class="page" id="page-usermgmt">
+  <div class="section-header"><div class="section-title">👥 USER MANAGEMENT</div><span style="background:rgba(249,115,22,.15);color:var(--accent);padding:4px 12px;border-radius:20px;font-size:11px;font-family:var(--font-mono)">👑 ADMIN ONLY</span></div>
+  <div class="card"><div class="card-body"><table><thead><tr><th>EMAIL</th><th>NAME</th><th>TYPE</th><th>ORG</th><th>JOINED</th><th>ACTION</th></tr></thead><tbody id="users-table"></tbody></table></div></div>
+</div>
+
+<!-- ═══ SYSTEM LOGS ═══ -->
+<div class="page" id="page-logs">
+  <div class="section-header"><div class="section-title">📝 SYSTEM LOGS <span class="live-badge" style="font-size:10px;margin-left:8px">● LIVE</span></div><span style="background:rgba(249,115,22,.15);color:var(--accent);padding:4px 12px;border-radius:20px;font-size:11px;font-family:var(--font-mono)">👑 ADMIN ONLY</span></div>
+  <div class="card"><div id="logs-body" style="padding:8px 0"></div></div>
+</div>
+
+<!-- ═══ BROADCAST ═══ -->
+<div class="page" id="page-broadcast">
+  <div class="section-header"><div class="section-title">📡 BROADCAST ALERT</div><span style="background:rgba(249,115,22,.15);color:var(--accent);padding:4px 12px;border-radius:20px;font-size:11px;font-family:var(--font-mono)">👑 ADMIN ONLY</span></div>
+  <div class="form-section" style="max-width:640px">
+    <div class="form-section-title"><div class="step-badge">!</div>Emergency Broadcast → Firebase</div>
+    <div class="form-grid" style="grid-template-columns:1fr">
+      <div class="form-group full"><label>TARGET</label><select id="bc-target"><option>All Users & Agencies</option><option>NDRF Units Only</option><option>Medical Teams Only</option><option>Fire & Rescue Only</option></select></div>
+      <div class="form-group full"><label>PRIORITY</label><select id="bc-priority"><option>🔴 Critical Emergency</option><option>🟠 High Alert</option><option>🟡 Warning</option><option>🔵 Information</option></select></div>
+      <div class="form-group full"><label>MESSAGE</label><textarea id="bc-msg" style="min-height:100px" placeholder="Type broadcast message…"></textarea></div>
+      <div class="form-actions">
+        <button class="btn btn-ghost" onclick="document.getElementById('bc-msg').value=''">Clear</button>
+        <button class="btn btn-danger" onclick="sendBroadcast()">📡 BROADCAST NOW → Firebase</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+    </div><!-- content -->
+  </div><!-- main -->
+</div><!-- app -->
+
+<!-- ═══ MODALS ═══ -->
+<div class="modal-bg" id="modal-incident" onclick="if(event.target===this)closeModal('incident')">
+  <div class="modal" style="width:620px">
+    <div class="modal-title">🆘 Report Incident → Firebase</div>
+    <div class="form-grid">
+      <div class="form-group"><label>TYPE</label><select id="inc-type" onchange="showForecast()"><option>Flood</option><option>Earthquake</option><option>Fire</option><option>Cyclone</option><option>Building Collapse</option><option>Chemical Hazard</option></select></div>
+      <div class="form-group"><label>SEVERITY</label><select id="inc-sev"><option>Critical</option><option>High</option><option>Medium</option><option>Low</option></select></div>
+      <div class="form-group full"><label>LOCATION *</label><input id="inc-loc" placeholder="Street, area, city…"/></div>
+      <div class="form-group full"><label>DESCRIPTION</label><textarea id="inc-desc" placeholder="Describe the situation…"></textarea></div>
+    </div>
+    <div class="ai-panel" id="ai-panel">
+      <div style="font-family:var(--font-head);font-size:15px;color:var(--purple);margin-bottom:12px;letter-spacing:.5px">🤖 AI RESOURCE FORECAST — <span id="ai-type">Flood</span></div>
+      <div id="ai-rows"></div>
+      <div style="margin-top:10px">
+        <div style="font-size:11px;color:var(--accent3);font-family:var(--font-mono);margin-bottom:6px">✅ RECOMMENDED AGENCIES:</div>
+        <div id="ai-agencies"></div>
+      </div>
+    </div>
+    <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:14px">
+      <button class="btn btn-ghost" onclick="closeModal('incident')">Cancel</button>
+      <button class="btn btn-danger" onclick="submitIncident()">🆘 Submit to Firebase</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="modal-civsos" onclick="if(event.target===this)closeModal('civsos')">
+  <div class="modal">
+    <div class="modal-title">📍 Report Civilian SOS</div>
+    <div class="sos-grid">
+      <div class="sos-btn sel" id="sb-food" onclick="setSOS('Food Needed',this)"><span class="sos-icon">🍱</span>Food Needed</div>
+      <div class="sos-btn" id="sb-medical" onclick="setSOS('Medical Emergency',this)"><span class="sos-icon">💉</span>Medical</div>
+      <div class="sos-btn" id="sb-trapped" onclick="setSOS('Trapped in Building',this)"><span class="sos-icon">🏚</span>Trapped</div>
+      <div class="sos-btn" id="sb-rescue" onclick="setSOS('Rescue Needed',this)"><span class="sos-icon">🆘</span>Rescue</div>
+    </div>
+    <div class="form-group" style="margin-bottom:10px"><label>LOCATION</label><input id="civ-loc" placeholder="Your current location…"/></div>
+    <div class="form-group" style="margin-bottom:10px"><label>MESSAGE (optional)</label><input id="civ-msg" placeholder="e.g. 4 people stranded, water rising…"/></div>
+    <div style="display:flex;gap:8px;margin-bottom:12px">
+      <button class="btn btn-ghost" onclick="civGPS()">📍 Use My GPS</button>
+      <span id="civ-gps-s" style="font-size:11px;color:var(--text-muted);align-self:center"></span>
+    </div>
+    <div style="display:flex;justify-content:flex-end;gap:10px">
+      <button class="btn btn-ghost" onclick="closeModal('civsos')">Cancel</button>
+      <button class="btn btn-danger" onclick="submitCivSOS()">📍 Drop SOS Pin</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="modal-newalert" onclick="if(event.target===this)closeModal('newalert')">
+  <div class="modal">
+    <div class="modal-title">⚠ Create Alert → Firebase</div>
+    <div class="form-grid">
+      <div class="form-group"><label>ALERT TYPE</label><select id="al-type"><option>Weather</option><option>Incident</option><option>Resource</option><option>System</option></select></div>
+      <div class="form-group"><label>SEVERITY</label><select id="al-sev"><option value="critical">Critical</option><option value="warning">Warning</option><option value="info">Info</option></select></div>
+      <div class="form-group full"><label>TITLE</label><input id="al-title" placeholder="Alert title…"/></div>
+      <div class="form-group full"><label>MESSAGE</label><textarea id="al-msg" placeholder="Alert message…"></textarea></div>
+      <div class="form-actions">
+        <button class="btn btn-ghost" onclick="closeModal('newalert')">Cancel</button>
+        <button class="btn btn-primary" onclick="createAlert()">Push to Firebase</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="modal-addres" onclick="if(event.target===this)closeModal('addres')">
+  <div class="modal">
+    <div class="modal-title">🎒 Update Resource → Firebase</div>
+    <div style="font-size:13px;color:var(--text-dim);margin-bottom:14px">Changes save to Firebase and update the inventory in real time across all sessions.</div>
+    <div class="form-grid">
+      <div class="form-group full">
+        <label>RESOURCE TYPE *</label>
+        <select id="res-type-sel">
+          <option value="">-- Select Resource --</option>
+          <option value="fire_engines">🚒 Fire Engines</option>
+          <option value="ambulances">🚑 Ambulances</option>
+          <option value="helicopters">🚁 Helicopters</option>
+          <option value="rescue_boats">⛵ Rescue Boats</option>
+          <option value="relief_tents">🏕️ Relief Tents</option>
+          <option value="medical_kits">💊 Medical Kits</option>
+          <option value="generators">🔋 Generators</option>
+          <option value="trucks">🚛 Trucks</option>
+          <option value="comm_sets">📡 Comm Sets</option>
+        </select>
+      </div>
+      <div class="form-group"><label>TOTAL QUANTITY</label><input type="number" id="res-total" placeholder="e.g. 50" min="0"/></div>
+      <div class="form-group"><label>AVAILABLE NOW</label><input type="number" id="res-avail" placeholder="e.g. 40" min="0"/></div>
+      <div class="form-actions">
+        <button class="btn btn-ghost" onclick="closeModal('addres')">Cancel</button>
+        <button class="btn btn-primary" id="res-save-btn" onclick="saveResource()">💾 Save to Firebase</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="modal-agdetail" onclick="if(event.target===this)closeModal('agdetail')">
+  <div class="modal" style="width:600px">
+    <div class="modal-title">Agency Details</div>
+    <div id="ag-detail-body"></div>
+    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:14px;padding-top:12px;border-top:1px solid var(--border)">
+      <button class="btn btn-ghost" onclick="closeModal('agdetail')">Close</button>
+      <button class="btn btn-success" onclick="closeModal('agdetail');showNotif('Resource request sent!')">📤 Request Resources</button>
+    </div>
+  </div>
+</div>
+
+<div class="fb-status">
+  <div class="fb-dot" id="fb-dot"></div>
+  <span id="fb-text">Connecting…</span>
+</div>
+
+<script>
+/* ════════════════════════════════════
+   FIREBASE CONFIG
+════════════════════════════════════ */
 const firebaseConfig = {
   apiKey: "AIzaSyBTHohDW-10f7EolWpW8CUlfLCIJNDZmF8",
   authDomain: "ralca-59e0a.firebaseapp.com",
@@ -11,13 +930,1010 @@ const firebaseConfig = {
   projectId: "ralca-59e0a",
   storageBucket: "ralca-59e0a.firebasestorage.app",
   messagingSenderId: "48983338103",
-  appId: "1:48983338103:web:56e63507811b1c0cca6a72"
+  appId: "1:48983338103:web:56e63507811b1c0cca6a72",
+  measurementId: "G-ZTJ9HMKVYJ"
 };
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.app().database("https://ralca-59e0a-default-rtdb.asia-southeast1.firebasedatabase.app");
 
-// Initialize Firebase and Realtime Database
-const app = initializeApp(firebaseConfig);
-const db = getDatabase(app);
+/* ════════════════════════════════════
+   STATIC AGENCY DATA
+════════════════════════════════════ */
+const STATIC_AGENCIES = [
+  {id:'AGY001', name:'National Disaster Response Force (HQ)', type:'NDRF', shortType:'NDRF', location:'New Delhi', city:'New Delhi', pin:'110001', address:'NDCC-II Building, Jai Singh Road', lat:28.6271, lng:77.2109, status:'active', resources:200, amenities:['Command Center', 'National Dispatch'], icon:'🛡️', color:'#f97316'},
+  {id:'AGY002', name:'National Disaster Management Authority', type:'Coordination Body', shortType:'NDMA', location:'New Delhi', city:'New Delhi', pin:'110029', address:'Safdarjung Enclave', lat:28.5694, lng:77.1958, status:'active', resources:150, amenities:['Satellite Comms', 'Strategy Ops'], icon:'📡', color:'#22d3ee'},
+  {id:'AGY003', name:'MHA Disaster Management Division', type:'Govt', shortType:'MHA', location:'New Delhi', city:'New Delhi', pin:'110001', address:'North Block', lat:28.6143, lng:77.2045, status:'active', resources:100, amenities:['Policy Coordination'], icon:'🏛️', color:'#3b82f6'},
+  {id:'AGY004', name:'1st Battalion NDRF', type:'NDRF', shortType:'NDRF-1', location:'Guwahati', city:'Guwahati', pin:'781017', address:'Patgaon, Azara', lat:26.1200, lng:91.6000, status:'active', resources:120, amenities:['Flood Rescue', 'CSSR'], icon:'🛡️', color:'#f97316'},
+  {id:'AGY005', name:'2nd Battalion NDRF', type:'NDRF', shortType:'NDRF-2', location:'Nadia', city:'Haringhata', pin:'741246', address:'Nadia, West Bengal', lat:22.9600, lng:88.5600, status:'active', resources:120, amenities:['Flood Rescue', 'Boats'], icon:'🛡️', color:'#f97316'},
+  {id:'AGY006', name:'3rd Battalion NDRF', type:'NDRF', shortType:'NDRF-3', location:'Cuttack', city:'Cuttack', pin:'754013', address:'Mundali, Odisha', lat:20.4400, lng:85.7400, status:'active', resources:120, amenities:['Cyclone Prep', 'Evacuation'], icon:'🛡️', color:'#f97316'},
+  {id:'AGY007', name:'4th Battalion NDRF', type:'NDRF', shortType:'NDRF-4', location:'Arakkonam', city:'Arakkonam', pin:'631152', address:'Tamil Nadu', lat:13.0802, lng:79.6669, status:'active', resources:120, amenities:['CSSR', 'Chemical Hazard'], icon:'🛡️', color:'#f97316'},
+  {id:'AGY008', name:'5th Battalion NDRF', type:'NDRF', shortType:'NDRF-5', location:'Pune', city:'Pune', pin:'412109', address:'Maharashtra', lat:18.5204, lng:73.8567, status:'active', resources:120, amenities:['Urban SAR', 'K9 Units'], icon:'🛡️', color:'#f97316'},
+  {id:'AGY009', name:'6th Battalion NDRF', type:'NDRF', shortType:'NDRF-6', location:'Vadodara', city:'Vadodara', pin:'391510', address:'Gujarat', lat:22.3072, lng:73.1812, status:'active', resources:120, amenities:['Earthquake Rescue'], icon:'🛡️', color:'#f97316'},
+  {id:'AGY010', name:'7th Battalion NDRF', type:'NDRF', shortType:'NDRF-7', location:'Bathinda', city:'Bathinda', pin:'151001', address:'Punjab', lat:30.2110, lng:74.9455, status:'active', resources:120, amenities:['CBRN Response'], icon:'🛡️', color:'#f97316'},
+  {id:'AGY011', name:'8th Battalion NDRF', type:'NDRF', shortType:'NDRF-8', location:'Ghaziabad', city:'Ghaziabad', pin:'201002', address:'Uttar Pradesh', lat:28.6692, lng:77.4538, status:'standby', resources:120, amenities:['CSSR', 'Medical'], icon:'🛡️', color:'#f97316'},
+  {id:'AGY012', name:'9th Battalion NDRF', type:'NDRF', shortType:'NDRF-9', location:'Patna', city:'Patna', pin:'800001', address:'Bihar', lat:25.5941, lng:85.1376, status:'active', resources:120, amenities:['Flood Rescue Boats'], icon:'🛡️', color:'#f97316'},
+  {id:'AGY013', name:'10th Battalion NDRF', type:'NDRF', shortType:'NDRF-10', location:'Vijayawada', city:'Vijayawada', pin:'520001', address:'Andhra Pradesh', lat:16.5062, lng:80.6480, status:'active', resources:120, amenities:['Cyclone Prep'], icon:'🛡️', color:'#f97316'},
+  {id:'AGY014', name:'11th Battalion NDRF', type:'NDRF', shortType:'NDRF-11', location:'Varanasi', city:'Varanasi', pin:'221002', address:'Uttar Pradesh', lat:25.3176, lng:82.9739, status:'active', resources:120, amenities:['Flood Rescue'], icon:'🛡️', color:'#f97316'},
+  {id:'AGY015', name:'12th Battalion NDRF', type:'NDRF', shortType:'NDRF-12', location:'Itanagar', city:'Itanagar', pin:'791112', address:'Arunachal Pradesh', lat:27.0886, lng:93.6053, status:'standby', resources:120, amenities:['High Altitude Rescue'], icon:'🛡️', color:'#f97316'},
+  {id:'AGY016', name:'13th Battalion NDRF', type:'NDRF', shortType:'NDRF-13', location:'Ludhiana', city:'Ludhiana', pin:'141008', address:'Punjab', lat:30.9010, lng:75.8573, status:'active', resources:120, amenities:['CSSR'], icon:'🛡️', color:'#f97316'},
+  {id:'AGY017', name:'14th Battalion NDRF', type:'NDRF', shortType:'NDRF-14', location:'Nurpur', city:'Nurpur', pin:'176201', address:'Himachal Pradesh', lat:32.3005, lng:75.8953, status:'standby', resources:120, amenities:['Mountain Rescue'], icon:'🛡️', color:'#f97316'},
+  {id:'AGY018', name:'15th Battalion NDRF', type:'NDRF', shortType:'NDRF-15', location:'Gadarpur', city:'Gadarpur', pin:'263152', address:'Uttarakhand', lat:29.0347, lng:79.2555, status:'active', resources:120, amenities:['Landslide Clearance'], icon:'🛡️', color:'#f97316'},
+  {id:'AGY019', name:'16th Battalion NDRF', type:'NDRF', shortType:'NDRF-16', location:'Dwarka', city:'New Delhi', pin:'110077', address:'New Delhi', lat:28.5823, lng:77.0500, status:'active', resources:120, amenities:['Urban SAR'], icon:'🛡️', color:'#f97316'},
+  {id:'AGY020', name:'Andhra Pradesh SDRF', type:'SDRF', shortType:'SDRF-AP', location:'Amaravati', city:'Amaravati', pin:'522020', address:'AP HQ', lat:16.5115, lng:80.5186, status:'active', resources:80, amenities:['Coastal Rescue'], icon:'🚒', color:'#fbbf24'},
+  {id:'AGY021', name:'Arunachal Pradesh SDRF', type:'SDRF', shortType:'SDRF-AR', location:'Itanagar', city:'Itanagar', pin:'791111', address:'AR HQ', lat:27.0886, lng:93.6053, status:'standby', resources:60, amenities:['Mountain Rescue'], icon:'🚒', color:'#fbbf24'},
+  {id:'AGY022', name:'Assam SDRF', type:'SDRF', shortType:'SDRF-AS', location:'Guwahati', city:'Guwahati', pin:'781006', address:'Assam HQ', lat:26.1445, lng:91.7362, status:'active', resources:90, amenities:['River Boats'], icon:'🚒', color:'#fbbf24'},
+  {id:'AGY023', name:'Bihar SDRF', type:'SDRF', shortType:'SDRF-BR', location:'Patna', city:'Patna', pin:'800001', address:'Bihar HQ', lat:25.5941, lng:85.1376, status:'active', resources:85, amenities:['Flood Ops'], icon:'🚒', color:'#fbbf24'},
+  {id:'AGY024', name:'Chhattisgarh SDRF', type:'SDRF', shortType:'SDRF-CG', location:'Raipur', city:'Raipur', pin:'492001', address:'CG HQ', lat:21.2514, lng:81.6296, status:'standby', resources:70, amenities:['Logistics'], icon:'🚒', color:'#fbbf24'},
+  {id:'AGY025', name:'Gujarat SDRF', type:'SDRF', shortType:'SDRF-GJ', location:'Gandhinagar', city:'Gandhinagar', pin:'382010', address:'Gujarat HQ', lat:23.2156, lng:72.6369, status:'active', resources:95, amenities:['Earthquake Relief'], icon:'🚒', color:'#fbbf24'},
+  {id:'AGY026', name:'Haryana SDRF', type:'SDRF', shortType:'SDRF-HR', location:'Chandigarh', city:'Chandigarh', pin:'160001', address:'Haryana HQ', lat:30.7333, lng:76.7794, status:'standby', resources:65, amenities:['Industrial Hazards'], icon:'🚒', color:'#fbbf24'},
+  {id:'AGY027', name:'Himachal Pradesh SDRF', type:'SDRF', shortType:'SDRF-HP', location:'Shimla', city:'Shimla', pin:'171002', address:'HP HQ', lat:31.1048, lng:77.1734, status:'active', resources:60, amenities:['Snow Rescue'], icon:'🚒', color:'#fbbf24'},
+  {id:'AGY028', name:'Karnataka SDRF', type:'SDRF', shortType:'SDRF-KA', location:'Bengaluru', city:'Bengaluru', pin:'560001', address:'KA HQ', lat:12.9716, lng:77.5946, status:'active', resources:100, amenities:['Urban Flooding'], icon:'🚒', color:'#fbbf24'},
+  {id:'AGY029', name:'Kerala SDRF', type:'SDRF', shortType:'SDRF-KL', location:'Trivandrum', city:'Thiruvananthapuram', pin:'695001', address:'KL HQ', lat:8.5241, lng:76.9366, status:'active', resources:85, amenities:['Monsoon Relief'], icon:'🚒', color:'#fbbf24'},
+  {id:'AGY030', name:'Madhya Pradesh SDRF', type:'SDRF', shortType:'SDRF-MP', location:'Bhopal', city:'Bhopal', pin:'462001', address:'MP HQ', lat:23.2599, lng:77.4126, status:'standby', resources:80, amenities:['Drought Relief'], icon:'🚒', color:'#fbbf24'},
+  {id:'AGY031', name:'Maharashtra SDRF', type:'SDRF', shortType:'SDRF-MH', location:'Mumbai', city:'Mumbai', pin:'400001', address:'MH HQ', lat:19.0760, lng:72.8777, status:'active', resources:110, amenities:['Coastal Defense'], icon:'🚒', color:'#fbbf24'},
+  {id:'AGY032', name:'Odisha SDRF', type:'SDRF', shortType:'SDRF-OD', location:'Bhubaneswar', city:'Bhubaneswar', pin:'751001', address:'OD HQ', lat:20.2961, lng:85.8245, status:'active', resources:105, amenities:['Cyclone Centers'], icon:'🚒', color:'#fbbf24'},
+  {id:'AGY033', name:'Punjab SDRF', type:'SDRF', shortType:'SDRF-PB', location:'Chandigarh', city:'Chandigarh', pin:'160001', address:'PB HQ', lat:30.7333, lng:76.7794, status:'standby', resources:75, amenities:['Flood Logistics'], icon:'🚒', color:'#fbbf24'},
+  {id:'AGY034', name:'Rajasthan SDRF', type:'SDRF', shortType:'SDRF-RJ', location:'Jaipur', city:'Jaipur', pin:'302001', address:'RJ HQ', lat:26.9124, lng:75.7873, status:'active', resources:80, amenities:['Heatwave Relief'], icon:'🚒', color:'#fbbf24'},
+  {id:'AGY035', name:'Tamil Nadu SDRF', type:'SDRF', shortType:'SDRF-TN', location:'Chennai', city:'Chennai', pin:'600009', address:'TN HQ', lat:13.0827, lng:80.2707, status:'active', resources:100, amenities:['Flood Boats', 'Diving'], icon:'🚒', color:'#fbbf24'},
+  {id:'AGY036', name:'Telangana SDRF', type:'SDRF', shortType:'SDRF-TS', location:'Hyderabad', city:'Hyderabad', pin:'500001', address:'TS HQ', lat:17.3850, lng:78.4867, status:'standby', resources:85, amenities:['Urban SAR'], icon:'🚒', color:'#fbbf24'},
+  {id:'AGY037', name:'Uttar Pradesh SDRF', type:'SDRF', shortType:'SDRF-UP', location:'Lucknow', city:'Lucknow', pin:'226001', address:'UP HQ', lat:26.8467, lng:80.9462, status:'active', resources:110, amenities:['River Ops'], icon:'🚒', color:'#fbbf24'},
+  {id:'AGY038', name:'Uttarakhand SDRF', type:'SDRF', shortType:'SDRF-UK', location:'Dehradun', city:'Dehradun', pin:'248001', address:'UK HQ', lat:30.3165, lng:78.0322, status:'active', resources:75, amenities:['Landslide Rescue'], icon:'🚒', color:'#fbbf24'},
+  {id:'AGY039', name:'West Bengal SDRF', type:'SDRF', shortType:'SDRF-WB', location:'Kolkata', city:'Kolkata', pin:'700001', address:'WB HQ', lat:22.5726, lng:88.3639, status:'active', resources:95, amenities:['Cyclone Evac'], icon:'🚒', color:'#fbbf24'},
+  {id:'AGY040', name:'Indian Red Cross Society', type:'Medical / NGO', shortType:'Red Cross', location:'New Delhi', city:'New Delhi', pin:'110001', address:'1, Red Cross Road', lat:28.6129, lng:77.2066, status:'active', resources:200, amenities:['Ambulances', 'Blood Banks'], icon:'🏥', color:'#10b981'},
+  {id:'AGY041', name:'Goonj NGO', type:'NGO', shortType:'Goonj', location:'New Delhi', city:'New Delhi', pin:'110076', address:'Sarita Vihar', lat:28.5330, lng:77.2932, status:'active', resources:40, amenities:['Clothing', 'Rations'], icon:'📦', color:'#10b981'},
+  {id:'AGY042', name:'SEEDS India', type:'NGO / Shelter', shortType:'SEEDS', location:'New Delhi', city:'New Delhi', pin:'110016', address:'R.K. Puram', lat:28.5679, lng:77.1756, status:'standby', resources:45, amenities:['Tents', 'Shelter Kits'], icon:'🏗️', color:'#10b981'},
+  {id:'AGY043', name:'CARE India', type:'NGO', shortType:'CARE', location:'New Delhi', city:'New Delhi', pin:'110016', address:'Hauz Khas', lat:28.5520, lng:77.2030, status:'active', resources:55, amenities:['WASH Kits', 'Food'], icon:'🤝', color:'#10b981'},
+  {id:'AGY044', name:'Oxfam India', type:'NGO / WASH', shortType:'Oxfam', location:'New Delhi', city:'New Delhi', pin:'110049', address:'South Ex', lat:28.5706, lng:77.1594, status:'active', resources:50, amenities:['Water Filters', 'Sanitation'], icon:'💧', color:'#10b981'},
+  {id:'AGY045', name:'Save the Children India', type:'NGO / Child Safety', shortType:'SaveChildren', location:'New Delhi', city:'New Delhi', pin:'110025', address:'Okhla', lat:28.5355, lng:77.2685, status:'standby', resources:30, amenities:['Pediatric Care'], icon:'👶', color:'#10b981'},
+  {id:'AGY046', name:'Sphere India', type:'NGO', shortType:'Sphere', location:'New Delhi', city:'New Delhi', pin:'110014', address:'Jungpura', lat:28.5830, lng:77.2450, status:'active', resources:25, amenities:['Coordination', 'Data mapping'], icon:'📊', color:'#10b981'},
+  {id:'AGY047', name:'ActionAid India', type:'NGO', shortType:'ActionAid', location:'New Delhi', city:'New Delhi', pin:'110049', address:'South Ex', lat:28.5690, lng:77.2150, status:'active', resources:35, amenities:['Community Kitchens'], icon:'🤝', color:'#10b981'},
+  {id:'AGY048', name:'Plan India', type:'NGO', shortType:'Plan India', location:'New Delhi', city:'New Delhi', pin:'110017', address:'Malviya Nagar', lat:28.5340, lng:77.2080, status:'standby', resources:30, amenities:['Hygiene Kits'], icon:'🤝', color:'#10b981'},
+  {id:'AGY049', name:'CARE Emergency Response', type:'NGO', shortType:'CARE ERT', location:'New Delhi', city:'New Delhi', pin:'110016', address:'Hauz Khas', lat:28.5525, lng:77.2025, status:'active', resources:45, amenities:['Rapid Deployment'], icon:'🚐', color:'#10b981'},
+  {id:'AGY050', name:'Doctors For You (DFY)', type:'Medical / NGO', shortType:'DFY', location:'Mumbai', city:'Mumbai', pin:'400070', address:'Kurla', lat:19.0760, lng:72.8777, status:'active', resources:60, amenities:['Mobile Clinics', 'Trauma Care'], icon:'🩺', color:'#10b981'}
+];
 
-// Keep your existing let variables, but start them empty
-let agencies = [];
-let incidents = [];
+let allAgencies = [...STATIC_AGENCIES];
+let allAlerts = [], allIncidents = [], allMsgs = [], allSOS = [];
+let currentUser = null, currentChan = 'emergency-chennai-flood';
+const ADMIN_EMAIL = 'admin@gmail.com';
+
+const DEFAULT_RESOURCES = {
+  fire_engines: {icon:'🚒',name:'Fire Engines', total:28, avail:22, key:'fire_engines'},
+  ambulances:   {icon:'🚑',name:'Ambulances',   total:45, avail:38, key:'ambulances'},
+  helicopters:  {icon:'🚁',name:'Helicopters',  total:8,  avail:2,  key:'helicopters'},
+  rescue_boats: {icon:'⛵',name:'Rescue Boats', total:24, avail:3,  key:'rescue_boats'},
+  relief_tents: {icon:'🏕️',name:'Relief Tents',total:500,avail:320,key:'relief_tents'},
+  medical_kits: {icon:'💊',name:'Medical Kits', total:340,avail:340,key:'medical_kits'},
+  generators:   {icon:'🔋',name:'Generators',   total:60, avail:48, key:'generators'},
+  trucks:       {icon:'🚛',name:'Trucks',        total:35, avail:28, key:'trucks'},
+  comm_sets:    {icon:'📡',name:'Comm Sets',    total:120,avail:10, key:'comm_sets'},
+};
+let allResources = JSON.parse(JSON.stringify(DEFAULT_RESOURCES));
+
+/* ════════════════════════════════════
+   FIREBASE CONNECTION STATUS
+════════════════════════════════════ */
+db.ref('.info/connected').on('value', snap => {
+  const on = snap.val();
+  const dot = document.getElementById('fb-dot');
+  const txt = document.getElementById('fb-text');
+  const st  = document.getElementById('fb-status');
+  if(dot) dot.className = 'fb-dot' + (on ? '' : ' offline');
+  if(txt) txt.textContent = on ? 'Firebase Live' : 'Firebase Offline';
+  if(st)  { st.textContent = on ? 'ONLINE' : 'OFFLINE'; st.style.color = on ? 'var(--green)' : 'var(--accent2)'; }
+});
+
+/* ════════════════════════════════════
+   AUTH STATE
+════════════════════════════════════ */
+auth.onAuthStateChanged(async user => {
+  document.getElementById('loading-screen').style.display = 'none';
+  if(user) {
+    let role = 'civilian', userType = 'civilian', displayName = user.email.split('@')[0], orgName = '';
+    if(user.email === ADMIN_EMAIL) { role = 'admin'; userType = 'admin'; displayName = 'Gokul R (Admin)'; }
+    else {
+      try {
+        const snap = await db.ref(`users/${user.uid}`).once('value');
+        if(snap.exists()) {
+          const d = snap.val();
+          userType = d.userType || 'civilian';
+          role = userType;
+          displayName = d.fullName || displayName;
+          orgName = d.orgName || '';
+        }
+      } catch(e) {}
+    }
+    launchApp({ email: user.email, role, userType, name: displayName, orgName, uid: user.uid });
+  } else {
+    document.getElementById('login-screen').style.display = 'flex';
+  }
+});
+
+/* ════════════════════════════════════
+   LOGIN / REGISTER
+════════════════════════════════════ */
+let selectedRole = 'agency';
+function switchTab(t) {
+  ['login','reg'].forEach(x => { document.getElementById('tab-'+x).classList.toggle('active', x===t); document.getElementById('panel-'+x).style.display = x===t?'block':'none'; });
+}
+function setRole(r) {
+  selectedRole = r;
+  ['agency','civilian','officer'].forEach(x => document.getElementById('rc-'+x).classList.toggle('active', x===r));
+  document.getElementById('org-field').style.display = r==='agency' ? 'block' : 'none';
+}
+function errMsg(id, msg) { const e=document.getElementById(id); e.textContent=msg; e.style.display='block'; }
+function clearErr(id) { document.getElementById(id).style.display='none'; }
+function friendlyErr(code) {
+  return {'auth/user-not-found':'No account found with this email.','auth/wrong-password':'Wrong password.','auth/email-already-in-use':'Email already registered.','auth/weak-password':'Password too short (min 6 chars).','auth/invalid-email':'Invalid email.','auth/invalid-credential':'Invalid credentials.','auth/too-many-requests':'Too many attempts. Try later.','auth/network-request-failed':'Network error.'}[code] || 'Error: '+code;
+}
+async function doLogin() {
+  clearErr('loginErr');
+  const em = document.getElementById('loginEmail').value.trim();
+  const pw = document.getElementById('loginPass').value.trim();
+  if(!em||!pw) { errMsg('loginErr','Please fill all fields.'); return; }
+  const btn = document.getElementById('loginBtn');
+  btn.disabled=true; btn.innerHTML='<div class="spinner"></div> Signing in…';
+  try { await auth.signInWithEmailAndPassword(em, pw); }
+  catch(e) { errMsg('loginErr', friendlyErr(e.code)); btn.disabled=false; btn.textContent='🔐 LOGIN TO RALCA'; }
+}
+async function doRegister() {
+  clearErr('regErr');
+  const em = document.getElementById('regEmail').value.trim();
+  const pw = document.getElementById('regPass').value.trim();
+  const fn = document.getElementById('regName').value.trim();
+  const org = document.getElementById('regOrg').value.trim();
+  if(!em||!pw||!fn) { errMsg('regErr','Please fill all required fields.'); return; }
+  if(pw.length<6) { errMsg('regErr','Password must be at least 6 characters.'); return; }
+  if(selectedRole==='agency'&&!org) { errMsg('regErr','Please enter your organisation name.'); return; }
+  const btn = document.getElementById('regBtn');
+  btn.disabled=true; btn.innerHTML='<div class="spinner"></div> Creating…';
+  try {
+    const cred = await auth.createUserWithEmailAndPassword(em, pw);
+    await db.ref(`users/${cred.user.uid}`).set({ email:em, fullName:fn, orgName:org, userType:selectedRole, joined:new Date().toLocaleDateString(), createdAt:Date.now() });
+    sysLog(`New ${selectedRole} registered: ${em} (${fn})`);
+  } catch(e) { errMsg('regErr', friendlyErr(e.code)); btn.disabled=false; btn.textContent='✅ CREATE ACCOUNT'; }
+}
+function guestLogin() {
+  document.getElementById('login-screen').style.display='none';
+  currentUser = {email:'guest',role:'guest',userType:'guest',name:'Guest User'};
+  document.getElementById('app-screen').style.display='block';
+  setupUI(currentUser); initAll(); sysLog('Guest login');
+}
+function launchApp(user) {
+  currentUser = user;
+  document.getElementById('login-screen').style.display='none';
+  document.getElementById('app-screen').style.display='block';
+  setupUI(user); initAll(); sysLog(`Login: ${user.email} [${user.role}]`);
+}
+async function doLogout() {
+  if(currentUser?.role==='guest') { currentUser=null; document.getElementById('app-screen').style.display='none'; document.getElementById('login-screen').style.display='flex'; return; }
+  sysLog(`Logout: ${currentUser?.email}`);
+  await auth.signOut(); currentUser=null;
+  miniMap=fullMap=corrMap=civMap=null;
+  document.getElementById('app-screen').style.display='none';
+}
+
+/* ════════════════════════════════════
+   SETUP UI
+════════════════════════════════════ */
+function setupUI(user) {
+  const role = user.role||'civilian';
+  const isAdmin   = role==='admin';
+  const isAgency  = isAdmin || role==='agency' || role==='officer';
+  const isCivil   = role==='civilian' || role==='guest';
+
+  document.getElementById('navAvatar').textContent = (user.name||'U').charAt(0).toUpperCase();
+  document.getElementById('navName').textContent   = user.name||'User';
+  document.getElementById('navRole').textContent   = (user.userType||role).toUpperCase();
+
+  document.querySelectorAll('.show-admin').forEach(el => el.style.display = isAdmin ? '' : 'none');
+  document.getElementById('ng-admin').style.display  = isAdmin ? 'block' : 'none';
+  document.querySelectorAll('.show-agency').forEach(el => el.style.display = isAgency ? '' : 'none');
+  document.getElementById('ng-agencies').style.display = isAgency ? 'block' : 'none';
+
+  document.getElementById('admin-banner').style.display  = isAdmin ? 'flex' : 'none';
+  document.getElementById('guest-banner').style.display  = role==='guest' ? 'block' : 'none';
+  document.getElementById('civ-banner').style.display    = role==='civilian' ? 'flex' : 'none';
+  document.getElementById('sosTopBtn').style.display     = role==='guest' ? 'none' : '';
+  document.getElementById('inc-dot').style.display       = isCivil ? 'none' : '';
+  document.getElementById('inc-label').style.display     = isCivil ? 'none' : '';
+
+  const rf = document.getElementById('route-from');
+  if(rf) rf.innerHTML = '<option value="">-- Select Agency --</option>' + allAgencies.map(a=>`<option value="${a.id}">${esc(a.name)}</option>`).join('');
+
+  if(role==='guest') {
+    const mi = document.getElementById('msg-input-area');
+    if(mi) mi.innerHTML='<div style="flex:1;text-align:center;font-size:13px;color:var(--text-muted);padding:12px">🔒 Login to send messages</div>';
+  }
+}
+
+/* ════════════════════════════════════
+   SEED DATA
+════════════════════════════════════ */
+async function seedData() {
+  for(const a of STATIC_AGENCIES) {
+    const s = await db.ref(`agencies/${a.id}`).once('value');
+    if(!s.exists()) await db.ref(`agencies/${a.id}`).set(a);
+  }
+  const as = await db.ref('alerts').once('value');
+  if(!as.exists()) {
+    const defaults = [
+      {type:'critical',icon:'🌊',title:'Flash Flood — Tambaram Region',meta:'Chennai · 3 agencies deployed',time:Date.now()-14*60000},
+      {type:'critical',icon:'🔥',title:'Industrial Fire — Ambattur',meta:'2 casualties reported',time:Date.now()-32*60000},
+      {type:'warning',icon:'🌀',title:'Cyclone Watch — Bay of Bengal',meta:'Expected landfall in 48 hrs',time:Date.now()-2*3600000},
+      {type:'info',icon:'💧',title:'Water Level Rising — Adyar River',meta:'Alert level 3 · Monitoring',time:Date.now()-5*3600000},
+    ];
+    for(const a of defaults) await db.ref('alerts').push(a);
+  }
+  const ms = await db.ref('messages/emergency-chennai-flood').once('value');
+  if(!ms.exists()) {
+    const dmsgs = [
+      {sender:'Gokul R',role:'ADMIN',msg:'All units — flood water at +2.3m in Tambaram. Proceed evacuations.',time:Date.now()-30*60000},
+      {sender:'SDRF Tamil Nadu',role:'SDRF',msg:'Confirmed. 3 boats deployed. ETA 8 minutes.',time:Date.now()-28*60000},
+      {sender:'Indian Red Cross',role:'MEDICAL',msg:'Medical camp at Tambaram Govt School. Need 20 extra kits.',time:Date.now()-25*60000},
+    ];
+    for(const m of dmsgs) await db.ref('messages/emergency-chennai-flood').push(m);
+  }
+  const resSnap = await db.ref('resources').once('value');
+  if(!resSnap.exists()) {
+    for(const [k,v] of Object.entries(DEFAULT_RESOURCES)) {
+      await db.ref(`resources/${k}`).set({...v, key:k});
+    }
+  }
+  const rdSnap = await db.ref('corridor_roads').once('value');
+  if(!rdSnap.exists()) {
+    for(const r of INDIA_ROADS) {
+      await db.ref(`corridor_roads/${r.id}`).set(r);
+    }
+  }
+}
+
+/* ════════════════════════════════════
+   FIREBASE LISTENERS
+════════════════════════════════════ */
+function listenFirebase() {
+
+  /* AGENCIES */
+  db.ref('agencies').on('value', snap => {
+    const fbMap = {};
+    if(snap.exists()) snap.forEach(c => { const v=c.val(); if(v&&v.id) fbMap[v.id]=v; });
+    const merged = {};
+    STATIC_AGENCIES.forEach(a => merged[a.id] = a);
+    Object.values(fbMap).forEach(a => { merged[a.id] = a; });
+    allAgencies = Object.values(merged);
+
+    renderDashAgencies();
+    renderAgTable();
+    const n = allAgencies.length;
+    setEl('st-agencies', n);
+    setEl('fb-ag-count', n);
+    setEl('ag-count', n);
+    setEl('mini-count', n + ' AGENCIES');
+    const rf = document.getElementById('route-from');
+    if(rf) { const cv=rf.value; rf.innerHTML='<option value="">-- Select Agency --</option>'+allAgencies.map(a=>`<option value="${a.id}">${esc(a.name)}</option>`).join(''); rf.value=cv; }
+  });
+
+  /* ALERTS — live sync, no limit */
+  db.ref('alerts').orderByChild('time').on('value', snap => {
+    allAlerts = [];
+    if(snap.exists()) {
+      snap.forEach(c => { allAlerts.push({ ...c.val(), _k: c.key }); });
+    }
+    allAlerts.reverse();
+    renderAlerts();
+    renderDashAlerts();
+    const count = allAlerts.length;
+    setEl('st-alerts', count);
+    const critOnly = allAlerts.filter(a => String(a.type).toLowerCase() === 'critical');
+    setEl('alertBadge', critOnly.length);
+  });
+
+  /* INCIDENTS */
+  db.ref('incidents').orderByChild('time').on('value', snap => {
+    allIncidents = [];
+    snap.forEach(c => allIncidents.push({...c.val(), _k:c.key}));
+    allIncidents.reverse();
+    renderIncidents();
+    const activeCount = allIncidents.filter(i=>(i.status||'').toLowerCase()==='active').length;
+    setEl('st-incidents', activeCount);
+    setEl('fb-inc-count', allIncidents.length);
+  });
+
+  /* MESSAGES */
+  db.ref(`messages/${currentChan}`).orderByChild('time').on('value', snap => {
+    allMsgs = [];
+    snap.forEach(c => allMsgs.push({...c.val(), _k:c.key}));
+    renderMsgs();
+  });
+
+  /* CIVILIAN SOS */
+  db.ref('civilian_sos').orderByChild('time').on('value', snap => {
+    allSOS = [];
+    snap.forEach(c => allSOS.push({...c.val(), _k:c.key}));
+    allSOS.reverse();
+    renderSOSTable();
+    updateSOSChips();
+    renderCivHeatmap();
+    setEl('st-sos', allSOS.length);
+  });
+
+  /* SYSTEM LOGS */
+  db.ref('system_logs').orderByChild('time').limitToLast(200).on('value', snap => {
+    const logs = []; snap.forEach(c => logs.push(c.val())); logs.reverse();
+    const b = document.getElementById('logs-body');
+    if(b) b.innerHTML = logs.length
+      ? logs.map(l=>`<div class="alert-item"><div class="alert-icon info">📋</div><div class="alert-content"><div class="alert-title">${esc(l.msg)}</div></div><div class="alert-time">${new Date(l.time).toLocaleTimeString()}</div></div>`).join('')
+      : '<div style="padding:20px;color:var(--text-muted);text-align:center;font-size:13px">No logs yet.</div>';
+  });
+
+  /* RESOURCES */
+  db.ref('resources').on('value', snap => {
+    if(snap.exists()) {
+      allResources = JSON.parse(JSON.stringify(DEFAULT_RESOURCES));
+      snap.forEach(c => {
+        const v = c.val();
+        if(v && c.key) allResources[c.key] = {...(allResources[c.key]||{}), ...v, key:c.key};
+      });
+    }
+    renderResources();
+  });
+
+  /* USERS */
+  db.ref('users').on('value', snap => renderUsers(snap));
+
+  /* CORRIDOR ROADS */
+  db.ref('corridor_roads').on('value', snap => {
+    if(snap.exists()) {
+      const fbData = snap.val();
+      roadStatus = roadStatus.map(localRoad => {
+        if(fbData[localRoad.id]) {
+          return { ...localRoad, clear: fbData[localRoad.id].clear };
+        }
+        return localRoad;
+      });
+      renderRoadList();
+      if(corrMap) drawCorridorRoads();
+    }
+  });
+}
+
+function setEl(id, val) {
+  const el = document.getElementById(id);
+  if(el) el.textContent = val;
+}
+
+async function sysLog(msg) { try { await db.ref('system_logs').push({msg,time:Date.now()}); } catch(e){} }
+
+/* ════════════════════════════════════
+   INDIA-WIDE CORRIDOR ROADS
+════════════════════════════════════ */
+const INDIA_ROADS = [
+  {id:'nh44_jk',  name:'NH-44: Srinagar—Jalandhar',    segment:'J&K–Punjab stretch',         clear:true,  from:[32.72,74.86],to:[31.32,75.57]},
+  {id:'nh44_pb',  name:'NH-44: Jalandhar—Delhi',         segment:'Punjab–Delhi corridor',       clear:true,  from:[31.32,75.57],to:[28.55,77.10]},
+  {id:'nh44_da',  name:'NH-44: Delhi—Agra',              segment:'Mathura bypass',              clear:true,  from:[28.55,77.10],to:[27.18,78.01]},
+  {id:'nh44_an',  name:'NH-44: Agra—Nagpur',             segment:'Gwalior–Bhopal–Nagpur',       clear:false, from:[27.18,78.01],to:[21.15,79.09]},
+  {id:'nh44_nb',  name:'NH-44: Nagpur—Bengaluru',        segment:'Hyderabad–Bengaluru',         clear:true,  from:[21.15,79.09],to:[12.97,77.59]},
+  {id:'nh44_bc',  name:'NH-44: Bengaluru—Chennai',       segment:'Krishnagiri–Chennai',         clear:true,  from:[12.97,77.59],to:[13.08,80.27]},
+  {id:'nh44_ck',  name:'NH-44: Chennai—Kanyakumari',     segment:'Madurai–Kanyakumari',         clear:false, from:[9.92,78.12], to:[8.09,77.55]},
+  {id:'nh27_ae',  name:'NH-27: Ahmedabad—Nagpur',        segment:'East-West Corridor West',     clear:true,  from:[23.03,72.58],to:[21.15,79.09]},
+  {id:'nh27_nv',  name:'NH-27: Nagpur—Varanasi',         segment:'East-West Corridor East',     clear:true,  from:[21.15,79.09],to:[25.32,83.01]},
+  {id:'nh48_dj',  name:'NH-48: Delhi—Jaipur',            segment:'Gurugram–Jaipur',             clear:true,  from:[28.44,77.03],to:[26.91,75.79]},
+  {id:'nh48_jm',  name:'NH-48: Jaipur—Mumbai',           segment:'Ahmedabad–Mumbai',            clear:false, from:[26.91,75.79],to:[19.08,72.88]},
+  {id:'nh16_kb',  name:'NH-16: Kolkata—Bhubaneswar',     segment:'Kharagpur–Bhubaneswar',       clear:true,  from:[22.33,87.32],to:[20.29,85.84]},
+  {id:'nh16_bv',  name:'NH-16: Bhubaneswar—Vizag',       segment:'Coastal corridor',            clear:true,  from:[20.29,85.84],to:[17.69,83.22]},
+  {id:'nh16_vc',  name:'NH-16: Vizag—Chennai',           segment:'Vijayawada–Nellore',          clear:false, from:[17.69,83.22],to:[13.08,80.27]},
+  {id:'nh19_dk',  name:'NH-19: Delhi—Kolkata',           segment:'Allahabad–Varanasi–Patna',    clear:false, from:[25.45,81.84],to:[22.57,88.36]},
+  {id:'nh37',     name:'NH-37: Guwahati—Dibrugarh',      segment:'Assam Valley',                clear:true,  from:[26.14,91.74],to:[27.49,94.91]},
+  {id:'omr',      name:'OMR — Sholinganallur–Perungudi',  segment:'IT Corridor stretch',         clear:true,  from:[12.89,80.23],to:[13.03,80.25]},
+  {id:'gst',      name:'GST Road — Pallavaram–Tambaram',  segment:'Tambaram stretch',            clear:false, from:[12.97,80.16],to:[12.93,80.11]},
+  {id:'ecr',      name:'ECR — East Coast Road, Chennai',  segment:'Thiruvanmiyur–Kovalam',       clear:true,  from:[12.98,80.27],to:[12.79,80.25]},
+  {id:'rajiv',    name:'Rajiv Gandhi Salai (IT Corridor)', segment:'Perungudi–Sholinganallur',   clear:true,  from:[13.01,80.25],to:[12.90,80.23]},
+  {id:'mumbai_pw',name:'Mumbai–Pune Expressway',          segment:'Khopoli–Pune',                clear:true,  from:[19.08,72.88],to:[18.52,73.86]},
+  {id:'mumbai_et',name:'Eastern Express Highway',         segment:'Thane–Mulund',                clear:false, from:[19.20,72.97],to:[19.13,72.92]},
+];
+let roadStatus = [...INDIA_ROADS];
+
+/* ════════════════════════════════════
+   MAPS
+════════════════════════════════════ */
+let miniMap=null, fullMap=null, corrMap=null, civMap=null;
+let fullMarkers=[], civMarkers=[], corrLayers=[], hmVisible=false;
+let markerClusterGroup;
+const INCIDENT_ZONES=[
+  {lat:13.05,lng:80.22,label:'🌊 Flood — Tambaram',color:'#ef4444',r:40000},
+  {lat:19.076,lng:72.88,label:'🌊 Flood — Mumbai',color:'#3b82f6',r:50000},
+  {lat:20.29,lng:85.84,label:'🌀 Cyclone — Odisha',color:'#f97316',r:80000},
+  {lat:22.57,lng:88.36,label:'🌊 Flood — Kolkata',color:'#3b82f6',r:50000},
+  {lat:28.61,lng:77.23,label:'⚠ Alert — Delhi',color:'#fbbf24',r:40000}
+];
+
+function getColor(a){return a.color||'#94a3b8';}
+function mkIcon(c){return L.divIcon({className:'',html:`<div style="width:16px;height:16px;border-radius:50%;background:${c};border:2.5px solid #fff;box-shadow:0 0 10px ${c}80"></div>`,iconSize:[16,16],iconAnchor:[8,8]});}
+
+function popupHTML(a){
+  const am=(a.amenities||[]).slice(0,4).map(x=>`<span style="display:inline-block;background:rgba(34,211,238,.1);border:1px solid rgba(34,211,238,.2);color:#22d3ee;padding:1px 6px;border-radius:8px;font-size:10px;margin:1px;font-family:monospace">${esc(x)}</span>`).join('');
+  const more=(a.amenities||[]).length>4?`<span style="font-size:10px;color:#64748b">+${(a.amenities||[]).length-4} more</span>`:'';
+  return`<div style="font-family:'DM Sans',sans-serif;min-width:210px"><div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><span style="font-size:18px">${a.icon||'🏛'}</span><div><b style="font-size:13px">${esc(a.name)}</b><div style="font-size:11px;color:#94a3b8">📍 ${esc(a.city||'')} ${esc(a.pin||'')}</div></div></div><span style="background:rgba(249,115,22,.2);color:#f97316;padding:1px 7px;border-radius:8px;font-size:11px">${esc(a.type)}</span>&nbsp;<span style="background:rgba(16,185,129,.2);color:#10b981;padding:1px 7px;border-radius:8px;font-size:11px">${(a.status||'active').toUpperCase()}</span><div style="margin:6px 0;font-size:11px;font-weight:600;color:#e2e8f0">Assets:</div>${am}${more}<div style="margin-top:6px;font-size:12px;color:#e2e8f0">👥 ${a.resources||0} resources</div></div>`;
+}
+
+function initMiniMap(){
+  if(miniMap) return;
+  miniMap=L.map('minimap',{zoomControl:false,scrollWheelZoom:false,dragging:false,attributionControl:false}).setView([22,79],4);
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{maxZoom:18}).addTo(miniMap);
+  INCIDENT_ZONES.forEach(z=>L.circle([z.lat,z.lng],{color:z.color,fillColor:z.color,fillOpacity:.12,radius:z.r,weight:1.5,dashArray:'6,4'}).addTo(miniMap));
+  allAgencies.forEach(a=>{if(a.lat&&a.lng) L.marker([a.lat,a.lng],{icon:mkIcon(getColor(a))}).addTo(miniMap).bindTooltip(`<b>${a.name}</b>`,{direction:'top'});});
+}
+
+function initFullMap(){
+  if(!fullMap) {
+    fullMap=L.map('fullmap',{zoomControl:true,attributionControl:false}).setView([22,79],5);
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{maxZoom:18}).addTo(fullMap);
+    INCIDENT_ZONES.forEach(z=>L.circle([z.lat,z.lng],{color:z.color,fillColor:z.color,fillOpacity:.15,radius:z.r,weight:2,dashArray:'8,4'}).addTo(fullMap).bindPopup(`<b>${z.label}</b>`));
+    markerClusterGroup = L.markerClusterGroup({maxClusterRadius:40,spiderfyOnMaxZoom:true,disableClusteringAtZoom:12});
+    fullMap.addLayer(markerClusterGroup);
+    fullMap.on('mousemove',e=>{const el=document.getElementById('mapCoords'); if(el) el.textContent=`📍 ${e.latlng.lat.toFixed(4)}°N, ${e.latlng.lng.toFixed(4)}°E`;});
+  }
+  if(markerClusterGroup) {
+    markerClusterGroup.clearLayers();
+    fullMarkers=[];
+    allAgencies.forEach(a=>{
+      if(!a.lat||!a.lng) return;
+      const m=L.marker([a.lat,a.lng],{icon:mkIcon(getColor(a))}).bindPopup(popupHTML(a),{maxWidth:270});
+      markerClusterGroup.addLayer(m);
+      fullMarkers.push({marker:m,type:a.type,agency:a});
+    });
+  }
+}
+
+function initCorrMap(){
+  if(corrMap) return;
+  corrMap=L.map('corridormap',{zoomControl:true,attributionControl:false}).setView([22,79],5);
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{maxZoom:18}).addTo(corrMap);
+  drawCorridorRoads();
+  INCIDENT_ZONES.forEach(z=>L.circle([z.lat,z.lng],{color:z.color,fillColor:z.color,fillOpacity:.2,radius:z.r,weight:1.5}).addTo(corrMap).bindPopup(`<b>${z.label}</b>`));
+  allAgencies.forEach(a=>{if(a.lat&&a.lng) L.marker([a.lat,a.lng],{icon:mkIcon(getColor(a))}).addTo(corrMap).bindTooltip(a.name+' ('+a.type+')',{sticky:true});});
+}
+
+function drawCorridorRoads(){
+  if(!corrMap) return;
+  corrLayers.forEach(l=>corrMap.removeLayer(l)); corrLayers=[];
+  roadStatus.forEach(r=>{
+    if(!r.from||!r.to) return;
+    const c=r.clear?'#10b981':'#ef4444';
+    const glow=L.polyline([r.from,r.to],{color:c,weight:14,opacity:.08}).addTo(corrMap);
+    const line=L.polyline([r.from,r.to],{color:c,weight:3.5,dashArray:r.clear?null:'10,6',opacity:.85}).addTo(corrMap).bindTooltip(`${r.name}<br>${r.clear?'✅ CLEAR':'⚠ BLOCKED'} — ${r.segment}`,{sticky:true});
+    corrLayers.push(glow,line);
+  });
+}
+
+function renderRoadList(){
+  const el=document.getElementById('road-list'); if(!el) return;
+  el.innerHTML=roadStatus.map(r=>`<div class="road-item"><div><div class="road-name">${esc(r.name)}</div><div class="road-meta">${esc(r.segment)}</div></div><button class="toggle-road ${r.clear?'clear':'blocked'}" onclick="toggleRoad('${r.id}')" title="${r.clear?'Mark Blocked':'Mark Clear'}"></button></div>`).join('');
+  document.getElementById('clear-count').textContent=roadStatus.filter(r=>r.clear).length;
+  document.getElementById('blocked-count').textContent=roadStatus.filter(r=>!r.clear).length;
+}
+
+async function toggleRoad(id){
+  if(currentUser?.role==='guest'){showNotif('🔒 Login to update roads.');return;}
+  const roadIndex = roadStatus.findIndex(r => r.id === id);
+  if(roadIndex === -1) return;
+  const newStatus = !roadStatus[roadIndex].clear;
+  try {
+    await db.ref(`corridor_roads/${id}`).update({ clear: newStatus });
+    showNotif(`🚦 Road ${newStatus ? 'Enabled' : 'Disabled'}`);
+  } catch(e) { console.error(e); }
+}
+
+function calcRoute(){
+  const from=document.getElementById('route-from').value;
+  const to=document.getElementById('route-to').value;
+  if(!from){showNotif('Select an origin agency first.'); return;}
+  const agency=allAgencies.find(a=>a.id===from);
+  const clearRds=roadStatus.filter(r=>r.clear);
+  const DEST={'tambaram':'Tambaram Flood Zone','ambattur':'Ambattur Industrial Area','adyar':'Adyar River Zone','mumbai':'Mumbai Suburban Zone','kolkata':'Kolkata Port Area','odisha':'Odisha Coastline','delhi':'Delhi NCR','vellore':'Vellore Cyclone Zone'};
+  const steps=[
+    {ok:true, road:`Depart: ${agency?.name||'Origin'}`, sub:'Unit confirmed ready'},
+    ...clearRds.slice(0,4).map(r=>({ok:true,road:r.name,sub:r.segment+' ✅ CLEAR'})),
+    ...(roadStatus.find(r=>!r.clear)?[{ok:false,road:roadStatus.find(r=>!r.clear).name,sub:'Blocked — alternate taken'}]:[]),
+    {ok:true,road:'Arrive: '+(DEST[to]||to),sub:'Destination via green corridor'},
+  ];
+  document.getElementById('route-steps').innerHTML=steps.map(s=>`<div class="route-step"><div style="width:8px;height:8px;border-radius:50%;flex-shrink:0;background:${s.ok?'var(--green)':'var(--accent2)'};margin-top:3px"></div><div><div style="font-size:12px;font-weight:600">${esc(s.road)}</div><div style="font-size:11px;color:var(--text-muted)">${esc(s.sub)}</div></div></div>`).join('');
+  document.getElementById('route-result').classList.add('show');
+  showNotif(`✅ Corridor: ${clearRds.length}/${roadStatus.length} roads clear`);
+  sysLog(`Corridor calculated: ${agency?.name||from} → ${to}`);
+}
+function clearRoute(){ document.getElementById('route-result').classList.remove('show'); document.getElementById('route-steps').innerHTML=''; }
+
+/* ════════════════════════════════════
+   AI FORECAST
+════════════════════════════════════ */
+const FORECAST={
+  Flood:{needs:[{r:'Rescue Boats',q:5,e:'⛵',k:'boat'},{r:'NDRF Personnel',q:30,e:'👷',k:'ndrf'},{r:'Medical Kits',q:20,e:'💊',k:'medical'},{r:'Flood Lights',q:10,e:'💡',k:'light'}],types:['NDRF','SDRF','Coast Guard','Medical']},
+  Earthquake:{needs:[{r:'CSSR Teams',q:4,e:'🏗️',k:'collapse'},{r:'K9 Units',q:8,e:'🐕',k:'k9'},{r:'Heavy Machinery',q:3,e:'🚧',k:'mach'},{r:'Trauma Kits',q:25,e:'🩹',k:'trauma'}],types:['NDRF','Medical']},
+  Fire:{needs:[{r:'Fire Engines',q:6,e:'🚒',k:'fire'},{r:'Foam Agents',q:20,e:'🧯',k:'foam'},{r:'Breathing Apparatus',q:15,e:'😷',k:'hazmat'},{r:'EMS Units',q:4,e:'🚑',k:'amb'}],types:['Fire & Rescue','Medical / EMS']},
+  Cyclone:{needs:[{r:'Evacuation Buses',q:12,e:'🚌',k:'bus'},{r:'Relief Tents',q:50,e:'🏕️',k:'tent'},{r:'Coast Guard Vessels',q:3,e:'⛴️',k:'vessel'},{r:'WASH Units',q:8,e:'💧',k:'wash'}],types:['Coast Guard','NGO']},
+  'Building Collapse':{needs:[{r:'Urban SAR',q:5,e:'👷',k:'sar'},{r:'Cutting Tools',q:10,e:'🔧',k:'tools'},{r:'Trauma Surgeons',q:3,e:'🩺',k:'surg'},{r:'Cranes',q:2,e:'🏗️',k:'crane'}],types:['NDRF']},
+  'Chemical Hazard':{needs:[{r:'Hazmat Suits',q:20,e:'☢️',k:'haz'},{r:'Decon Stations',q:3,e:'🚿',k:'decon'},{r:'Antidote Kits',q:15,e:'💉',k:'anti'},{r:'Evac Teams',q:8,e:'🚐',k:'evac'}],types:['NDRF','Civil Defence']},
+};
+const INV={boat:24,ndrf:120,medical:340,light:60,collapse:3,k9:8,mach:5,trauma:120,fire:28,foam:80,hazmat:45,amb:45,bus:35,tent:500,vessel:6,wash:20,sar:18,tools:60,surg:12,crane:4,decon:5,anti:30,evac:22,haz:45};
+
+function showForecast(){
+  const type=document.getElementById('inc-type')?.value||'Flood';
+  const fc=FORECAST[type]||FORECAST.Flood;
+  const el=document.getElementById('ai-type'); if(el) el.textContent=type;
+  const rows=document.getElementById('ai-rows');
+  if(rows) rows.innerHTML=fc.needs.map(n=>{
+    const av=INV[n.k]||0, ok=av>=n.q?'ok':av>=n.q*.5?'warn':'crit';
+    const lbl=av>=n.q?'✅ OK':av>=n.q*.5?'⚠ LOW':'🚨 CRITICAL';
+    return`<div class="ai-row"><span style="font-size:16px">${n.e}</span><span style="flex:1;font-size:12px;font-weight:600">${n.r}</span><div style="text-align:right"><div style="font-family:var(--font-head);font-size:18px;color:var(--accent)">${n.q}</div><div style="font-size:11px;color:var(--text-muted)">${av} avail</div></div><span class="ai-status ai-${ok}">${lbl}</span></div>`;
+  }).join('');
+  const aEl=document.getElementById('ai-agencies');
+  if(aEl){
+    const matched=allAgencies.filter(a=>fc.types.some(t=>(a.type||'').includes(t.split(' ')[0]))).slice(0,3);
+    aEl.innerHTML=matched.map(a=>`<div onclick="closeModal('incident');showAgDetail('${a.id}')" style="display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:7px;background:rgba(16,185,129,.05);border:1px solid rgba(16,185,129,.15);margin-top:6px;cursor:pointer"><span>${a.icon||'🏛'}</span><div style="flex:1"><div style="font-size:12px;font-weight:700">${esc(a.name)}</div><div style="font-size:11px;color:var(--text-muted)">${esc(a.type)} · ${a.resources||0} res</div></div><span style="font-size:10px;color:var(--accent3);font-family:var(--font-mono)">VIEW →</span></div>`).join('');
+  }
+}
+
+/* ════════════════════════════════════
+   CIVILIAN SOS
+════════════════════════════════════ */
+let selSOS='Food Needed', civLat=null, civLng=null;
+const SOS_C={'Food Needed':'#fbbf24','Medical Emergency':'#ef4444','Trapped in Building':'#f97316','Rescue Needed':'#22d3ee'};
+function setSOS(t,el){selSOS=t; document.querySelectorAll('.sos-btn').forEach(b=>b.classList.remove('sel')); el.classList.add('sel');}
+function civGPS(){ const s=document.getElementById('civ-gps-s'); s.textContent='Locating…'; setTimeout(()=>{civLat=13.0827+((Math.random()-.5)*.05); civLng=80.2707+((Math.random()-.5)*.05); s.textContent=`✅ ${civLat.toFixed(4)}°N`; s.style.color='var(--green)';},800);}
+async function submitCivSOS(){
+  const loc=document.getElementById('civ-loc').value.trim(), msg=document.getElementById('civ-msg').value.trim();
+  if(!loc&&!civLat){showNotif('Enter location or use GPS.');return;}
+  const lat=civLat||(13.05+(Math.random()-.5)*.3), lng=civLng||(80.22+(Math.random()-.5)*.3);
+  await db.ref('civilian_sos').push({type:selSOS,location:loc||'GPS',msg,lat,lng,time:Date.now(),reportedBy:currentUser?.name||'Anonymous'});
+  sysLog(`CivSOS: ${selSOS} @ ${loc||lat+','+lng}`);
+  closeModal('civsos'); showNotif(`📍 SOS: ${selSOS}`);
+  civLat=null; civLng=null;
+  document.getElementById('civ-loc').value=''; document.getElementById('civ-msg').value='';
+}
+function initCivMap(){
+  if(civMap) return;
+  civMap=L.map('civmap',{zoomControl:true,attributionControl:false}).setView([13.05,80.22],10);
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{maxZoom:18}).addTo(civMap);
+  INCIDENT_ZONES.slice(0,2).forEach(z=>L.circle([z.lat,z.lng],{color:z.color,fillColor:z.color,fillOpacity:.08,radius:25000,weight:1,dashArray:'6,4'}).addTo(civMap));
+  civMap.on('click',e=>{civLat=e.latlng.lat; civLng=e.latlng.lng; showModal('civsos');});
+  renderCivHeatmap();
+}
+function renderCivHeatmap(){
+  if(!civMap) return;
+  civMarkers.forEach(m=>civMap.removeLayer(m)); civMarkers=[];
+  allSOS.forEach(s=>{
+    const c=SOS_C[s.type]||'#22d3ee';
+    const icon=L.divIcon({className:'',html:`<div style="width:13px;height:13px;border-radius:50%;background:${c};border:2px solid #fff;box-shadow:0 0 8px ${c}cc"></div>`,iconSize:[13,13],iconAnchor:[6.5,6.5]});
+    const m=L.marker([s.lat,s.lng],{icon}).addTo(civMap).bindPopup(`<b>${esc(s.type)}</b><br>${esc(s.location||'')}<br><small style="color:#94a3b8">${esc(s.msg||'')}</small>`);
+    const circle=L.circle([s.lat,s.lng],{color:c,fillColor:c,fillOpacity:.05,radius:1500,weight:0}).addTo(civMap);
+    civMarkers.push(m,circle);
+  });
+}
+function toggleHeatmap(){
+  if(!fullMap) return;
+  hmVisible=!hmVisible;
+  if(hmVisible){ allSOS.forEach(s=>{const c=SOS_C[s.type]||'#22d3ee'; L.circle([s.lat,s.lng],{color:c,fillColor:c,fillOpacity:.18,radius:10000,weight:1}).addTo(fullMap);}); showNotif(`Heatmap: ${allSOS.length} SOS pins`);}
+  else showNotif('Heatmap hidden');
+}
+function updateSOSChips(){
+  const counts={food:0,medical:0,trapped:0,rescue:0};
+  allSOS.forEach(s=>{if(s.type==='Food Needed') counts.food++; else if(s.type==='Medical Emergency') counts.medical++; else if(s.type==='Trapped in Building') counts.trapped++; else if(s.type==='Rescue Needed') counts.rescue++;});
+  ['food','medical','trapped','rescue'].forEach(k=>{const el=document.getElementById('sc-'+k); if(el) el.textContent=counts[k];});
+}
+function renderSOSTable(){
+  const tb=document.getElementById('sos-table'); if(!tb) return;
+  const pm={'Trapped in Building':'badge-busy','Medical Emergency':'badge-busy','Rescue Needed':'badge-standby','Food Needed':'badge-pending'};
+  tb.innerHTML=allSOS.length?allSOS.slice(0,20).map(s=>`<tr><td><strong>${esc(s.type)}</strong></td><td>${esc(s.location||'GPS')}</td><td style="color:var(--text-muted)">${esc(s.msg||'—')}</td><td style="font-size:11px;color:var(--text-muted);font-family:var(--font-mono)">${ago(s.time)}</td><td><span class="badge ${pm[s.type]||'badge-pending'}">${s.type==='Trapped in Building'||s.type==='Medical Emergency'?'HIGH':'MED'}</span></td></tr>`).join(''):'<tr><td colspan="5" style="text-align:center;padding:20px;color:var(--text-muted)">No SOS reports yet.</td></tr>';
+}
+
+/* ════════════════════════════════════
+   VOICE BROADCAST
+════════════════════════════════════ */
+const LANGS=[{c:'en-IN',n:'English (India)',f:'🇮🇳'},{c:'hi-IN',n:'हिन्दी',f:'🇮🇳'},{c:'ta-IN',n:'தமிழ்',f:'🏴'},{c:'te-IN',n:'తెలుగు',f:'🏴'},{c:'kn-IN',n:'ಕನ್ನಡ',f:'🏴'},{c:'ml-IN',n:'മലയാളം',f:'🏴'},{c:'bn-IN',n:'বাংলা',f:'🏴'},{c:'mr-IN',n:'मराठी',f:'🏴'},{c:'gu-IN',n:'ગુજરાતી',f:'🏴'}];
+const PHRASES=[{en:'Evacuate immediately to nearest shelter.',hi:'तुरंत निकटतम आश्रय जाएं।'},{en:'Do not drink tap water. Use packaged water only.',hi:'नल का पानी न पिएं।'},{en:'Rescue teams on the way. Stay calm and visible.',hi:'बचाव दल आ रहा है।'},{en:'Move to higher ground. Flooding in 30 minutes.',hi:'तुरंत ऊंची जमीन पर जाएं।'}];
+let selLang='ta-IN'; const voiceHist=[];
+function initVoice(){const el=document.getElementById('lang-grid'); if(!el) return; el.innerHTML=LANGS.map(l=>`<div class="lang-chip${l.c===selLang?' sel':''}" onclick="setLang('${l.c}',this)">${l.f} ${l.n}</div>`).join('');}
+function initPhrases(){const el=document.getElementById('quick-phrases'); if(!el) return; el.innerHTML=PHRASES.map((p,i)=>`<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--surface2);border-radius:8px;border:1px solid var(--border);cursor:pointer" onclick="usePhrase(${i})"><span>⚡</span><div style="flex:1"><div style="font-size:12px;font-weight:600">${esc(p.en)}</div><div style="font-size:11px;color:var(--text-muted)">${esc(p.hi)}</div></div><button class="btn btn-ghost" style="font-size:11px;padding:3px 8px">Use</button></div>`).join('');}
+function setLang(c,el){selLang=c; document.querySelectorAll('.lang-chip').forEach(x=>x.classList.remove('sel')); el.classList.add('sel');}
+function usePhrase(i){document.getElementById('voice-msg').value=PHRASES[i].en;}
+function startVoice(){
+  const msg=document.getElementById('voice-msg').value.trim();
+  if(!msg){showNotif('Type a message first.');return;}
+  if(!window.speechSynthesis){showNotif('Speech API not supported. Use Chrome.');return;}
+  window.speechSynthesis.cancel();
+  const u=new SpeechSynthesisUtterance(msg); u.lang=selLang; u.rate=0.9;
+  const v=window.speechSynthesis.getVoices().find(x=>x.lang.startsWith(selLang.split('-')[0])); if(v) u.voice=v;
+  u.onstart=()=>{document.getElementById('vwave').classList.remove('off'); document.getElementById('vstatus').textContent='BROADCASTING…'; document.getElementById('vstatus').style.color='var(--accent3)';};
+  u.onend=()=>{document.getElementById('vwave').classList.add('off'); document.getElementById('vstatus').textContent='COMPLETE'; document.getElementById('vstatus').style.color='var(--green)'; const ln=LANGS.find(l=>l.c===selLang); voiceHist.unshift({msg,lang:ln?.n||selLang,time:Date.now()}); renderVoiceHist(); sysLog(`VoiceBroadcast [${selLang}]: "${msg.slice(0,50)}"`);}; 
+  window.speechSynthesis.speak(u);
+}
+function stopVoice(){window.speechSynthesis?.cancel(); document.getElementById('vwave').classList.add('off'); document.getElementById('vstatus').textContent='STOPPED'; document.getElementById('vstatus').style.color='var(--text-muted)';}
+function renderVoiceHist(){const el=document.getElementById('voice-hist'); if(!el) return; el.innerHTML=voiceHist.length?voiceHist.slice(0,10).map(h=>`<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid rgba(30,45,71,.5);font-size:12px"><span style="background:rgba(34,211,238,.1);color:var(--accent3);padding:1px 6px;border-radius:8px;font-size:10px;font-family:var(--font-mono)">${esc(h.lang)}</span><span style="flex:1;color:var(--text-dim)">${esc(h.msg.slice(0,60))}${h.msg.length>60?'…':''}</span><span style="color:var(--text-muted);font-size:10px">${ago(h.time)}</span></div>`).join(''):'<div style="padding:16px;text-align:center;color:var(--text-muted);font-size:12px">No broadcasts yet.</div>';}
+
+/* ════════════════════════════════════
+   OFFLINE / SMS
+════════════════════════════════════ */
+let isOffline=false; const offQ=[];
+function simOffline(){isOffline=true; const p=document.getElementById('conn-pill'),t=document.getElementById('conn-text'); if(p){p.textContent='OFFLINE';p.style.background='rgba(239,68,68,.15)';p.style.color='var(--accent2)';} if(t) t.textContent='No internet detected'; document.getElementById('offline-ind').style.display='block'; showNotif('📵 Offline simulated');}
+function simOnline(){isOffline=false; const p=document.getElementById('conn-pill'),t=document.getElementById('conn-text'); if(p){p.textContent='ONLINE';p.style.background='rgba(16,185,129,.15)';p.style.color='var(--green)';} if(t) t.textContent='Network active'; document.getElementById('offline-ind').style.display='none'; if(offQ.length) showNotif(`📶 Online! Syncing ${offQ.length} items`); offQ.length=0; renderOffQ();}
+function smsGPS(){const el=document.getElementById('sms-gps'); el.textContent='Locating…'; setTimeout(()=>{el.textContent='✅ 13.0827, 80.2707'; el.style.color='var(--green)'; genSMS();},800);}
+function genSMS(){const t=document.getElementById('sms-type')?.value||'FLOOD',d=document.getElementById('sms-desc')?.value||'Emergency',g=document.getElementById('sms-gps')?.textContent||'',c=g.includes('✅')?g.replace('✅ ','').split(',').map(x=>x.trim()):['-','-'],el=document.getElementById('gen-sms'); if(el) el.textContent=`RALCA | SOS | ${t} | ${c[0]} | ${c[1]} | ${d}`;}
+function copySMS(){const t=document.getElementById('gen-sms')?.textContent||''; if(!t.startsWith('RALCA')){showNotif('Generate SMS first.'); return;} navigator.clipboard?.writeText(t).catch(()=>{}); showNotif('📋 SMS copied!'); if(isOffline){offQ.push({data:t,time:Date.now()}); renderOffQ();}}
+function renderOffQ(){const el=document.getElementById('offline-q'); if(!el) return; if(!offQ.length){el.innerHTML='<span style="font-style:italic;color:var(--text-muted)">No pending items.</span>'; return;} el.innerHTML=offQ.map((q,i)=>`<div style="padding:5px 0;border-bottom:1px solid rgba(30,45,71,.4);font-size:12px"><span style="color:var(--yellow);font-family:var(--font-mono)">[${i+1}]</span> ${esc(q.data)}</div>`).join('');}
+
+/* ════════════════════════════════════
+   RESOURCES
+════════════════════════════════════ */
+function renderResources(){
+  const resources = Object.values(allResources);
+  if(!resources.length) return;
+
+  const vehicles = ['fire_engines','ambulances','trucks','helicopters'];
+  const totVeh = vehicles.reduce((s,k)=>s+(allResources[k]?.total||0),0);
+  const avVeh  = vehicles.reduce((s,k)=>s+(allResources[k]?.avail||0),0);
+  setEl('rs-vehicles',   totVeh || 86);
+  setEl('rs-vehicles-s', avVeh + ' available');
+  setEl('rs-personnel',  '1,240');
+  setEl('rs-personnel-s','890 on standby');
+  const mk = allResources['medical_kits'];
+  setEl('rs-medkits',   mk ? mk.total : 340);
+  setEl('rs-medkits-s', '100% stocked');
+  const rb = allResources['rescue_boats'];
+  setEl('rs-boats',     rb ? rb.total : 24);
+  setEl('rs-boats-s',   rb ? `${(rb.total||0)-(rb.avail||0)} deployed` : '6 deployed');
+
+  const crit = resources.filter(r => r.total > 0 && (r.avail||0)/(r.total) < 0.1);
+  const ib = document.getElementById('inv-bar'), ra = document.getElementById('res-alerts');
+  if(ib) {
+    if(crit.length){ ib.style.display='flex'; setEl('inv-text', crit.map(r=>r.name).join(', ')+' below 10%!'); }
+    else ib.style.display='none';
+  }
+  if(ra) ra.innerHTML = crit.map(r=>`<div class="inv-bar" style="margin-bottom:8px">${r.icon||'📦'}&nbsp;<strong>${esc(r.name)}</strong>: ${r.avail||0}/${r.total||0} (${Math.round((r.avail||0)/(r.total||1)*100)}%)<span class="crit-tag" style="margin-left:6px">CRITICAL LOW</span></div>`).join('');
+
+  const grid = document.getElementById('res-grid'); if(!grid) return;
+  grid.innerHTML = resources.map(r => {
+    const p = r.total > 0 ? Math.round((r.avail||0)/r.total*100) : 0;
+    const isCrit = p < 10;
+    return `<div class="resource-card${isCrit?' crit':''}" style="position:relative">
+      ${isCrit?'<div style="position:absolute;top:8px;right:8px;background:var(--accent2);color:#fff;font-size:9px;font-family:var(--font-mono);padding:2px 6px;border-radius:8px;font-weight:700">⚠ LOW</div>':''}
+      <div style="font-size:28px;margin-bottom:8px">${r.icon||'📦'}</div>
+      <div style="font-size:13px;font-weight:600;margin-bottom:4px">${esc(r.name||r.key)}</div>
+      <div style="font-family:var(--font-head);font-size:28px;color:var(--accent)">${r.avail||0}<span style="font-size:14px;color:var(--text-muted)">/${r.total||0}</span></div>
+      <div style="font-size:11px;color:var(--text-muted);margin-top:2px">${p}% available</div>
+      <div class="progress-bar"><div class="progress-fill" style="width:${p}%;background:${p>70?'var(--green)':p>40?'var(--yellow)':p>10?'var(--accent)':'var(--accent2)'}"></div></div>
+    </div>`;
+  }).join('');
+}
+
+/* ════════════════════════════════════
+   AGENCIES TABLE
+════════════════════════════════════ */
+function renderAgTable(){
+  const tb=document.getElementById('ag-table'); if(!tb) return;
+  const q=(document.getElementById('agSearch')?.value||'').toLowerCase();
+  const sm={active:'badge-active',standby:'badge-standby',busy:'badge-busy'};
+  const filtered=q?allAgencies.filter(a=>a.name.toLowerCase().includes(q)||a.type.toLowerCase().includes(q)||(a.city||'').toLowerCase().includes(q)):allAgencies;
+  tb.innerHTML=filtered.map(a=>`<tr><td><strong>${esc(a.name)}</strong><div style="font-size:11px;color:var(--text-muted)">${esc(a.address||'')}</div></td><td style="font-size:12px">${esc(a.type)}</td><td>${esc(a.city||a.location||'')}</td><td style="font-family:var(--font-mono);font-size:11px;color:var(--accent3)">${esc(a.pin||'')}</td><td>${(a.amenities||[]).slice(0,2).map(x=>`<span class="amenity-tag">${esc(x)}</span>`).join(' ')}${(a.amenities||[]).length>2?`<span style="font-size:10px;color:var(--text-muted)"> +${(a.amenities||[]).length-2}</span>`:''}</td><td><span class="badge ${sm[a.status||'active']||'badge-pending'}">${(a.status||'active').toUpperCase()}</span></td><td><button class="btn btn-ghost" style="font-size:11px;padding:4px 10px" onclick="showAgDetail('${esc(a.id)}')">View →</button></td></tr>`).join('');
+  setEl('ag-count', filtered.length);
+}
+function filterAgencies(){ renderAgTable(); }
+
+/* ════════════════════════════════════
+   NAVIGATION
+════════════════════════════════════ */
+function go(page, navEl) {
+  const adminOnly=['adminpanel','usermgmt','logs','broadcast','register'];
+  if(adminOnly.includes(page) && currentUser?.role!=='admin'){showNotif('🔒 Admin access required.'); return;}
+
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  const pe=document.getElementById('page-'+page); if(pe) pe.classList.add('active');
+  if(navEl){document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active')); navEl.classList.add('active');}
+
+  const titles={
+    dashboard:'Dashboard', map:'Live Tracking Map', corridor:'Green Corridor — All India',
+    alerts:'Alerts & Notifications', agencies:'All Agencies', register:'Register Agency',
+    resources:'Resource Inventory', messaging:'Inter-Agency Messaging',
+    incidents:'Incident Management', civilian:'Civilian SOS Heatmap',
+    voice:'Voice Broadcast', offline:'Offline / SMS Mode',
+    adminpanel:'Admin Control Panel', usermgmt:'User Management',
+    logs:'System Logs', broadcast:'Broadcast Alert'
+  };
+  setEl('pageTitle', titles[page]||page);
+
+  if(page==='dashboard') {
+    renderDashAlerts();
+    renderDashAgencies();
+    setEl('st-agencies', allAgencies.length);
+    setEl('st-incidents', allIncidents.filter(i=>(i.status||'').toLowerCase()==='active').length);
+    setEl('st-alerts', allAlerts.length);
+    setEl('st-sos', allSOS.length);
+    setTimeout(()=>{ initMiniMap(); miniMap?.invalidateSize(); }, 100);
+  }
+  if(page==='map')        { setTimeout(()=>{ initFullMap(); fullMap?.invalidateSize(); }, 100); }
+  if(page==='corridor')   { setTimeout(()=>{ initCorrMap(); corrMap?.invalidateSize(); renderRoadList(); }, 100); }
+  if(page==='alerts')     { renderAlerts(); }
+  if(page==='agencies')   { renderAgTable(); }
+  if(page==='resources')  { renderResources(); }
+  if(page==='messaging')  { renderChannels(); renderMsgs(); }
+  if(page==='incidents')  { renderIncidents(); }
+  if(page==='civilian')   {
+    renderSOSTable(); updateSOSChips();
+    setTimeout(()=>{ initCivMap(); civMap?.invalidateSize(); }, 100);
+  }
+  if(page==='voice')      { initVoice(); initPhrases(); renderVoiceHist(); }
+  if(page==='offline')    { genSMS(); renderOffQ(); }
+}
+
+/* ════════════════════════════════════
+   RENDERERS
+════════════════════════════════════ */
+function ago(ts){if(!ts) return'—'; const d=Date.now()-ts; if(d<60000) return Math.floor(d/1000)+'s ago'; if(d<3600000) return Math.floor(d/60000)+'m ago'; if(d<86400000) return Math.floor(d/3600000)+'h ago'; return new Date(ts).toLocaleDateString();}
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+function renderDashAlerts(){
+  const el=document.getElementById('dash-alerts'); if(!el) return;
+  if(!allAlerts.length){el.innerHTML='<div style="padding:20px;color:var(--text-muted);font-size:13px">No alerts yet. Alerts pushed to Firebase will appear here in real time.</div>'; return;}
+  el.innerHTML=allAlerts.slice(0,5).map(a=>`<div class="alert-item"><div class="alert-icon ${(a.type||'info').toLowerCase()}">${a.icon||'⚠'}</div><div class="alert-content"><div class="alert-title">${esc(a.title)}</div><div class="alert-meta">${esc(a.meta||'')}</div></div><div class="alert-time">${ago(a.time)}</div></div>`).join('');
+}
+
+function renderDashAgencies(){
+  const el=document.getElementById('dash-agencies'); if(!el) return;
+  const sm={active:'badge-active',standby:'badge-standby',busy:'badge-busy'};
+  el.innerHTML=allAgencies.filter(a=>(a.status||'').toLowerCase()==='active').slice(0,5).map(a=>`<tr><td><strong>${esc(a.name)}</strong></td><td style="color:var(--text-muted);font-size:12px">${esc(a.shortType||a.type)}</td><td><span class="badge ${sm[a.status||'active']||'badge-pending'}">${(a.status||'').toUpperCase()}</span></td></tr>`).join('');
+}
+
+/* ════════════════════════════════════
+   ✅ FIX: renderAlerts — SINGLE DEFINITION
+   This was duplicated in the original code causing the
+   "Unexpected token '}'" SyntaxError that crashed the app.
+════════════════════════════════════ */
+function renderAlerts() {
+  const ce = document.getElementById('crit-alerts');
+  const we = document.getElementById('warn-alerts');
+  if(!ce || !we) return;
+
+  const criticals = allAlerts.filter(a => String(a.type).toLowerCase() === 'critical');
+  const warnings  = allAlerts.filter(a => String(a.type).toLowerCase() !== 'critical');
+
+  ce.innerHTML = criticals.length > 0
+    ? criticals.map(a => `
+        <div class="alert-item">
+          <div class="alert-icon critical">${a.icon || '🚨'}</div>
+          <div class="alert-content">
+            <div class="alert-title">${esc(a.title)}</div>
+            <div class="alert-meta">${esc(a.meta || '')}</div>
+          </div>
+          <div class="alert-time">${ago(a.time)}</div>
+        </div>`).join('')
+    : '<div style="padding:16px;color:var(--text-muted);font-size:13px">No critical alerts.</div>';
+
+  we.innerHTML = warnings.length > 0
+    ? warnings.map(a => `
+        <div class="alert-item">
+          <div class="alert-icon ${String(a.type).toLowerCase() === 'warning' ? 'warning' : 'info'}">${a.icon || '⚠'}</div>
+          <div class="alert-content">
+            <div class="alert-title">${esc(a.title)}</div>
+            <div class="alert-meta">${esc(a.meta || '')}</div>
+          </div>
+          <div class="alert-time">${ago(a.time)}</div>
+        </div>`).join('')
+    : '<div style="padding:16px;color:var(--text-muted);font-size:13px">No warnings or info alerts.</div>';
+}
+
+function showAgDetail(id){
+  const a=allAgencies.find(x=>x.id===id); if(!a) return;
+  const c=getColor(a);
+  document.getElementById('ag-detail-body').innerHTML=`<div style="display:flex;align-items:center;gap:14px;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid var(--border)"><div style="width:50px;height:50px;border-radius:12px;display:grid;place-items:center;font-size:24px;background:${c}20;border:1px solid ${c}40;flex-shrink:0">${a.icon||'🏛'}</div><div><div style="font-size:17px;font-weight:700">${esc(a.name)}</div><div style="font-size:12px;color:var(--text-muted);margin-top:3px">📍 ${esc(a.address||'')}</div><div style="margin-top:6px;display:flex;gap:5px;flex-wrap:wrap"><span class="badge badge-pending">${esc(a.type)}</span><span class="badge ${a.status==='active'?'badge-active':a.status==='standby'?'badge-standby':'badge-busy'}">${(a.status||'').toUpperCase()}</span></div></div></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">${[['AGENCY ID',`<span style="font-family:var(--font-mono);color:var(--accent3)">${esc(a.id)}</span>`],['PIN CODE',esc(a.pin||'')],['CITY',esc(a.city||'')],['RESOURCES',`<span style="color:var(--accent)">${a.resources||0} units</span>`],['COORDINATES',`<span style="font-family:var(--font-mono);font-size:12px">${a.lat?a.lat.toFixed(4):'—'}°N, ${a.lng?a.lng.toFixed(4):'—'}°E</span>`],['TYPE',esc(a.type)]].map(([l,v])=>`<div><div style="font-size:10px;color:var(--text-muted);font-family:var(--font-mono);letter-spacing:.5px">${l}</div><div style="font-size:13px;margin-top:3px;font-weight:500">${v}</div></div>`).join('')}</div><div><div style="font-family:var(--font-head);font-size:13px;color:var(--accent3);margin-bottom:8px">🎒 ASSETS (${(a.amenities||[]).length})</div><div style="display:flex;flex-wrap:wrap;gap:4px">${(a.amenities||[]).map(x=>`<span class="amenity-pill">${esc(x)}</span>`).join('')}</div></div>`;
+  showModal('agdetail');
+}
+
+const CHANNELS=[
+  {id:'emergency-chennai-flood',icon:'🔴',name:'Emergency — Chennai Flood',n:12,u:5},
+  {id:'ndrf-command',icon:'🟠',name:'NDRF Command',n:8,u:2},
+  {id:'medical-coord',icon:'🟡',name:'Medical Coordination',n:5,u:0},
+  {id:'logistics',icon:'🔵',name:'Logistics & Supply',n:9,u:1},
+  {id:'general',icon:'⚪',name:'General Broadcast',n:48,u:0},
+  {id:'civilian-updates',icon:'🟣',name:'Civilian Updates',n:20,u:3}
+];
+function renderChannels(){
+  const el=document.getElementById('channel-list'); if(!el) return;
+  el.innerHTML=CHANNELS.map(c=>`<div style="padding:9px;border-radius:8px;cursor:pointer;background:${c.id===currentChan?'rgba(249,115,22,.1)':'transparent'};display:flex;align-items:center;gap:8px;margin-bottom:3px" onclick="switchChan('${c.id}','${c.name}')"><span>${c.icon}</span><div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${c.name}</div><div style="font-size:11px;color:var(--text-muted)">${c.n} agencies</div></div>${c.u?`<span class="nav-badge">${c.u}</span>`:''}</div>`).join('');
+}
+function switchChan(id, name) {
+  db.ref(`messages/${currentChan}`).off();
+  currentChan = id;
+  const t = document.getElementById('chan-title'); if(t) t.textContent = name;
+  db.ref(`messages/${currentChan}`).orderByChild('time').on('value', snap => {
+    allMsgs = [];
+    snap.forEach(c => allMsgs.push({...c.val(), _k:c.key}));
+    renderMsgs();
+  });
+  renderChannels();
+}
+function renderMsgs(){
+  const el=document.getElementById('chat-body'); if(!el) return;
+  if(!allMsgs.length){el.innerHTML='<div style="text-align:center;color:var(--text-muted);font-size:13px;padding:20px">No messages yet.</div>'; return;}
+  el.innerHTML=allMsgs.map(m=>`<div style="display:flex;gap:10px;align-items:flex-start"><div class="avatar" style="width:28px;height:28px;font-size:11px;flex-shrink:0">${(m.sender||'U').charAt(0)}</div><div><div style="display:flex;align-items:center;gap:7px;margin-bottom:3px"><span style="font-size:13px;font-weight:600">${esc(m.sender)}</span><span class="badge badge-pending" style="font-size:10px">${esc(m.role||'USER')}</span><span style="font-size:11px;color:var(--text-muted)">${m.time?new Date(m.time).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}):''}</span></div><div style="background:var(--surface2);padding:8px 12px;border-radius:0 8px 8px 8px;font-size:13px;line-height:1.5">${esc(m.msg)}</div></div></div>`).join('');
+  el.scrollTop=el.scrollHeight;
+}
+
+function renderIncidents(){
+  const sv={Critical:'badge-busy',High:'badge-standby',Medium:'badge-pending',Low:'badge-active'};
+  const ss={active:'badge-busy',resolved:'badge-active',monitoring:'badge-standby'};
+  const el=document.getElementById('inc-table'); if(!el) return;
+  el.innerHTML=allIncidents.length
+    ? allIncidents.map(i=>`<tr><td style="font-family:var(--font-mono);color:var(--accent3);font-size:11px">${esc(i.id||i._k||'—')}</td><td><strong>${esc(i.type)}</strong></td><td>${esc(i.location)}</td><td><span class="badge ${sv[i.severity]||'badge-pending'}">${esc(i.severity)}</span></td><td style="font-size:12px;color:var(--text-muted)">${esc(i.reportedBy||'—')}</td><td style="font-size:12px;color:var(--text-muted)">${ago(i.time)}</td><td><span class="badge ${ss[(i.status||'active').toLowerCase()]||'badge-busy'}">${(i.status||'active').toUpperCase()}</span></td><td><button class="btn btn-purple" style="font-size:10px;padding:2px 8px" onclick="openForecast('${esc(i.type)}')">🤖 AI</button></td></tr>`).join('')
+    : '<tr><td colspan="8" style="text-align:center;padding:20px;color:var(--text-muted)">No incidents yet.</td></tr>';
+}
+
+function openForecast(t){const s=document.getElementById('inc-type'); if(s) s.value=t; showForecast(); showModal('incident');}
+
+function renderUsers(snap){
+  const tb=document.getElementById('users-table'); if(!tb) return;
+  const fixed=[{email:ADMIN_EMAIL,fullName:'Gokul R',userType:'admin',orgName:'RALCA System',joined:'System'}];
+  const dbu=[];
+  if(snap) snap.forEach(c=>{const u=c.val(); if(u.email!==ADMIN_EMAIL) dbu.push({email:u.email,fullName:u.fullName||'—',userType:u.userType||'civilian',orgName:u.orgName||'—',joined:u.joined||'—'});});
+  const all=[...fixed,...dbu];
+  const tmap={admin:'background:rgba(249,115,22,.2);color:var(--accent)',agency:'background:rgba(34,211,238,.15);color:var(--accent3)',civilian:'background:rgba(167,139,250,.15);color:var(--purple)',officer:'background:rgba(34,211,238,.15);color:var(--accent3)'};
+  tb.innerHTML=all.map(u=>`<tr><td style="font-family:var(--font-mono);font-size:12px">${esc(u.email)}</td><td>${esc(u.fullName)}</td><td><span style="padding:2px 8px;border-radius:10px;font-size:11px;font-family:var(--font-mono);font-weight:700;${tmap[u.userType]||tmap.civilian}">${(u.userType||'civilian').toUpperCase()}</span></td><td style="color:var(--text-muted);font-size:12px">${esc(u.orgName)}</td><td style="color:var(--text-muted);font-size:12px">${u.joined}</td><td>${u.userType!=='admin'?`<button class="btn btn-ghost" style="font-size:11px;padding:4px 10px" onclick="showNotif('Action applied.')">Manage</button>`:'-'}</td></tr>`).join('');
+}
+
+/* ════════════════════════════════════
+   ACTIONS
+════════════════════════════════════ */
+async function submitIncident(){
+  if(currentUser?.role==='guest'){showNotif('🔒 Login to report incidents.');return;}
+  const type=document.getElementById('inc-type').value, sev=document.getElementById('inc-sev').value, loc=document.getElementById('inc-loc').value.trim(), desc=document.getElementById('inc-desc').value.trim();
+  if(!loc){showNotif('Enter a location.'); return;}
+  const inc={id:'INC-'+Date.now(),type,severity:sev,location:loc,desc,reportedBy:currentUser?.name||'Unknown',status:'active',time:Date.now()};
+  await db.ref('incidents').push(inc);
+  await db.ref('alerts').push({type:'critical',icon:'🆘',title:`${type} — ${loc}`,meta:`Severity: ${sev} · By ${currentUser?.name||'User'}`,time:Date.now()});
+  sysLog(`Incident: ${type} @ ${loc} by ${currentUser?.email}`);
+  closeModal('incident'); showNotif('🆘 Incident saved to Firebase! Visible in Incidents table.');
+  document.getElementById('inc-loc').value=''; document.getElementById('inc-desc').value='';
+}
+
+async function createAlert(){
+  if(currentUser?.role!=='admin'){showNotif('🔒 Admin only.');return;}
+  const title=document.getElementById('al-title').value.trim(), msg=document.getElementById('al-msg').value.trim(), sev=document.getElementById('al-sev').value.toLowerCase();
+  if(!title||!msg){showNotif('Fill title and message.');return;}
+  try{
+    await db.ref('alerts').push({type:sev,icon:sev==='critical'?'🚨':sev==='warning'?'⚠':'ℹ',title,meta:msg,time:Date.now()});
+    sysLog(`Alert created: ${title}`); closeModal('newalert');
+    document.getElementById('al-title').value=''; document.getElementById('al-msg').value='';
+    showNotif('✅ Alert saved to Firebase! Go to Alerts tab — it is there now.');
+  }catch(e){showNotif('❌ Error saving alert: '+e.message);}
+}
+
+async function sendBroadcast(){
+  if(currentUser?.role!=='admin'){showNotif('🔒 Admin only.');return;}
+  const msg=document.getElementById('bc-msg').value.trim(), target=document.getElementById('bc-target').value, priority=document.getElementById('bc-priority').value;
+  if(!msg){showNotif('Enter a message.');return;}
+  const type=priority.toLowerCase().includes('critical')?'critical':priority.toLowerCase().includes('warning')?'warning':'info';
+  try{
+    await db.ref('alerts').push({type,icon:'📡',title:`📡 BROADCAST: ${target}`,meta:msg,time:Date.now()});
+    sysLog(`Broadcast (${priority}): "${msg.slice(0,40)}…"`);
+    document.getElementById('bc-msg').value='';
+    showNotif('📡 Broadcast saved to Firebase! Visible in Alerts tab now.');
+  }catch(e){showNotif('❌ Error: '+e.message);}
+}
+
+async function submitAgency(){
+  if(currentUser?.role!=='admin'){showNotif('🔒 Admin only.');return;}
+  const name=document.getElementById('rg-name').value.trim(), type=document.getElementById('rg-type').value;
+  if(!name||type==='-- Select Type --'){showNotif('Name and type required.');return;}
+  const assets=document.getElementById('rg-assets').value;
+  const amenities=assets?assets.split(',').map(s=>s.trim()).filter(Boolean):[];
+  const lat=parseFloat(document.getElementById('rg-lat').value)||null, lng=parseFloat(document.getElementById('rg-lng').value)||null;
+  const ag={id:'AGY'+Date.now(),name,type,shortType:type.split('/')[0].trim(),regno:document.getElementById('rg-regno').value,year:document.getElementById('rg-year').value,address:document.getElementById('rg-addr').value,contact:document.getElementById('rg-contact').value,phone:document.getElementById('rg-phone').value,email:document.getElementById('rg-email').value,city:document.getElementById('rg-state').value,pin:'000000',lat,lng,resources:parseInt(document.getElementById('rg-personnel').value)||0,status:'active',amenities,icon:'🏛',color:'#f97316',createdBy:currentUser.email,createdAt:Date.now()};
+  try{
+    await db.ref(`agencies/${ag.id}`).set(ag);
+    sysLog(`Agency registered: ${name}`);
+    showNotif(`✅ ${name} saved to Firebase! Visible in All Agencies instantly.`);
+    go('agencies',null);
+  }catch(e){showNotif('❌ Error: '+e.message);}
+}
+
+function clearRegForm(){
+  ['rg-name','rg-regno','rg-year','rg-addr','rg-contact','rg-phone','rg-email','rg-lat','rg-lng','rg-personnel','rg-vehicles','rg-assets'].forEach(id=>{const el=document.getElementById(id); if(el) el.value='';});
+}
+
+function captureGPS(){
+  document.getElementById('gps-status').textContent='Capturing…';
+  setTimeout(()=>{document.getElementById('rg-lat').value='13.0827'; document.getElementById('rg-lng').value='80.2707'; document.getElementById('gps-status').textContent='✅ Chennai, TN'; document.getElementById('gps-status').style.color='var(--green)';},1000);
+}
+
+async function sendMsg(){
+  if(currentUser?.role==='guest'){showNotif('🔒 Login to send messages.');return;}
+  const inp=document.getElementById('msgInput'), txt=inp.value.trim(); if(!txt) return;
+  const role=currentUser.userType==='admin'?'ADMIN':currentUser.userType==='agency'?'AGENCY':currentUser.userType==='officer'?'OFFICER':'CIVILIAN';
+  try{
+    await db.ref(`messages/${currentChan}`).push({sender:currentUser.name||currentUser.email,role,msg:txt,time:Date.now(),uid:currentUser.uid||'guest'});
+    inp.value='';
+  }catch(e){showNotif('❌ Message not sent: '+e.message);}
+}
+
+async function saveResource(){
+  if(currentUser?.role!=='admin'){showNotif('🔒 Admin only.');return;}
+  const key=document.getElementById('res-type-sel').value;
+  const total=parseInt(document.getElementById('res-total').value)||0;
+  const avail=parseInt(document.getElementById('res-avail').value)||0;
+  if(!key){showNotif('Select a resource type.');return;}
+  if(avail>total){showNotif('Available cannot exceed total.');return;}
+  const btn=document.getElementById('res-save-btn');
+  if(btn){btn.disabled=true;btn.textContent='Saving…';}
+  try{
+    const base=DEFAULT_RESOURCES[key]||{icon:'📦',name:key};
+    await db.ref(`resources/${key}`).set({...base, key, total, avail, updatedAt:Date.now(), updatedBy:currentUser.name||currentUser.email});
+    sysLog(`Resource updated: ${base.name} → ${avail}/${total}`);
+    closeModal('addres');
+    showNotif(`✅ ${base.name} updated: ${avail}/${total} — inventory refreshed instantly!`);
+    document.getElementById('res-type-sel').value='';
+    document.getElementById('res-total').value='';
+    document.getElementById('res-avail').value='';
+  }catch(e){showNotif('❌ Error saving resource: '+e.message);}
+  finally{if(btn){btn.disabled=false;btn.textContent='💾 Save to Firebase';}}
+}
+
+function filterMap(el,type){
+  document.querySelectorAll('.filter-chip').forEach(c=>c.classList.remove('active'));
+  el.classList.add('active');
+  if(!fullMap || !markerClusterGroup) return;
+  markerClusterGroup.clearLayers();
+  const markersToAdd = [];
+  fullMarkers.forEach(({marker,type:t})=>{
+    const tl=(t||'').toLowerCase(); let show=false;
+    if(type==='all') show=true;
+    else if(type==='ndrf') show=tl.includes('ndrf')||tl.includes('sdrf')||tl.includes('coordination');
+    else if(type==='medical') show=tl.includes('medical')||tl.includes('ems');
+    else if(type==='ngo') show=tl.includes('ngo')||tl.includes('child')||tl.includes('elderly')||tl.includes('shelter')||tl.includes('wash')||tl.includes('logistics');
+    else if(type==='coast') show=tl.includes('coast');
+    if(show) markersToAdd.push(marker);
+  });
+  markerClusterGroup.addLayers(markersToAdd);
+}
+
+let ntTimer;
+function showNotif(msg){
+  document.querySelectorAll('.notif').forEach(n=>n.remove());
+  const n=document.createElement('div'); n.className='notif';
+  n.innerHTML=`<div class="notif-title">🔔 RALCA</div><div class="notif-body">${msg}</div>`;
+  document.body.appendChild(n);
+  clearTimeout(ntTimer); ntTimer=setTimeout(()=>n.remove(),4000);
+}
+function showModal(id){const el=document.getElementById('modal-'+id); if(el) el.classList.add('open'); if(id==='incident') showForecast();}
+function closeModal(id){const el=document.getElementById('modal-'+id); if(el) el.classList.remove('open');}
+
+function refreshAll(){
+  showNotif('🔄 All data refreshed from Firebase!');
+  renderAlerts(); renderDashAlerts();
+  renderIncidents();
+  renderAgTable(); renderDashAgencies();
+  renderResources();
+  renderSOSTable(); updateSOSChips();
+  renderMsgs();
+  setEl('st-agencies', allAgencies.length);
+  setEl('st-incidents', allIncidents.filter(i=>(i.status||'').toLowerCase()==='active').length);
+  setEl('st-alerts', allAlerts.length);
+  setEl('st-sos', allSOS.length);
+  setEl('alertBadge', allAlerts.filter(a=>(a.type||'').toLowerCase()==='critical').length);
+  setEl('fb-ag-count', allAgencies.length);
+  setEl('fb-inc-count', allIncidents.length);
+}
+
+/* ════════════════════════════════════
+   INIT ALL
+════════════════════════════════════ */
+function initAll(){
+  renderChannels(); renderDashAgencies(); renderAgTable();
+  renderRoadList(); initVoice(); initPhrases(); renderVoiceHist(); renderOffQ();
+  listenFirebase();
+  seedData();
+  if(window.speechSynthesis){window.speechSynthesis.onvoiceschanged=()=>window.speechSynthesis.getVoices(); window.speechSynthesis.getVoices();}
+  setTimeout(initMiniMap, 300);
+}
+</script>
+</body>
+</html>
