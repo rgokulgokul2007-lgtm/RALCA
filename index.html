@@ -264,7 +264,17 @@ body{font-family:var(--font-body);background:var(--gray-50);color:var(--gray-900
 .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)}
 </style>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.css" />
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.js"></script>
+<style>
+  /* Advanced Map Controls Overlay */
+  .map-overlay-top { position:absolute; top:12px; left:12px; right:12px; z-index:400; display:flex; gap:10px; pointer-events:none; }
+  .map-overlay-top > * { pointer-events:auto; }
+  .filter-select { padding:8px 12px; border-radius:8px; border:1px solid var(--gray-200); box-shadow:var(--shadow-sm); font-size:12px; font-weight:600; outline:none; cursor:pointer; }
+  .sos-btn { background:var(--red); color:white; border:none; padding:8px 16px; border-radius:8px; font-weight:700; font-size:12px; box-shadow:var(--shadow-md); cursor:pointer; animation: pulse 2s infinite; display:none; }
+  @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(231, 76, 60, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(231, 76, 60, 0); } 100% { box-shadow: 0 0 0 0 rgba(231, 76, 60, 0); } }
+</style>
 </head>
 <body>
 
@@ -460,8 +470,17 @@ body{font-family:var(--font-body);background:var(--gray-50);color:var(--gray-900
             <div class="stat-sub">Total on ground</div>
           </div>
         </div>
-        <div class="dashboard-body">
+<div class="dashboard-body">
           <div class="map-wrap">
+            <div class="map-overlay-top">
+              <select class="filter-select" id="advFilterResource" onchange="renderMapPins()">
+                <option value="all">All Resources</option>
+                <option value="boat">Has Boats/Marine</option>
+                <option value="medical">Has Medical Kits</option>
+                <option value="heavy">Has Heavy Equipment</option>
+              </select>
+              <button class="sos-btn" id="civilianSosBtn" onclick="triggerCivilianSOS()">🚨 TRANSMIT EMERGENCY SOS</button>
+            </div>
             <div id="mainMapSvg" style="width: 100%; height: 100%; z-index: 1;"></div>
             <div class="map-legend-box" style="z-index: 2;">
               <div class="ml-item"><div class="ml-dot" style="background:#1E8449"></div>Active</div>
@@ -1036,7 +1055,10 @@ function initApp() {
   // Hide management features from Civilians
   const appRegBtn = document.getElementById('appRegAgencyBtn');
   if(appRegBtn) appRegBtn.style.display = (currentUser && currentUser.role === 'civilian') ? 'none' : 'flex';
-
+  
+  // Show SOS button ONLY for Civilians
+  const sosBtn = document.getElementById('civilianSosBtn');
+  if(sosBtn) sosBtn.style.display = (currentUser && currentUser.role === 'civilian') ? 'block' : 'none';
   // Initialize Leaflet Map
   if (!leafletMap) {
     leafletMap = L.map('mainMapSvg').setView([22.5937, 78.9629], 5); // Center on India
@@ -1241,13 +1263,13 @@ let actionButtons = `
     <button class="dd-action-btn primary-action" onclick="callAgency('${ag.contact}')">📞 Contact Agency</button>
     <button class="dd-action-btn" onclick="exportSingleAgency(${ag.id})">📥 Export Details</button>`;
 
-  // Only allow Admins and Agencies to modify statuses or delete records
+  // Only allow Admins and Agencies to modify statuses, track, or delete records
   if (currentUser && currentUser.role !== 'civilian') {
     actionButtons += `
+    <button class="dd-action-btn" style="background:#D5F5E3; color:#1E8449; border-color:#1E8449;" onclick="toggleLiveTracking(${ag.id})">📡 Start Live Tracking</button>
     <button class="dd-action-btn" onclick="changeStatus(${ag.id})">🔄 Change Status</button>
     <button class="dd-action-btn danger" onclick="removeAgency(${ag.id})">🗑 Remove Agency</button>`;
   }
-
   document.getElementById('ddActions').innerHTML = actionButtons;
   document.getElementById('detailDrawer').classList.add('open');
 }
@@ -1369,9 +1391,12 @@ function renderIncidentsList() {
           <span>👥 ${inc.affected} affected</span>
           <span>🕐 ${inc.time}</span>
         </div>
-        ${(currentUser && currentUser.role === 'civilian') 
+${(currentUser && currentUser.role === 'civilian') 
             ? `<span style="font-size:11px; color:var(--gray-500); font-weight:600;">${inc.status==='resolved'?'✅ Resolved':'Active Incident'}</span>` 
-            : `<button class="ic-footer-btn" onclick="resolveIncident(${inc.id},this)">${inc.status==='resolved'?'✅ Resolved':'Mark Resolved'}</button>`}
+            : `<div style="display:flex; gap:8px;">
+                 <button class="ic-footer-btn" style="background:var(--navy); color:white; border:none;" onclick="drawRouteToIncident('${inc.district}')">🗺️ Route</button>
+                 <button class="ic-footer-btn" onclick="resolveIncident(${inc.id},this)">${inc.status==='resolved'?'✅ Resolved':'Mark Resolved'}</button>
+               </div>`}
       </div>
     </div>`).join('');
 }
@@ -1452,6 +1477,140 @@ function exportData(type) {
   showToast('Report downloaded: '+filename,'success');
 }
 function generateFullReport(){exportData('full')}
+  // ==========================================
+// ADVANCED HACKATHON FEATURES
+// ==========================================
+
+// 1. ADVANCED MAP FILTERING
+const originalRenderMapPins = renderMapPins; // Save original function
+renderMapPins = function() {
+  if (!markersLayer) return;
+  markersLayer.clearLayers();
+  
+  const filterVal = document.getElementById('advFilterResource')?.value || 'all';
+  
+  agencies.forEach(ag => {
+    let show = true;
+    const equip = (ag.equipment || '').toLowerCase();
+    
+    if (filterVal === 'boat' && !equip.includes('boat') && !equip.includes('marine') && !equip.includes('diving')) show = false;
+    if (filterVal === 'medical' && !equip.includes('medical') && !equip.includes('ambulance') && !equip.includes('cbrn')) show = false;
+    if (filterVal === 'heavy' && !equip.includes('cssr') && !equip.includes('hydraulic') && !equip.includes('heavy')) show = false;
+
+    if (show && ag.lat && ag.lng) {
+      const isCivilianSOS = ag.type === 'Civilian SOS';
+      const color = isCivilianSOS ? '#922B21' : STATUS_COLOR[ag.status];
+      
+      const marker = L.circleMarker([ag.lat, ag.lng], {
+        color: color, fillColor: color, fillOpacity: isCivilianSOS ? 1 : 0.9,
+        radius: isCivilianSOS ? 10 : 6, weight: isCivilianSOS ? 4 : 2,
+        className: isCivilianSOS ? 'sos-pulse' : ''
+      }).addTo(markersLayer);
+      
+      marker.bindTooltip(`<b>${ag.name}</b><br>${ag.type}`, { direction: 'top' });
+      marker.on('click', () => openAgencyDrawer(ag.id));
+    }
+  });
+};
+
+// 2. CIVILIAN SOS WITH DEVICE GPS
+function triggerCivilianSOS() {
+  showToast('Acquiring satellite GPS lock...', 'standby');
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const lat = position.coords.latitude;
+        const lng = position.coords.longitude;
+        
+        // 1. Create a blinking SOS Pin on the map
+        const sosPin = {
+          id: Date.now(), name: "CIVILIAN SOS ALERT", type: "Civilian SOS",
+          district: "Live GPS Location", contact: currentUser.email, email: currentUser.email,
+          personnel: 0, vehicles: 0, status: 'deployed', equipment: 'Needs immediate evacuation',
+          registered: new Date().toISOString(), lat: lat, lng: lng
+        };
+        window.firebaseSet(window.firebaseRef(window.db, 'agencies/' + sosPin.id), sosPin);
+
+        // 2. Push it to the Incidents Board
+        const newInc = {
+          id: Date.now() + 1, title: 'CRITICAL: Civilian SOS Signal', type: 'Search & Rescue',
+          severity: 'high', district: `GPS: ${lat.toFixed(4)}, ${lng.toFixed(4)}`, area: 'Live Location',
+          desc: `Civilian initiated emergency distress signal from their mobile device.`, affected: 1,
+          agency: 'Unassigned', status: 'active', time: 'Just now', reporter: currentUser.name
+        };
+        window.firebaseSet(window.firebaseRef(window.db, 'incidents/' + newInc.id), newInc);
+        
+        showToast('SOS Broadcasted to all agencies!', 'success');
+      },
+      (error) => { showToast('GPS Access Denied. Ensure location is enabled.', 'error'); },
+      { enableHighAccuracy: true }
+    );
+  } else {
+    showToast('Geolocation not supported by this browser.', 'error');
+  }
+}
+
+// 3. DYNAMIC ROAD ROUTING
+let routingControl = null;
+async function drawRouteToIncident(districtStr) {
+  if(!leafletMap) return;
+  showToast('Calculating fastest route...', 'standby');
+  
+  // Clean up district string (e.g., "GPS: 11.0, 77.0" or "Coimbatore")
+  let targetCoords;
+  if(districtStr.includes('GPS:')) {
+    const parts = districtStr.replace('GPS:', '').split(',');
+    targetCoords = { lat: parseFloat(parts[0]), lng: parseFloat(parts[1]) };
+  } else {
+    targetCoords = await getCoordinatesFromDistrict(districtStr);
+  }
+
+  // Find nearest active agency (Simplified logic: grab first active agency for demo)
+  const activeAgencies = agencies.filter(a => a.status === 'active' || a.status === 'standby');
+  if(activeAgencies.length === 0) { showToast('No active agencies available to route.', 'error'); return; }
+  const startAgency = activeAgencies[0]; 
+
+  if (routingControl) leafletMap.removeControl(routingControl);
+
+  routingControl = L.Routing.control({
+    waypoints: [
+      L.latLng(startAgency.lat, startAgency.lng),
+      L.latLng(targetCoords.lat, targetCoords.lng)
+    ],
+    routeWhileDragging: false,
+    lineOptions: { styles: [{ color: '#E74C3C', weight: 4 }] },
+    show: false // Hides the turn-by-turn text box to save UI space
+  }).addTo(leafletMap);
+  
+  showToast(`Route plotted for ${startAgency.name}`, 'success');
+  showPage('dashboard', document.querySelector('.nav-link')); // Switch to map tab
+}
+
+// 4. LIVE FLEET TRACKING (Simulated movement for demo)
+let trackingInterval = null;
+function toggleLiveTracking(id) {
+  const ag = agencies.find(a => a.id === id);
+  if(!ag) return;
+  
+  if (trackingInterval) {
+    clearInterval(trackingInterval);
+    trackingInterval = null;
+    showToast(`Live tracking disabled for ${ag.name}`, 'success');
+    closeDrawer();
+    return;
+  }
+
+  showToast(`GPS Live Sync activated for ${ag.name}`, 'success');
+  ag.status = 'deployed'; // Auto-deploy them
+  
+  // Move the agency slightly every 3 seconds to simulate driving
+  trackingInterval = setInterval(() => {
+    ag.lat += (Math.random() - 0.5) * 0.05; 
+    ag.lng += (Math.random() - 0.5) * 0.05;
+    window.firebaseSet(window.firebaseRef(window.db, 'agencies/' + id), ag);
+  }, 3000);
+  closeDrawer();
+}
 </script>
 </body>
 </html>
