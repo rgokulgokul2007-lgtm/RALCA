@@ -341,31 +341,41 @@ body{font-family:var(--font-body);background:var(--gray-50);color:var(--gray-900
       <div class="login-hint"><strong>Demo:</strong> citizen@email.com &nbsp;|&nbsp; citizen123<br><strong>Note:</strong> Civilians have view-only access.</div>
     </div>
 
-    <div id="tabRegister" style="display:none">
+<div id="tabRegister" style="display:none">
       <div class="form-group">
-        <label class="form-label">Agency Name</label>
-        <input class="form-input" id="regAgName" placeholder="Full agency name" />
-      </div>
-      <div class="form-group">
-        <label class="form-label">Agency Type</label>
-        <select class="form-select" id="regAgType">
-          <option>Fire & Rescue</option><option>Medical / EMS</option><option>Flood Response</option>
-          <option>Search & Rescue</option><option>Disaster Management</option><option>Coast Guard</option><option>Police / Security</option>
+        <label class="form-label">Register As</label>
+        <select class="form-select" id="regRole" onchange="document.getElementById('agencyRegFields').style.display = this.value === 'agency' ? 'block' : 'none'">
+          <option value="civilian">Civilian (View Only)</option>
+          <option value="agency">Relief Agency</option>
         </select>
       </div>
       <div class="form-group">
-        <label class="form-label">Official Email</label>
-        <input class="form-input" id="regAgEmail" placeholder="official@agency.gov.in" />
+        <label class="form-label">Full Name / Organization Name</label>
+        <input class="form-input" id="regAgName" placeholder="Your name or agency name" />
       </div>
       <div class="form-group">
-        <label class="form-label">Contact Number</label>
-        <input class="form-input" id="regAgPhone" placeholder="+91 XXXXX XXXXX" />
+        <label class="form-label">Email</label>
+        <input class="form-input" id="regAgEmail" placeholder="your@email.com" />
       </div>
       <div class="form-group">
-        <label class="form-label">District / Zone</label>
-        <input class="form-input" id="regAgDistrict" placeholder="e.g. Regional Office 1, India" />
+        <label class="form-label">District / City</label>
+        <input class="form-input" id="regAgDistrict" placeholder="e.g. Coimbatore" />
       </div>
-      <button class="btn-login" onclick="doRegister()">Register Agency</button>
+      
+      <div id="agencyRegFields" style="display:none">
+        <div class="form-group">
+          <label class="form-label">Agency Type</label>
+          <select class="form-select" id="regAgType">
+            <option>Fire & Rescue</option><option>Medical / EMS</option><option>Flood Response</option>
+            <option>Search & Rescue</option><option>Disaster Management</option><option>Coast Guard</option><option>Police / Security</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Contact Number</label>
+          <input class="form-input" id="regAgPhone" placeholder="+91 XXXXX XXXXX" />
+        </div>
+      </div>
+      <button class="btn-login" onclick="doRegister()">Complete Registration</button>
     </div>
   </div>
 </div>
@@ -475,12 +485,12 @@ body{font-family:var(--font-body);background:var(--gray-50);color:var(--gray-900
             <div class="page-title">Registered Agencies</div>
             <div class="page-sub" id="agenciesCount">Loading...</div>
           </div>
-          <div style="display:flex;gap:8px">
+         <div style="display:flex;gap:8px">
             <button class="btn-secondary" onclick="exportData('agencies')">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
               Export CSV
             </button>
-            <button class="btn-primary" onclick="openRegisterModal()">
+            <button class="btn-primary" id="appRegAgencyBtn" onclick="openRegisterModal()">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="white"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
               Register Agency
             </button>
@@ -972,14 +982,27 @@ function doLogin(role) {
   }
 }
 async function doRegister() {
-  const n=document.getElementById('regAgName').value.trim();
-  const d=document.getElementById('regAgDistrict').value.trim();
-  if(!n||!d){showToast('Please fill required fields','error');return;}
-  
-  showToast('Locating district on live map...', 'standby'); // Shows while searching
-  const coords = await getCoordinatesFromDistrict(d);
-  
-  const newAg = {
+  const role = document.getElementById('regRole').value;
+  const n=document.getElementById('regAgName').value.trim();
+  const d=document.getElementById('regAgDistrict').value.trim();
+  if(!n||!d){showToast('Please fill required fields','error');return;}
+
+  if (role === 'civilian') {
+    // Civilians bypass the map pinning process entirely
+    showToast('Civilian registered successfully!','success');
+    currentUser={role:'civilian', email:document.getElementById('regAgEmail').value||'citizen@app.com', name:n};
+    document.getElementById('userName').textContent=n.slice(0,20);
+    document.getElementById('userAvatar').textContent=getInitials(n);
+    document.getElementById('loginScreen').classList.remove('active');
+    document.getElementById('appScreen').classList.add('active');
+    initApp();
+    return;
+  }
+  
+  showToast('Locating district on live map...', 'standby'); // Shows while searching
+  const coords = await getCoordinatesFromDistrict(d);
+  
+  const newAg = {
     id: Date.now(), name:n, type:document.getElementById('regAgType').value,
     district:d, contact:document.getElementById('regAgPhone').value,
     email:document.getElementById('regAgEmail').value,
@@ -1010,6 +1033,10 @@ let leafletMap = null;
 let markersLayer = null;
 
 function initApp() {
+  // Hide management features from Civilians
+  const appRegBtn = document.getElementById('appRegAgencyBtn');
+  if(appRegBtn) appRegBtn.style.display = (currentUser && currentUser.role === 'civilian') ? 'none' : 'flex';
+
   // Initialize Leaflet Map
   if (!leafletMap) {
     leafletMap = L.map('mainMapSvg').setView([22.5937, 78.9629], 5); // Center on India
@@ -1210,11 +1237,18 @@ function openAgencyDrawer(id) {
       <div class="info-row"><span class="ir-label">Equipment</span><span class="ir-val" style="font-size:11px;text-align:right;max-width:160px">${ag.equipment||'Standard kit'}</span></div>
       <div class="info-row"><span class="ir-label">Registered</span><span class="ir-val">${ag.registered}</span></div>
     </div>`;
-  document.getElementById('ddActions').innerHTML=`
+let actionButtons = `
     <button class="dd-action-btn primary-action" onclick="callAgency('${ag.contact}')">📞 Contact Agency</button>
+    <button class="dd-action-btn" onclick="exportSingleAgency(${ag.id})">📥 Export Details</button>`;
+
+  // Only allow Admins and Agencies to modify statuses or delete records
+  if (currentUser && currentUser.role !== 'civilian') {
+    actionButtons += `
     <button class="dd-action-btn" onclick="changeStatus(${ag.id})">🔄 Change Status</button>
-    <button class="dd-action-btn" onclick="exportSingleAgency(${ag.id})">📥 Export Details</button>
     <button class="dd-action-btn danger" onclick="removeAgency(${ag.id})">🗑 Remove Agency</button>`;
+  }
+
+  document.getElementById('ddActions').innerHTML = actionButtons;
   document.getElementById('detailDrawer').classList.add('open');
 }
 function closeDrawer(){document.getElementById('detailDrawer').classList.remove('open')}
@@ -1329,13 +1363,15 @@ function renderIncidentsList() {
         <span class="ic-badge" style="background:${inc.status==='active'?'#FADBD8':inc.status==='resolved'?'#D5F5E3':'#FEF9E7'};color:${inc.status==='active'?'#922B21':inc.status==='resolved'?'#1E8449':'#784212'}">${inc.status}</span>
       </div>
       <div class="ic-desc">${inc.desc}</div>
-      <div class="ic-footer">
+<div class="ic-footer">
         <div class="ic-meta">
           <span>📍 ${inc.district.split(',')[0]}</span>
           <span>👥 ${inc.affected} affected</span>
           <span>🕐 ${inc.time}</span>
         </div>
-        <button class="ic-footer-btn" onclick="resolveIncident(${inc.id},this)">${inc.status==='resolved'?'✅ Resolved':'Mark Resolved'}</button>
+        ${(currentUser && currentUser.role === 'civilian') 
+            ? `<span style="font-size:11px; color:var(--gray-500); font-weight:600;">${inc.status==='resolved'?'✅ Resolved':'Active Incident'}</span>` 
+            : `<button class="ic-footer-btn" onclick="resolveIncident(${inc.id},this)">${inc.status==='resolved'?'✅ Resolved':'Mark Resolved'}</button>`}
       </div>
     </div>`).join('');
 }
