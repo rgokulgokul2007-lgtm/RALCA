@@ -1194,7 +1194,13 @@ function openAgencyDrawer(id) {
   document.getElementById('detailDrawer').classList.add('open');
 }
 function closeDrawer(){document.getElementById('detailDrawer').classList.remove('open')}
-function callAgency(c){showToast('Calling: '+c,'success')}
+function callAgency(c){
+  // showToast is your existing UI feedback
+  showToast('Connecting to: ' + c, 'success');
+  
+  // This triggers the device's native dialer
+  window.location.href = 'tel:' + c.replace(/\s+/g, '');
+}
 function changeStatus(id) {
   const ag=agencies.find(a=>a.id===id);
   const opts=['active','standby','deployed'].filter(s=>s!==ag.status);
