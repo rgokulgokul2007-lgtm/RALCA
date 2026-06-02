@@ -380,9 +380,13 @@ body{font-family:var(--font-body);background:var(--gray-50);color:var(--gray-900
         <label class="form-label">Full Name / Organization Name</label>
         <input class="form-input" id="regAgName" placeholder="Your name or agency name" />
       </div>
-      <div class="form-group">
+<div class="form-group">
         <label class="form-label">Email</label>
         <input class="form-input" id="regAgEmail" placeholder="your@email.com" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        <input class="form-input" type="password" id="regAgPass" placeholder="Create a password" />
       </div>
       <div class="form-group">
         <label class="form-label">District / City</label>
@@ -851,7 +855,7 @@ body{font-family:var(--font-body);background:var(--gray-50);color:var(--gray-900
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-  import { getDatabase, ref, set, onValue, remove } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
+  import { getDatabase, ref, set, onValue, remove, get, child } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyBTHohDW-10f7EolWpW8CUlfLCIJNDZmF8",
@@ -872,6 +876,8 @@ body{font-family:var(--font-body);background:var(--gray-50);color:var(--gray-900
   window.firebaseSet = set;
   window.firebaseOnValue = onValue;
   window.firebaseRemove = remove;
+  window.firebaseGet = get;
+  window.firebaseChild = child;
 </script>
 
 <script>
@@ -1036,16 +1042,17 @@ function switchLoginTab(tab) {
   });
 }
 
-function doLogin(role) {
+async function doLogin(role) {
   const emailId = role==='agency'?'agLogin': role==='admin'?'adLogin':'civLogin';
   const passId = role==='agency'?'agPass': role==='admin'?'adPass':'civPass';
   const errId = role==='agency'?'agError': role==='admin'?'adError':'civError';
+  const errEl = document.getElementById(errId);
   
   const email = document.getElementById(emailId).value.trim();
   const pass  = document.getElementById(passId).value;
-  const errEl = document.getElementById(errId);
-  const [ce,cp] = CREDS[role];
   
+  // 1. Keep Demo Accounts active for the Judges!
+  const [ce,cp] = CREDS[role];
   if(email===ce && pass===cp) {
     const roleNames = {'admin':'Admin Control', 'agency':'Agency Officer', 'civilian':'Civilian Observer'};
     currentUser = {role, email, name: roleNames[role]};
@@ -1055,8 +1062,45 @@ function doLogin(role) {
     document.getElementById('appScreen').classList.add('active');
     if(errEl) errEl.style.display='none';
     initApp();
-  } else {
+    return;
+  }
+
+  // 2. Check Custom Registered Users in Firebase
+  try {
+    const dbRef = window.firebaseRef(window.db);
+    const snapshot = await window.firebaseGet(window.firebaseChild(dbRef, 'users'));
+    
+    if (snapshot.exists()) {
+      const users = snapshot.val();
+      let foundUser = null;
+      
+      for (const key in users) {
+        if (users[key].email === email && users[key].password === pass) {
+          foundUser = users[key];
+          break;
+        }
+      }
+
+      if (foundUser) {
+        if(foundUser.role !== role) {
+           showToast(`Error: Please log in using the ${foundUser.role.toUpperCase()} tab!`, 'error');
+           return;
+        }
+        currentUser = { role: foundUser.role, email: foundUser.email, name: foundUser.name };
+        document.getElementById('userName').textContent = currentUser.name;
+        document.getElementById('userAvatar').textContent = currentUser.name.split(' ').map(w=>w[0]).join('').slice(0,2);
+        document.getElementById('loginScreen').classList.remove('active');
+        document.getElementById('appScreen').classList.add('active');
+        if(errEl) errEl.style.display='none';
+        initApp();
+        return;
+      }
+    }
+    
+    // If not found or wrong password
     if(errEl) errEl.style.display='block';
+  } catch (error) {
+    showToast('Login failed. Check connection.', 'error');
   }
 }
 
@@ -1064,12 +1108,20 @@ async function doRegister() {
   const role = document.getElementById('regRole').value;
   const n=document.getElementById('regAgName').value.trim();
   const d=document.getElementById('regAgDistrict').value.trim();
-  if(!n||!d){showToast('Please fill required fields','error');return;}
+  const email = document.getElementById('regAgEmail').value.trim();
+  const pass = document.getElementById('regAgPass').value;
+
+  if(!n||!d||!email||!pass){showToast('Please fill all fields','error');return;}
+  
+  const userId = 'usr_' + Date.now();
 
   if (role === 'civilian') {
-    // Civilians bypass the map pinning process entirely
+    // 1. Create Civilian in Firebase
+    const newUser = { name: n, email: email, password: pass, role: 'civilian' };
+    await window.firebaseSet(window.firebaseRef(window.db, 'users/' + userId), newUser);
+
     showToast('Civilian registered successfully!','success');
-    currentUser={role:'civilian', email:document.getElementById('regAgEmail').value||'citizen@app.com', name:n};
+    currentUser={role:'civilian', email:email, name:n};
     document.getElementById('userName').textContent=n.slice(0,20);
     document.getElementById('userAvatar').textContent=getInitials(n);
     document.getElementById('loginScreen').classList.remove('active');
@@ -1078,27 +1130,32 @@ async function doRegister() {
     return;
   }
   
-  showToast('Locating district on live map...', 'standby'); // Shows while searching
+  showToast('Locating district on live map...', 'standby');
   const coords = await getCoordinatesFromDistrict(d);
   
   const newAg = {
     id: Date.now(), name:n, type:document.getElementById('regAgType').value,
     district:d, contact:document.getElementById('regAgPhone').value,
-    email:document.getElementById('regAgEmail').value,
+    email:email,
     personnel:30, vehicles:4, status:'standby', equipment:'Standard kit',
     registered:new Date().toISOString().slice(0,10),
     lat: coords.lat, lng: coords.lng
   };
 
-  window.firebaseSet(window.firebaseRef(window.db, 'agencies/' + newAg.id), newAg).then(() => {
-    showToast('Agency registered! Please wait for approval.','success');
-    currentUser={role:'agency',email:newAg.email||'new@agency.com',name:newAg.name};
-    document.getElementById('userName').textContent=newAg.name.slice(0,20);
-    document.getElementById('userAvatar').textContent=getInitials(newAg.name);
-    document.getElementById('loginScreen').classList.remove('active');
-    document.getElementById('appScreen').classList.add('active');
-    initApp();
-  });
+  // 2. Create Agency Profile
+  await window.firebaseSet(window.firebaseRef(window.db, 'agencies/' + newAg.id), newAg);
+  
+  // 3. Create Agency Login Credentials
+  const newUser = { name: n, email: email, password: pass, role: 'agency', agencyId: newAg.id };
+  await window.firebaseSet(window.firebaseRef(window.db, 'users/' + userId), newUser);
+
+  showToast('Agency registered! You can now log in.','success');
+  currentUser={role:'agency', email:email, name:newAg.name};
+  document.getElementById('userName').textContent=newAg.name.slice(0,20);
+  document.getElementById('userAvatar').textContent=getInitials(newAg.name);
+  document.getElementById('loginScreen').classList.remove('active');
+  document.getElementById('appScreen').classList.add('active');
+  initApp();
 }
 
 function doLogout() {
