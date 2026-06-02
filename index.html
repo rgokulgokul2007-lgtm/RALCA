@@ -267,6 +267,8 @@ body{font-family:var(--font-body);background:var(--gray-50);color:var(--gray-900
 .flex{display:flex}.items-center{align-items:center}.gap-8{gap:8px}.gap-12{gap:12px}
 .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)}
 </style>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 </head>
 <body>
 
@@ -438,35 +440,9 @@ body{font-family:var(--font-body);background:var(--gray-50);color:var(--gray-900
           </div>
         </div>
         <div class="dashboard-body">
-          <div class="map-wrap">
-            <svg class="map-svg-full" id="mainMapSvg" viewBox="0 0 640 460" xmlns="http://www.w3.org/2000/svg">
-              <defs>
-                <pattern id="g" width="30" height="30" patternUnits="userSpaceOnUse">
-                  <path d="M 30 0 L 0 0 0 30" fill="none" stroke="#c5d5c5" stroke-width="0.5"/>
-                </pattern>
-              </defs>
-              <rect width="640" height="460" fill="#d8e8d8"/>
-              <rect width="640" height="460" fill="url(#g)"/>
-              
-              <path d="M 220 30 L 270 50 L 300 100 L 400 130 L 450 200 L 370 230 L 320 320 L 250 430 L 200 320 L 140 240 L 90 180 L 140 120 Z" fill="#b8d4f0" opacity="0.6" stroke="#7aa3cc" stroke-width="2"/>
-              <text x="500" y="280" font-size="12" fill="#1A5276" font-family="sans-serif" text-anchor="middle" opacity=".8">Bay of Bengal</text>
-              <text x="90" y="320" font-size="12" fill="#1A5276" font-family="sans-serif" text-anchor="middle" opacity=".8">Arabian Sea</text>
-              
-              <text x="320" y="445" font-size="11" fill="#5F5E5A" font-family="sans-serif" text-anchor="middle">India — Live Agency Map</text>
-              <g id="mainMapPins"></g>
-            </svg>
-            <div class="map-ctrl">
-              <div class="map-btn" title="Zoom In" onclick="alert('In a real deployment, this connects to Leaflet.js maps')">
-                <svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
-              </div>
-              <div class="map-btn" title="Zoom Out">
-                <svg viewBox="0 0 24 24"><path d="M19 13H5v-2h14v2z"/></svg>
-              </div>
-              <div class="map-btn" title="Locate">
-                <svg viewBox="0 0 24 24"><path d="M12 8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm8.94 3A8.994 8.994 0 0013 3.06V1h-2v2.06A8.994 8.994 0 003.06 11H1v2h2.06A8.994 8.994 0 0011 20.94V23h2v-2.06A8.994 8.994 0 0020.94 13H23v-2h-2.06zM12 19c-3.87 0-7-3.13-7-7s3.13-7 7-7 7 3.13 7 7-3.13 7-7 7z"/></svg>
-              </div>
-            </div>
-            <div class="map-legend-box">
+<div class="map-wrap">
+            <div id="mainMapSvg" style="width: 100%; height: 100%; z-index: 1;"></div>
+            <div class="map-legend-box" style="z-index: 2;">
               <div class="ml-item"><div class="ml-dot" style="background:#1E8449"></div>Active</div>
               <div class="ml-item"><div class="ml-dot" style="background:#E67E22"></div>Standby</div>
               <div class="ml-item"><div class="ml-dot" style="background:#C0392B"></div>Deployed</div>
@@ -775,45 +751,28 @@ body{font-family:var(--font-body);background:var(--gray-50);color:var(--gray-900
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-  import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-analytics.js";
-  import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
+  import { getDatabase, ref, set, onValue, remove } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
 
-// Import the functions you need from the SDKs you need
-import { initializeApp } from "firebase/app";
-import { getAnalytics } from "firebase/analytics";
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
-
-// Your web app's Firebase configuration
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
-const firebaseConfig = {
-  apiKey: "AIzaSyBTHohDW-10f7EolWpW8CUlfLCIJNDZmF8",
-  authDomain: "ralca-59e0a.firebaseapp.com",
-  databaseURL: "https://ralca-59e0a-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "ralca-59e0a",
-  storageBucket: "ralca-59e0a.firebasestorage.app",
-  messagingSenderId: "48983338103",
-  appId: "1:48983338103:web:56e63507811b1c0cca6a72",
-  measurementId: "G-ZTJ9HMKVYJ"
-};
-
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
+  const firebaseConfig = {
+    apiKey: "AIzaSyBTHohDW-10f7EolWpW8CUlfLCIJNDZmF8",
+    authDomain: "ralca-59e0a.firebaseapp.com",
+    databaseURL: "https://ralca-59e0a-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "ralca-59e0a",
+    storageBucket: "ralca-59e0a.firebasestorage.app",
+    messagingSenderId: "48983338103",
+    appId: "1:48983338103:web:56e63507811b1c0cca6a72"
+  };
 
   const app = initializeApp(firebaseConfig);
-  const analytics = getAnalytics(app);
   const db = getDatabase(app);
   
-  // Expose hooks to the app logic below
-  window.syncAgenciesToFirebase = function(data) {
-    console.log("Syncing Data to Firebase RTDB...");
-    set(ref(db, 'agencies'), data)
-      .then(() => console.log("Database successfully populated!"))
-      .catch((error) => console.error("Firebase Sync Error:", error));
-  }
+  // Expose methods globally for the standard script below
+  window.db = db;
+  window.firebaseRef = ref;
+  window.firebaseSet = set;
+  window.firebaseOnValue = onValue;
+  window.firebaseRemove = remove;
 </script>
-
 <script>
 // ─── DATA ───────────────────────────────────────────
 const TYPE_META = {
@@ -944,20 +903,43 @@ function doLogout() {
 }
 
 // ─── APP INIT ─────────────────────────────────────────
+let leafletMap = null;
+let markersLayer = null;
+
 function initApp() {
-  renderSidebar();
-  renderDashboard();
-  renderAgenciesGrid();
-  renderIncidentsList();
-  renderResourcesTable();
-  updateStats();
-  populateIncidentAgencySelect();
-  document.getElementById('incidentReportCount').textContent=incidents.length+' total incidents';
-  
-  // Push the 100 generated agencies to your Firebase Realtime database once the app initiates
-  if (window.syncAgenciesToFirebase) {
-    window.syncAgenciesToFirebase(agencies);
+  // Initialize Leaflet Map
+  if (!leafletMap) {
+    leafletMap = L.map('mainMapSvg').setView([22.5937, 78.9629], 5); // Center on India
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+      attribution: '&copy; OpenStreetMap &copy; CARTO'
+    }).addTo(leafletMap);
+    markersLayer = L.layerGroup().addTo(leafletMap);
   }
+
+  // Real-time listener for Agencies
+  window.firebaseOnValue(window.firebaseRef(window.db, 'agencies'), (snapshot) => {
+    const data = snapshot.val();
+    agencies = data ? Object.values(data) : [];
+    
+    renderSidebar();
+    renderAgenciesGrid();
+    renderMapPins();
+    updateStats();
+    renderResourcesTable();
+    populateIncidentAgencySelect();
+  });
+
+  // Real-time listener for Incidents
+  window.firebaseOnValue(window.firebaseRef(window.db, 'incidents'), (snapshot) => {
+    const data = snapshot.val();
+    incidents = data ? Object.values(data).sort((a, b) => b.id - a.id) : [];
+    
+    renderIncidentsList();
+    updateStats();
+    renderRpIncidents();
+    const countEl = document.getElementById('incidentReportCount');
+    if (countEl) countEl.textContent = incidents.length + ' total incidents';
+  });
 }
 
 function showPage(name, btn) {
@@ -966,6 +948,10 @@ function showPage(name, btn) {
   document.getElementById('page'+name.charAt(0).toUpperCase()+name.slice(1)).classList.add('active');
   if(btn) btn.classList.add('active');
   closeDrawer();
+  // Fix Leaflet map sizing issue on tab switch
+  if(name === 'dashboard' && leafletMap) {
+    setTimeout(() => leafletMap.invalidateSize(), 100);
+  }
 }
 
 // ─── UTILS ───────────────────────────────────────────
@@ -1021,22 +1007,24 @@ function renderDashboard() {
   renderRpIncidents();
 }
 function renderMapPins() {
-  const g=document.getElementById('mainMapPins');
-  if(!g) return;
-  g.innerHTML='';
-  agencies.forEach(ag=>{
-    const col=STATUS_COLOR[ag.status];
-    const grp=document.createElementNS('http://www.w3.org/2000/svg','g');
-    grp.style.cursor='pointer';
-    grp.onclick=()=>openAgencyDrawer(ag.id);
-    const pulse=document.createElementNS('http://www.w3.org/2000/svg','circle');
-    pulse.setAttribute('cx',ag.x);pulse.setAttribute('cy',ag.y);pulse.setAttribute('r','16');
-    pulse.setAttribute('fill',col);pulse.setAttribute('opacity','0.18');
-    const dot=document.createElementNS('http://www.w3.org/2000/svg','circle');
-    dot.setAttribute('cx',ag.x);dot.setAttribute('cy',ag.y);dot.setAttribute('r','5');
-    dot.setAttribute('fill',col);dot.setAttribute('stroke','white');dot.setAttribute('stroke-width','1.5');
-    grp.appendChild(pulse);grp.appendChild(dot);
-    g.appendChild(grp);
+  if (!markersLayer) return;
+  markersLayer.clearLayers();
+  
+  agencies.forEach(ag => {
+    // Generate mock India coordinates if missing
+    const lat = ag.lat || (10 + Math.random() * 20); 
+    const lng = ag.lng || (70 + Math.random() * 20);
+    
+    const marker = L.circleMarker([lat, lng], {
+      color: STATUS_COLOR[ag.status],
+      fillColor: STATUS_COLOR[ag.status],
+      fillOpacity: 0.9,
+      radius: 6,
+      weight: 2
+    }).addTo(markersLayer);
+    
+    marker.bindTooltip(`<b>${ag.name}</b><br>${ag.type}`, { direction: 'top' });
+    marker.on('click', () => openAgencyDrawer(ag.id));
   });
 }
 function switchRpTab(tab,el) {
@@ -1157,11 +1145,11 @@ function exportSingleAgency(id) {
   showToast('Exported agency details','success');
 }
 
-// ─── REGISTER MODAL ──────────────────────────────────
 function registerAgencyFull() {
   const n=document.getElementById('mRegName').value.trim();
   const d=document.getElementById('mRegDistrict').value.trim();
   if(!n||!d){showToast('Name and district are required','error');return;}
+  
   const newAg={
     id:Date.now(), name:n, type:document.getElementById('mRegType').value,
     district:d, contact:document.getElementById('mRegPhone').value,
@@ -1171,17 +1159,19 @@ function registerAgencyFull() {
     status:document.getElementById('mRegStatus').value,
     equipment:document.getElementById('mRegEquip').value||'Standard kit',
     registered:new Date().toISOString().slice(0,10),
-    x:140+Math.random()*200, y:100+Math.random()*250
+    lat: 10 + Math.random() * 20, 
+    lng: 70 + Math.random() * 20
   };
-  agencies.push(newAg);
-  closeModal('registerModal');
-  renderSidebar();renderAgenciesGrid();renderMapPins();updateStats();renderResourcesTable();populateIncidentAgencySelect();
-  showToast('Agency registered successfully!','success');
-  if(window.syncAgenciesToFirebase) window.syncAgenciesToFirebase(agencies);
-  
-  ['mRegName','mRegDistrict','mRegPhone','mRegEmail','mRegPersonnel','mRegVehicles','mRegEquip'].forEach(id=>{
-    const el=document.getElementById(id); if(el) el.value='';
-  });
+
+  // Push directly to Firebase - map and UI update automatically
+  window.firebaseSet(window.firebaseRef(window.db, 'agencies/' + newAg.id), newAg)
+    .then(() => {
+      closeModal('registerModal');
+      showToast('Agency registered successfully!','success');
+      ['mRegName','mRegDistrict','mRegPhone','mRegEmail','mRegPersonnel','mRegVehicles','mRegEquip'].forEach(id=>{
+        const el=document.getElementById(id); if(el) el.value='';
+      });
+    });
 }
 
 // ─── INCIDENTS ───────────────────────────────────────
@@ -1205,11 +1195,13 @@ function submitIncident() {
     desc:document.getElementById('incDesc').value, affected:parseInt(document.getElementById('incAffected').value)||0,
     agency:document.getElementById('incAgency').value, status:'active', time:'Just now', reporter:currentUser?.name||'User'
   };
-  incidents.unshift(newInc);
-  renderIncidentsList();updateStats();renderRpIncidents();
-  document.getElementById('incidentReportCount').textContent=incidents.length+' total incidents';
-  ['incTitle','incDistrict','incArea','incDesc','incAffected'].forEach(id=>{document.getElementById(id).value='';});
-  showToast('Incident reported successfully!','success');
+  
+  // Push directly to Firebase
+  window.firebaseSet(window.firebaseRef(window.db, 'incidents/' + newInc.id), newInc)
+    .then(() => {
+      ['incTitle','incDistrict','incArea','incDesc','incAffected'].forEach(id=>{document.getElementById(id).value='';});
+      showToast('Incident reported successfully!','success');
+    });
 }
 function renderIncidentsList() {
   const el=document.getElementById('incidentsList');
