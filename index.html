@@ -787,58 +787,82 @@ const TYPE_META = {
 const STATUS_COLOR = { active:'#1E8449', standby:'#E67E22', deployed:'#C0392B' };
 const STATUS_BG    = { active:'#D5F5E3', standby:'#FDEBD0', deployed:'#FADBD8' };
 
-// Helper to keep agencies strictly on Indian landmass
-function getLandCoords() {
-  const landNodes = [
-    [28.61, 77.20], [19.07, 72.87], [13.08, 80.27], [22.57, 88.36], [12.97, 77.59],
-    [17.38, 78.48], [23.02, 72.57], [26.91, 75.78], [21.17, 72.83], [18.52, 73.85],
-    [26.84, 80.94], [26.14, 91.73], [23.25, 77.41], [25.59, 85.13], [31.10, 77.16],
-    [20.30, 85.82], [21.15, 79.08], [22.30, 70.80], [15.31, 75.71], [11.01, 76.95],
-    [30.73, 76.77], [24.58, 73.68], [27.17, 78.00], [28.40, 77.31], [16.50, 80.64]
-  ];
-  const base = landNodes[Math.floor(Math.random() * landNodes.length)];
-  return { lat: base[0] + (Math.random() - 0.5) * 1.5, lng: base[1] + (Math.random() - 0.5) * 1.5 };
-}
+// Hardcoded Array of Exact Real-World Coordinates for 50 Major Indian Cities
+const realIndianCities = [
+  { name: "New Delhi, DL", lat: 28.6139, lng: 77.2090 }, { name: "Mumbai, MH", lat: 19.0760, lng: 72.8777 },
+  { name: "Chennai, TN", lat: 13.0827, lng: 80.2707 }, { name: "Kolkata, WB", lat: 22.5726, lng: 88.3639 },
+  { name: "Bangalore, KA", lat: 12.9716, lng: 77.5946 }, { name: "Hyderabad, TS", lat: 17.3850, lng: 78.4867 },
+  { name: "Ahmedabad, GJ", lat: 23.0225, lng: 72.5714 }, { name: "Pune, MH", lat: 18.5204, lng: 73.8567 },
+  { name: "Surat, GJ", lat: 21.1702, lng: 72.8311 }, { name: "Jaipur, RJ", lat: 26.9124, lng: 75.7873 },
+  { name: "Lucknow, UP", lat: 26.8467, lng: 80.9462 }, { name: "Kanpur, UP", lat: 26.4499, lng: 80.3319 },
+  { name: "Nagpur, MH", lat: 21.1458, lng: 79.0882 }, { name: "Indore, MP", lat: 22.7196, lng: 75.8577 },
+  { name: "Bhopal, MP", lat: 23.2599, lng: 77.4126 }, { name: "Visakhapatnam, AP", lat: 17.6868, lng: 83.2185 },
+  { name: "Patna, BR", lat: 25.5941, lng: 85.1376 }, { name: "Vadodara, GJ", lat: 22.3072, lng: 73.1812 },
+  { name: "Ghaziabad, UP", lat: 28.6692, lng: 77.4538 }, { name: "Ludhiana, PB", lat: 30.9010, lng: 75.8573 },
+  { name: "Agra, UP", lat: 27.1767, lng: 78.0081 }, { name: "Nashik, MH", lat: 19.9975, lng: 73.7898 },
+  { name: "Ranchi, JH", lat: 23.3441, lng: 85.3096 }, { name: "Coimbatore, TN", lat: 11.0168, lng: 76.9558 },
+  { name: "Guwahati, AS", lat: 26.1445, lng: 91.7362 }, { name: "Chandigarh, CH", lat: 30.7333, lng: 76.7794 },
+  { name: "Thiruvananthapuram, KL", lat: 8.5241, lng: 76.9366 }, { name: "Bhubaneswar, OD", lat: 20.2961, lng: 85.8245 },
+  { name: "Dehradun, UK", lat: 30.3165, lng: 78.0322 }, { name: "Kochi, KL", lat: 9.9312, lng: 76.2673 },
+  { name: "Panaji, GA", lat: 15.4909, lng: 73.8278 }, { name: "Shimla, HP", lat: 31.1048, lng: 77.1734 },
+  { name: "Srinagar, JK", lat: 34.0837, lng: 74.7973 }, { name: "Raipur, CG", lat: 21.2514, lng: 81.6296 },
+  { name: "Arakkonam, TN", lat: 13.0810, lng: 79.6685 }, { name: "Mundali, OD", lat: 20.4360, lng: 85.7360 },
+  { name: "Gandhinagar, GJ", lat: 23.2156, lng: 72.6369 }, { name: "Varanasi, UP", lat: 25.3176, lng: 82.9739 },
+  { name: "Amritsar, PB", lat: 31.6340, lng: 74.8723 }, { name: "Jodhpur, RJ", lat: 26.2389, lng: 73.0243 },
+  { name: "Madurai, TN", lat: 9.9252, lng: 78.1198 }, { name: "Mysore, KA", lat: 12.2958, lng: 76.6394 },
+  { name: "Mangalore, KA", lat: 12.9141, lng: 74.8560 }, { name: "Jabalpur, MP", lat: 23.1815, lng: 79.9864 },
+  { name: "Gwalior, MP", lat: 26.2183, lng: 78.1828 }, { name: "Vijayawada, AP", lat: 16.5062, lng: 80.6480 },
+  { name: "Tiruchirappalli, TN", lat: 10.7905, lng: 78.7047 }, { name: "Salem, TN", lat: 11.6643, lng: 78.1460 },
+  { name: "Jalandhar, PB", lat: 31.3260, lng: 75.5762 }, { name: "Udaipur, RJ", lat: 24.5854, lng: 73.6815 }
+];
 
-// We will programmatically generate the 100 Agencies requested
-const baseAgenciesPattern = [
-  { cat: 'NDRF Battalion', type: 'Disaster Management' },
-  { cat: 'SDRF', type: 'Disaster Management' },
-  { cat: 'Fire & Rescue', type: 'Fire & Rescue' },
-  { cat: 'Civil Defence', type: 'Police / Security' },
-  { cat: 'Home Guards', type: 'Police / Security' },
-  { cat: 'Red Cross', type: 'Medical / EMS' },
-  { cat: 'Medical Response', type: 'Medical / EMS' },
-  { cat: 'Coast Guard Unit', type: 'Coast Guard' }
+const agencyTypes = [
+  { prefix: "SDRF Battalion", type: "Disaster Management", equip: "Heavy Rescue Gear, Inflatable Boats" },
+  { prefix: "City Fire & Rescue", type: "Fire & Rescue", equip: "Fire Tenders, Turn-table Ladders" },
+  { prefix: "Red Cross EMS", type: "Medical / EMS", equip: "ALS Ambulances, Trauma Kits" },
+  { prefix: "Armed Police Unit", type: "Police / Security", equip: "Crowd Control, Comm Gear" },
+  { prefix: "Coastal/River Rescue", type: "Coast Guard", equip: "Patrol Boats, Deep Divers" }
 ];
 
 let agencies = [];
 
-function generate100Agencies() {
-  const statusOptions = ['active', 'standby', 'deployed'];
-  for(let i=1; i<=100; i++) {
-    let base = baseAgenciesPattern[(i-1) % 8];
-    const coords = getLandCoords();
-    
+// Helper for manual UI registrations to grab a random valid city coordinate
+function getRandomCityCoords() {
+  const city = realIndianCities[Math.floor(Math.random() * realIndianCities.length)];
+  return { lat: city.lat, lng: city.lng };
+}
+
+function loadExact100Agencies() {
+  const statusList = ['active', 'standby', 'deployed'];
+  
+  for (let i = 0; i < 100; i++) {
+    let city = realIndianCities[i % 50]; // Maps 2 agencies to every city perfectly
+    let typeData = agencyTypes[i % 5];
+    
+    // Add a tiny coordinate offset to the 2nd agency in the city so pins don't overlap completely
+    let latOffset = i >= 50 ? 0.025 : 0;
+    let lngOffset = i >= 50 ? 0.025 : 0;
+
     agencies.push({
-      id: i,
-      name: `${base.cat} Agency ${i}`,
-      type: base.type,
-      district: `Regional Office ${i}, India`,
-      contact: `+91-90000000${i.toString().padStart(2, '0')}`,
-      email: `agency${i}@rescuenet.gov.in`,
-      personnel: 30 + Math.floor(Math.random() * 80),
-      vehicles: 3 + Math.floor(Math.random() * 12),
-      status: statusOptions[Math.floor(Math.random() * 3)],
-      equipment: 'Rescue boats, ambulances, rescue vehicles, communication equipment',
+      id: i + 1,
+      name: `${city.name.split(',')[0]} ${typeData.prefix}`,
+      type: typeData.type,
+      district: city.name,
+      contact: `+91-9000000${(i+1).toString().padStart(3, '0')}`,
+      email: `contact@${city.name.split(',')[0].toLowerCase().replace(/\s/g,'')}rescue.gov.in`,
+      personnel: 50 + (i * 2 % 100),
+      vehicles: 5 + (i % 15),
+      status: statusList[i % 3],
+      equipment: typeData.equip,
       registered: '2024-01-01',
-      lat: coords.lat,
-      lng: coords.lng
+      lat: city.lat + latOffset,
+      lng: city.lng + lngOffset
     });
   }
 }
-// Run the Generator immediately to set the Data array
-generate100Agencies();
+
+// Load the exact data array
+loadExact100Agencies();
 
 let incidents = [
   {id:1,title:'Major Flooding — Regional Office 4',type:'Flood',severity:'high',district:'Regional Office 4',area:'Zone 4',desc:'Severe flooding affecting residents. Immediate evacuation needed.',affected:3200,agency:'Civil Defence Agency 4',status:'active',time:'2 hrs ago',reporter:'Admin'},
@@ -888,7 +912,7 @@ function doRegister() {
   const n=document.getElementById('regAgName').value.trim();
   const d=document.getElementById('regAgDistrict').value.trim();
   if(!n||!d){showToast('Please fill required fields','error');return;}
-  const coords = getLandCoords();
+  const coords = getRandomCityCoords();
   const newAg = {
     id: Date.now(), name:n, type:document.getElementById('regAgType').value,
     district:d, contact:document.getElementById('regAgPhone').value,
@@ -1024,26 +1048,18 @@ function renderMapPins() {
   markersLayer.clearLayers();
   
   agencies.forEach(ag => {
-    let lat = ag.lat;
-    let lng = ag.lng;
-    
-    // Safely assign land coordinates if missing or broken
-    if (!lat || !lng || lat < 5) {
-      const safeCoords = getLandCoords();
-      lat = safeCoords.lat;
-      lng = safeCoords.lng;
-    }
-    
-    const marker = L.circleMarker([lat, lng], {
-      color: STATUS_COLOR[ag.status],
-      fillColor: STATUS_COLOR[ag.status],
-      fillOpacity: 0.9,
-      radius: 6,
-      weight: 2
-    }).addTo(markersLayer);
-    
-    marker.bindTooltip(`<b>${ag.name}</b><br>${ag.type}`, { direction: 'top' });
-    marker.on('click', () => openAgencyDrawer(ag.id));
+    if (ag.lat && ag.lng) {
+      const marker = L.circleMarker([ag.lat, ag.lng], {
+        color: STATUS_COLOR[ag.status],
+        fillColor: STATUS_COLOR[ag.status],
+        fillOpacity: 0.9,
+        radius: 6,
+        weight: 2
+      }).addTo(markersLayer);
+      
+      marker.bindTooltip(`<b>${ag.name}</b><br>${ag.type}`, { direction: 'top' });
+      marker.on('click', () => openAgencyDrawer(ag.id));
+    }
   });
 }
 function switchRpTab(tab,el) {
@@ -1168,7 +1184,7 @@ function registerAgencyFull() {
   const n=document.getElementById('mRegName').value.trim();
   const d=document.getElementById('mRegDistrict').value.trim();
   if(!n||!d){showToast('Name and district are required','error');return;}
-  const coords = getLandCoords();
+  const coords = getRandomCityCoords();
   
   const newAg={
     id:Date.now(), name:n, type:document.getElementById('mRegType').value,
@@ -1182,7 +1198,6 @@ function registerAgencyFull() {
     lat: coords.lat, 
     lng: coords.lng
   };
-
   // Push directly to Firebase - map and UI update automatically
   window.firebaseSet(window.firebaseRef(window.db, 'agencies/' + newAg.id), newAg)
     .then(() => {
