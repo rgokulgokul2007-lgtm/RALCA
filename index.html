@@ -3,764 +3,1494 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>RALCA – Rescue Agency Locator & Coordination</title>
-<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet"/>
+<title>RALCA – National Disaster Command Center</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet"/>
+
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+
 <style>
-:root{--bg:#0a0e1a;--surface:#111827;--surface2:#1a2335;--border:#1e2d47;--accent:#f97316;--accent2:#ef4444;--accent3:#22d3ee;--green:#10b981;--yellow:#fbbf24;--text:#e2e8f0;--text-muted:#64748b;--text-dim:#94a3b8;--font-head:'Bebas Neue',sans-serif;--font-body:'DM Sans',sans-serif;--font-mono:'JetBrains Mono',monospace}
-*{box-sizing:border-box;margin:0;padding:0}
-body{background:var(--bg);color:var(--text);font-family:var(--font-body);min-height:100vh;overflow-x:hidden}
-a{text-decoration:none;color:inherit}
-.sidebar{position:fixed;top:0;left:0;width:240px;height:100vh;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;z-index:100}
-.logo{padding:20px 20px 16px;border-bottom:1px solid var(--border)}
-.logo-badge{display:flex;align-items:center;gap:10px}
-.logo-icon{width:36px;height:36px;background:var(--accent);border-radius:8px;display:grid;place-items:center;font-size:18px}
-.logo-text{font-family:var(--font-head);font-size:22px;letter-spacing:1px;color:var(--text)}
-.logo-sub{font-size:10px;color:var(--text-muted);font-family:var(--font-mono);margin-top:2px;letter-spacing:1px}
-.nav{flex:1;padding:16px 10px;overflow-y:auto}
-.nav-group{margin-bottom:24px}
-.nav-label{font-size:10px;font-family:var(--font-mono);color:var(--text-muted);padding:0 10px;margin-bottom:6px;letter-spacing:2px}
-.nav-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;cursor:pointer;transition:all .15s;font-size:14px;font-weight:500;color:var(--text-dim);position:relative}
-.nav-item:hover{background:var(--surface2);color:var(--text)}
-.nav-item.active{background:rgba(249,115,22,.12);color:var(--accent)}
-.nav-item .icon{font-size:16px;width:20px;text-align:center}
-.nav-badge{margin-left:auto;background:var(--accent2);color:#fff;font-size:10px;padding:1px 6px;border-radius:10px;font-family:var(--font-mono)}
-.sidebar-footer{padding:16px;border-top:1px solid var(--border)}
-.user-card{display:flex;align-items:center;gap:10px}
-.avatar{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:grid;place-items:center;font-weight:700;font-size:13px}
-.user-info{flex:1}
-.user-name{font-size:13px;font-weight:600}
-.user-role{font-size:11px;color:var(--accent);font-family:var(--font-mono)}
-.status-dot{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green);animation:pulse 2s infinite}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
-.main{margin-left:240px;min-height:100vh;display:flex;flex-direction:column}
-.topbar{height:56px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 24px;gap:16px;position:sticky;top:0;z-index:50}
-.topbar-title{font-family:var(--font-head);font-size:20px;letter-spacing:.5px;flex:1}
-.topbar-actions{display:flex;align-items:center;gap:10px}
-.btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;transition:all .15s;border:none;font-family:var(--font-body)}
-.btn-primary{background:var(--accent);color:#fff}
-.btn-primary:hover{background:#ea6c0a}
-.btn-ghost{background:transparent;color:var(--text-dim);border:1px solid var(--border)}
-.btn-ghost:hover{background:var(--surface2);color:var(--text)}
-.btn-danger{background:rgba(239,68,68,.15);color:var(--accent2);border:1px solid rgba(239,68,68,.3)}
-.btn-success{background:rgba(16,185,129,.15);color:var(--green);border:1px solid rgba(16,185,129,.3)}
-.alert-pulse{width:10px;height:10px;border-radius:50%;background:var(--accent2);box-shadow:0 0 8px var(--accent2);animation:pulse 1s infinite}
-.content{flex:1;padding:24px}
-.page{display:none}
-.page.active{display:block;animation:fadeIn .2s ease}
-@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
-.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px}
-.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px 20px;position:relative;overflow:hidden}
-.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
-.stat-card.orange::before{background:var(--accent)}
-.stat-card.red::before{background:var(--accent2)}
-.stat-card.cyan::before{background:var(--accent3)}
-.stat-card.green::before{background:var(--green)}
-.stat-label{font-size:11px;font-family:var(--font-mono);color:var(--text-muted);letter-spacing:1px;margin-bottom:8px}
-.stat-value{font-family:var(--font-head);font-size:36px;letter-spacing:1px;line-height:1}
-.stat-sub{font-size:12px;color:var(--text-muted);margin-top:6px}
-.stat-sub span{color:var(--green)}
-.map-container{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:24px}
-.map-header{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--border)}
-.map-title{font-family:var(--font-head);font-size:18px;letter-spacing:.5px}
-.map-filters{display:flex;gap:8px}
-.filter-chip{padding:4px 12px;border-radius:20px;font-size:12px;cursor:pointer;border:1px solid var(--border);color:var(--text-dim);transition:all .15s;font-weight:500}
-.filter-chip.active,.filter-chip:hover{border-color:var(--accent);color:var(--accent);background:rgba(249,115,22,.08)}
-.map-coords{padding:8px 12px;font-family:var(--font-mono);font-size:11px;color:var(--text-muted)}
-.two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-.card{background:var(--surface);border:1px solid var(--border);border-radius:12px}
-.card-header{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--border)}
-.card-title{font-family:var(--font-head);font-size:17px;letter-spacing:.5px}
-.card-body{padding:0}
-table{width:100%;border-collapse:collapse}
-th{text-align:left;font-size:11px;font-family:var(--font-mono);color:var(--text-muted);padding:10px 16px;letter-spacing:1px;border-bottom:1px solid var(--border)}
-td{padding:11px 16px;font-size:13px;border-bottom:1px solid rgba(30,45,71,.5)}
-tr:last-child td{border-bottom:none}
-tr:hover td{background:rgba(255,255,255,.02)}
-.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600;font-family:var(--font-mono)}
-.badge-active{background:rgba(16,185,129,.15);color:var(--green)}
-.badge-standby{background:rgba(251,191,36,.15);color:var(--yellow)}
-.badge-busy{background:rgba(239,68,68,.15);color:var(--accent2)}
-.badge-pending{background:rgba(34,211,238,.15);color:var(--accent3)}
-.alert-list{padding:8px 0}
-.alert-item{display:flex;align-items:flex-start;gap:12px;padding:12px 18px;border-bottom:1px solid rgba(30,45,71,.5);cursor:pointer;transition:background .12s}
-.alert-item:hover{background:rgba(255,255,255,.02)}
-.alert-item:last-child{border-bottom:none}
-.alert-icon{width:36px;height:36px;border-radius:8px;display:grid;place-items:center;font-size:16px;flex-shrink:0}
-.alert-icon.critical{background:rgba(239,68,68,.15)}
-.alert-icon.warning{background:rgba(251,191,36,.15)}
-.alert-icon.info{background:rgba(34,211,238,.15)}
-.alert-content{flex:1}
-.alert-title{font-size:13px;font-weight:600;margin-bottom:3px}
-.alert-meta{font-size:11px;color:var(--text-muted);font-family:var(--font-mono)}
-.alert-time{font-size:11px;color:var(--text-muted);white-space:nowrap;font-family:var(--font-mono)}
-.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-.form-group{display:flex;flex-direction:column;gap:6px}
-.form-group.full{grid-column:1/-1}
-label{font-size:12px;font-family:var(--font-mono);color:var(--text-muted);letter-spacing:.5px}
-input,select,textarea{background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:9px 12px;border-radius:8px;font-size:13px;font-family:var(--font-body);outline:none;transition:border-color .15s;width:100%}
-input:focus,select:focus,textarea:focus{border-color:var(--accent)}
-textarea{resize:vertical;min-height:80px}
-select option{background:var(--surface2)}
-.form-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:8px;grid-column:1/-1}
-.form-section{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:16px}
-.form-section-title{font-family:var(--font-head);font-size:18px;letter-spacing:.5px;margin-bottom:16px;display:flex;align-items:center;gap:8px}
-.step-badge{background:var(--accent);color:#fff;width:24px;height:24px;border-radius:50%;display:grid;place-items:center;font-size:12px;font-family:var(--font-mono);font-weight:700}
-.resource-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
-.resource-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px}
-.resource-icon{font-size:28px;margin-bottom:8px}
-.resource-name{font-size:13px;font-weight:600;margin-bottom:4px}
-.resource-count{font-family:var(--font-head);font-size:28px;color:var(--accent)}
-.resource-avail{font-size:11px;color:var(--text-muted)}
-.progress-bar{height:4px;background:var(--border);border-radius:2px;margin-top:8px}
-.progress-fill{height:100%;border-radius:2px}
-.section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
-.section-title{font-family:var(--font-head);font-size:20px;letter-spacing:.5px}
-::-webkit-scrollbar{width:5px;height:5px}
-::-webkit-scrollbar-track{background:transparent}
-::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
-.notif{position:fixed;top:70px;right:20px;background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--accent);border-radius:10px;padding:12px 16px;max-width:320px;z-index:999;animation:slideIn .3s ease;box-shadow:0 8px 32px rgba(0,0,0,.4)}
-@keyframes slideIn{from{transform:translateX(120%)}to{transform:translateX(0)}}
-.notif-title{font-size:13px;font-weight:600;margin-bottom:4px}
-.notif-body{font-size:12px;color:var(--text-muted)}
-.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:200;display:none;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
-.modal-bg.open{display:flex}
-.modal{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:24px;width:500px;max-width:90vw;max-height:85vh;overflow-y:auto;animation:fadeIn .2s ease}
-.modal-title{font-family:var(--font-head);font-size:22px;margin-bottom:20px}
+/* ==========================================================================
+   CSS VARIABLES & GLOBAL RESET
+   ========================================================================== */
+:root {
+  --bg-main: #070b14; --surface-1: #111827; --surface-2: #1f2937; --surface-3: #374151;
+  --border-light: #1e2d47; --border-focus: #3b82f6;
+  --primary: #f97316; --primary-hover: #ea580c; --primary-glow: rgba(249,115,22,0.3);
+  --danger: #ef4444; --danger-hover: #dc2626; --danger-bg: rgba(239,68,68,0.15);
+  --success: #10b981; --success-bg: rgba(16,185,129,0.15);
+  --warning: #f59e0b; --warning-bg: rgba(245,158,11,0.15);
+  --info: #0ea5e9; --info-bg: rgba(14,165,233,0.15);
+  --text-main: #f3f4f6; --text-muted: #9ca3af; --text-dark: #4b5563;
+  --font-head: 'Bebas Neue', sans-serif; --font-body: 'DM Sans', sans-serif; --font-mono: 'JetBrains Mono', monospace;
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.5); --shadow-md: 0 4px 6px rgba(0,0,0,0.5); --shadow-lg: 0 10px 15px rgba(0,0,0,0.7);
+  --radius-sm: 6px; --radius-md: 10px; --radius-lg: 16px;
+  --sidebar-width: 260px; --topbar-height: 64px;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { background-color: var(--bg-main); color: var(--text-main); font-family: var(--font-body); min-height: 100vh; overflow-x: hidden; font-size: 14px; }
+a { text-decoration: none; color: inherit; }
+ul { list-style: none; }
+button { font-family: var(--font-body); border: none; cursor: pointer; outline: none; }
+input, select, textarea { font-family: var(--font-body); }
+
+/* Custom Scrollbar */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: var(--bg-main); }
+::-webkit-scrollbar-thumb { background: var(--surface-3); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+/* ==========================================================================
+   LAYOUT: SIDEBAR & TOPBAR
+   ========================================================================== */
+.app-container { display: flex; height: 100vh; overflow: hidden; }
+
+/* Sidebar */
+.sidebar { width: var(--sidebar-width); background: var(--surface-1); border-right: 1px solid var(--border-light); display: flex; flex-direction: column; flex-shrink: 0; z-index: 100; transition: transform 0.3s ease; }
+.brand { height: var(--topbar-height); display: flex; align-items: center; padding: 0 20px; border-bottom: 1px solid var(--border-light); background: linear-gradient(180deg, var(--surface-2) 0%, var(--surface-1) 100%); }
+.brand-icon { width: 36px; height: 36px; background: var(--primary); border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; font-size: 18px; margin-right: 12px; box-shadow: 0 0 15px var(--primary-glow); }
+.brand-text h1 { font-family: var(--font-head); font-size: 24px; letter-spacing: 1px; color: #fff; line-height: 1; }
+.brand-text span { font-family: var(--font-mono); font-size: 10px; color: var(--text-muted); letter-spacing: 0.5px; }
+
+.nav-menu { flex: 1; overflow-y: auto; padding: 20px 12px; }
+.nav-section { margin-bottom: 24px; }
+.nav-section-title { font-family: var(--font-mono); font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 8px; padding-left: 12px; }
+.nav-item { display: flex; align-items: center; padding: 10px 12px; border-radius: var(--radius-sm); color: var(--text-muted); font-weight: 500; cursor: pointer; transition: all 0.2s; margin-bottom: 4px; }
+.nav-item i { width: 24px; font-size: 16px; text-align: center; margin-right: 10px; }
+.nav-item:hover { background: var(--surface-2); color: var(--text-main); }
+.nav-item.active { background: var(--primary-glow); color: var(--primary); border-left: 3px solid var(--primary); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+.badge { margin-left: auto; background: var(--danger); color: #fff; font-size: 10px; padding: 2px 6px; border-radius: 12px; font-weight: bold; }
+
+.sidebar-footer { padding: 16px; border-top: 1px solid var(--border-light); display: flex; align-items: center; gap: 12px; }
+.user-avatar { width: 40px; height: 40px; border-radius: 50%; background: var(--surface-3); display: flex; align-items: center; justify-content: center; font-weight: bold; color: #fff; border: 2px solid var(--border-light); }
+.user-info { flex: 1; }
+.user-name { font-size: 14px; font-weight: 600; color: #fff; }
+.user-role { font-size: 11px; color: var(--success); font-family: var(--font-mono); }
+
+/* Main Content Area */
+.main-content { flex: 1; display: flex; flex-direction: column; overflow: hidden; background: var(--bg-main); position: relative; }
+
+/* Topbar */
+.topbar { height: var(--topbar-height); background: rgba(17, 24, 39, 0.95); backdrop-filter: blur(10px); border-bottom: 1px solid var(--border-light); display: flex; align-items: center; justify-content: space-between; padding: 0 24px; z-index: 50; flex-shrink: 0; }
+.page-title { font-family: var(--font-head); font-size: 24px; letter-spacing: 1px; display: flex; align-items: center; gap: 12px; }
+.status-indicator { display: flex; align-items: center; gap: 8px; font-size: 12px; font-family: var(--font-mono); font-weight: bold; color: var(--success); background: var(--success-bg); padding: 4px 12px; border-radius: 20px; border: 1px solid rgba(16,185,129,0.3); }
+.pulse-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--success); box-shadow: 0 0 8px var(--success); animation: pulse 2s infinite; }
+.topbar-actions { display: flex; align-items: center; gap: 16px; }
+
+/* Buttons */
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 8px 16px; border-radius: var(--radius-sm); font-size: 13px; font-weight: 600; transition: all 0.2s; }
+.btn-primary { background: var(--primary); color: #fff; box-shadow: 0 2px 4px rgba(249,115,22,0.4); }
+.btn-primary:hover { background: var(--primary-hover); transform: translateY(-1px); box-shadow: 0 4px 6px rgba(249,115,22,0.5); }
+.btn-danger { background: var(--danger); color: #fff; }
+.btn-danger:hover { background: var(--danger-hover); }
+.btn-outline { background: transparent; border: 1px solid var(--border-light); color: var(--text-main); }
+.btn-outline:hover { background: var(--surface-2); border-color: var(--text-muted); }
+.btn-icon { width: 36px; height: 36px; padding: 0; border-radius: 50%; background: var(--surface-2); border: 1px solid var(--border-light); color: var(--text-main); display: flex; align-items: center; justify-content: center; font-size: 16px; }
+.btn-icon:hover { background: var(--surface-3); }
+
+/* ==========================================================================
+   PAGE SYSTEM & CONTAINERS
+   ========================================================================== */
+.page-container { flex: 1; overflow-y: auto; padding: 24px; scroll-behavior: smooth; }
+.page { display: none; animation: fadeIn 0.3s ease-in-out; }
+.page.active { display: block; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+/* Grids */
+.grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 24px; }
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px; }
+.grid-3-1 { display: grid; grid-template-columns: 3fr 1fr; gap: 20px; height: calc(100vh - 120px); }
+
+/* Cards */
+.card { background: var(--surface-1); border: 1px solid var(--border-light); border-radius: var(--radius-md); box-shadow: var(--shadow-sm); overflow: hidden; display: flex; flex-direction: column; }
+.card-header { padding: 16px 20px; border-bottom: 1px solid var(--border-light); display: flex; align-items: center; justify-content: space-between; background: rgba(255,255,255,0.01); }
+.card-title { font-family: var(--font-head); font-size: 18px; letter-spacing: 0.5px; display: flex; align-items: center; gap: 8px; }
+.card-body { padding: 20px; flex: 1; overflow-y: auto; }
+
+/* Stat Cards */
+.stat-card { background: var(--surface-1); border: 1px solid var(--border-light); border-radius: var(--radius-md); padding: 20px; position: relative; overflow: hidden; transition: transform 0.2s; }
+.stat-card:hover { transform: translateY(-2px); border-color: var(--surface-3); }
+.stat-card::before { content: ''; position: absolute; top: 0; left: 0; width: 4px; height: 100%; }
+.stat-card.c-primary::before { background: var(--primary); }
+.stat-card.c-danger::before { background: var(--danger); }
+.stat-card.c-info::before { background: var(--info); }
+.stat-card.c-success::before { background: var(--success); }
+.stat-icon { position: absolute; top: 20px; right: 20px; font-size: 24px; color: var(--surface-3); opacity: 0.5; }
+.stat-label { font-size: 12px; font-family: var(--font-mono); color: var(--text-muted); margin-bottom: 8px; text-transform: uppercase; }
+.stat-value { font-family: var(--font-head); font-size: 38px; color: #fff; line-height: 1; margin-bottom: 8px; }
+.stat-trend { font-size: 12px; color: var(--text-muted); display: flex; align-items: center; gap: 4px; }
+.trend-up { color: var(--success); }
+.trend-down { color: var(--danger); }
+
+/* ==========================================================================
+   SPECIFIC COMPONENTS
+   ========================================================================== */
+
+/* Map Containers */
+.map-wrapper { height: 100%; min-height: 400px; width: 100%; background: var(--surface-2); position: relative; z-index: 1; border-radius: 0 0 var(--radius-md) var(--radius-md); }
+.map-overlay-controls { position: absolute; top: 10px; right: 10px; z-index: 1000; background: var(--surface-1); padding: 8px; border-radius: var(--radius-sm); border: 1px solid var(--border-light); box-shadow: var(--shadow-md); }
+
+/* Tables */
+.table-responsive { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; text-align: left; }
+th { padding: 12px 16px; font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; border-bottom: 2px solid var(--border-light); background: var(--surface-2); }
+td { padding: 14px 16px; border-bottom: 1px solid var(--border-light); font-size: 13px; vertical-align: middle; }
+tbody tr:hover { background: rgba(255,255,255,0.02); }
+.table-action-btn { padding: 4px 8px; font-size: 11px; border-radius: 4px; background: var(--surface-3); color: #fff; border: none; cursor: pointer; transition: 0.2s; }
+.table-action-btn:hover { background: var(--primary); }
+
+/* Status Tags */
+.tag { display: inline-flex; align-items: center; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; font-family: var(--font-mono); text-transform: uppercase; }
+.tag-active { background: var(--success-bg); color: var(--success); border: 1px solid rgba(16,185,129,0.3); }
+.tag-standby { background: var(--warning-bg); color: var(--warning); border: 1px solid rgba(245,158,11,0.3); }
+.tag-deployed { background: var(--info-bg); color: var(--info); border: 1px solid rgba(14,165,233,0.3); }
+.tag-critical { background: var(--danger-bg); color: var(--danger); border: 1px solid rgba(239,68,68,0.3); }
+
+/* Forms */
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.form-group { display: flex; flex-direction: column; gap: 8px; }
+.form-group.full { grid-column: 1 / -1; }
+.form-label { font-size: 12px; font-family: var(--font-mono); color: var(--text-muted); letter-spacing: 0.5px; }
+.form-control { background: var(--surface-2); border: 1px solid var(--border-light); color: #fff; padding: 10px 14px; border-radius: var(--radius-sm); font-size: 14px; transition: all 0.2s; outline: none; width: 100%; }
+.form-control:focus { border-color: var(--primary); box-shadow: 0 0 0 2px var(--primary-glow); }
+.form-control::placeholder { color: var(--surface-3); }
+select.form-control { appearance: none; background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e"); background-repeat: no-repeat; background-position: right 10px center; background-size: 16px; padding-right: 40px; }
+textarea.form-control { resize: vertical; min-height: 100px; }
+
+/* Modals */
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(4px); z-index: 2000; display: flex; align-items: center; justify-content: center; opacity: 0; visibility: hidden; transition: all 0.3s; }
+.modal-overlay.active { opacity: 1; visibility: visible; }
+.modal-content { background: var(--surface-1); border: 1px solid var(--border-light); border-radius: var(--radius-lg); width: 100%; max-width: 600px; max-height: 90vh; display: flex; flex-direction: column; transform: translateY(20px); transition: transform 0.3s; box-shadow: var(--shadow-lg); }
+.modal-overlay.active .modal-content { transform: translateY(0); }
+.modal-header { padding: 20px 24px; border-bottom: 1px solid var(--border-light); display: flex; align-items: center; justify-content: space-between; }
+.modal-title { font-family: var(--font-head); font-size: 24px; color: #fff; letter-spacing: 1px; }
+.modal-close { background: transparent; border: none; color: var(--text-muted); font-size: 20px; cursor: pointer; transition: color 0.2s; }
+.modal-close:hover { color: var(--danger); }
+.modal-body { padding: 24px; overflow-y: auto; flex: 1; }
+.modal-footer { padding: 16px 24px; border-top: 1px solid var(--border-light); display: flex; justify-content: flex-end; gap: 12px; background: var(--surface-2); border-radius: 0 0 var(--radius-lg) var(--radius-lg); }
+
+/* Alerts / Lists */
+.alert-list { display: flex; flex-direction: column; }
+.alert-item { display: flex; align-items: flex-start; gap: 16px; padding: 16px; border-bottom: 1px solid var(--border-light); transition: background 0.2s; cursor: pointer; }
+.alert-item:hover { background: var(--surface-2); }
+.alert-item:last-child { border-bottom: none; }
+.alert-icon { width: 40px; height: 40px; border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+.icon-critical { background: var(--danger-bg); color: var(--danger); }
+.icon-warning { background: var(--warning-bg); color: var(--warning); }
+.icon-info { background: var(--info-bg); color: var(--info); }
+.alert-details { flex: 1; }
+.alert-title { font-size: 14px; font-weight: 600; color: #fff; margin-bottom: 4px; }
+.alert-desc { font-size: 12px; color: var(--text-muted); line-height: 1.4; }
+.alert-time { font-family: var(--font-mono); font-size: 11px; color: var(--text-dark); white-space: nowrap; }
+
+/* Custom Toasts */
+.toast-container { position: fixed; bottom: 24px; right: 24px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; }
+.toast { background: var(--surface-1); border: 1px solid var(--border-light); border-left: 4px solid var(--primary); padding: 16px 20px; border-radius: var(--radius-md); box-shadow: var(--shadow-lg); display: flex; align-items: center; gap: 12px; transform: translateX(120%); transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); width: 320px; }
+.toast.show { transform: translateX(0); }
+.toast.success { border-left-color: var(--success); }
+.toast.danger { border-left-color: var(--danger); }
+.toast-icon { font-size: 20px; }
+.toast.success .toast-icon { color: var(--success); }
+.toast.danger .toast-icon { color: var(--danger); }
+.toast-content { flex: 1; }
+.toast-title { font-weight: 600; font-size: 14px; margin-bottom: 2px; color: #fff; }
+.toast-msg { font-size: 12px; color: var(--text-muted); }
+
+/* Chat UI */
+.chat-layout { display: flex; height: calc(100vh - 180px); border: 1px solid var(--border-light); border-radius: var(--radius-md); overflow: hidden; }
+.chat-sidebar { width: 280px; background: var(--surface-1); border-right: 1px solid var(--border-light); display: flex; flex-direction: column; }
+.chat-header { padding: 16px; border-bottom: 1px solid var(--border-light); font-weight: bold; background: var(--surface-2); }
+.channel-list { flex: 1; overflow-y: auto; padding: 10px; }
+.channel-item { display: flex; align-items: center; gap: 10px; padding: 12px; border-radius: var(--radius-sm); cursor: pointer; transition: 0.2s; margin-bottom: 4px; }
+.channel-item:hover { background: var(--surface-2); }
+.channel-item.active { background: var(--primary-glow); border-left: 3px solid var(--primary); }
+.channel-icon { color: var(--text-muted); }
+.channel-info { flex: 1; }
+.channel-name { font-size: 13px; font-weight: 600; color: #fff; }
+.channel-meta { font-size: 11px; color: var(--text-dark); }
+.chat-main { flex: 1; background: var(--bg-main); display: flex; flex-direction: column; }
+.chat-messages { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 16px; }
+.msg-wrapper { display: flex; gap: 12px; max-width: 80%; }
+.msg-wrapper.own { align-self: flex-end; flex-direction: row-reverse; }
+.msg-avatar { width: 36px; height: 36px; border-radius: 50%; background: var(--surface-3); display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 12px; color: #fff; flex-shrink: 0; }
+.msg-wrapper.own .msg-avatar { background: var(--primary); }
+.msg-content { display: flex; flex-direction: column; gap: 4px; }
+.msg-wrapper.own .msg-content { align-items: flex-end; }
+.msg-header { display: flex; align-items: baseline; gap: 8px; }
+.msg-sender { font-size: 12px; font-weight: 600; color: var(--text-muted); }
+.msg-time { font-size: 10px; color: var(--text-dark); font-family: var(--font-mono); }
+.msg-bubble { background: var(--surface-2); padding: 12px 16px; border-radius: 0 12px 12px 12px; font-size: 13px; line-height: 1.5; color: #fff; border: 1px solid var(--border-light); }
+.msg-wrapper.own .msg-bubble { background: var(--primary); border-color: var(--primary-hover); border-radius: 12px 0 12px 12px; }
+.chat-input-area { padding: 16px; background: var(--surface-1); border-top: 1px solid var(--border-light); display: flex; gap: 12px; }
+.chat-input { flex: 1; background: var(--surface-2); border: 1px solid var(--border-light); color: #fff; padding: 12px 16px; border-radius: 24px; outline: none; font-family: var(--font-body); }
+.chat-input:focus { border-color: var(--primary); }
+.btn-send { width: 44px; height: 44px; border-radius: 50%; background: var(--primary); color: #fff; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 16px; transition: 0.2s; }
+.btn-send:hover { background: var(--primary-hover); transform: scale(1.05); }
+
+/* Resource Grid */
+.res-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
+.res-card { background: var(--surface-1); border: 1px solid var(--border-light); border-radius: var(--radius-md); padding: 20px; transition: 0.2s; }
+.res-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-md); border-color: var(--surface-3); }
+.res-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; }
+.res-icon { width: 48px; height: 48px; border-radius: 12px; background: var(--surface-2); display: flex; align-items: center; justify-content: center; font-size: 24px; color: var(--primary); }
+.res-stats { text-align: right; }
+.res-total { font-family: var(--font-head); font-size: 28px; color: #fff; line-height: 1; }
+.res-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; font-family: var(--font-mono); }
+.res-name { font-size: 16px; font-weight: 600; color: #fff; margin-bottom: 12px; }
+.res-progress-container { width: 100%; background: var(--surface-3); height: 6px; border-radius: 3px; overflow: hidden; margin-bottom: 8px; }
+.res-progress-bar { height: 100%; border-radius: 3px; transition: width 0.5s ease; }
+.res-meta { display: flex; justify-content: space-between; font-size: 12px; color: var(--text-muted); font-family: var(--font-mono); }
+
+/* Utility */
+.text-center { text-align: center; }
+.mt-4 { margin-top: 16px; }
+.mb-4 { margin-bottom: 16px; }
+.d-flex { display: flex; }
+.align-center { align-items: center; }
+.justify-between { justify-content: space-between; }
+.gap-2 { gap: 8px; }
+.gap-4 { gap: 16px; }
+.hidden { display: none !important; }
+
+/* Filter Tabs */
+.filter-tabs { display: flex; gap: 8px; background: var(--surface-2); padding: 4px; border-radius: var(--radius-sm); border: 1px solid var(--border-light); display: inline-flex; }
+.filter-tab { padding: 6px 16px; font-size: 12px; font-weight: 600; color: var(--text-muted); border-radius: 4px; cursor: pointer; transition: 0.2s; }
+.filter-tab:hover { color: #fff; }
+.filter-tab.active { background: var(--surface-3); color: #fff; box-shadow: var(--shadow-sm); }
 </style>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
+
 <body>
 
-<nav class="sidebar">
-  <div class="logo">
-    <div class="logo-badge">
-      <div class="logo-icon">🚨</div>
-      <div><div class="logo-text">RALCA</div><div class="logo-sub">DISASTER MGMT · SIH1440</div></div>
-    </div>
-  </div>
-  <div class="nav">
-    <div class="nav-group">
-      <div class="nav-label">COMMAND</div>
-      <div class="nav-item active" onclick="navigate('dashboard',this)"><span class="icon">📊</span>Dashboard</div>
-      <div class="nav-item" onclick="navigate('map',this)"><span class="icon">🗺️</span>Live Map</div>
-      <div class="nav-item" onclick="navigate('alerts',this)"><span class="icon">🚨</span>Alerts<span class="nav-badge" id="alertBadge">5</span></div>
-    </div>
-    <div class="nav-group">
-      <div class="nav-label">AGENCIES</div>
-      <div class="nav-item" onclick="navigate('agencies',this)"><span class="icon">🏛️</span>All Agencies</div>
-      <div class="nav-item" onclick="navigate('register',this)"><span class="icon">➕</span>Register Agency</div>
-      <div class="nav-item" onclick="navigate('resources',this)"><span class="icon">🎒</span>Resources</div>
-    </div>
-    <div class="nav-group">
-      <div class="nav-label">COMMS</div>
-      <div class="nav-item" onclick="navigate('messaging',this)"><span class="icon">💬</span>Messaging</div>
-      <div class="nav-item" onclick="navigate('incidents',this)"><span class="icon">⚡</span>Incidents</div>
-    </div>
-  </div>
-  <div class="sidebar-footer">
-    <div class="user-card">
-      <div class="avatar">GR</div>
-      <div class="user-info"><div class="user-name">Gokul R</div><div class="user-role">ADMIN</div></div>
-      <div class="status-dot"></div>
-    </div>
-  </div>
-</nav>
-
-<div class="main">
-  <div class="topbar">
-    <div class="topbar-title" id="pageTitle">Dashboard</div>
-    <div class="topbar-actions">
-      <div class="alert-pulse"></div>
-      <span style="font-size:13px;color:var(--accent2);font-weight:600">ACTIVE INCIDENT</span>
-      <button class="btn btn-danger" onclick="showModal('incident')">🆘 Send SOS</button>
-      <button class="btn btn-primary" onclick="showNotif('System is functioning optimally.')">🔔</button>
-    </div>
-  </div>
-  <div class="content">
-
-    <div class="page active" id="page-dashboard">
-      <div class="stats-grid">
-        <div class="stat-card orange"><div class="stat-label">REGISTERED AGENCIES</div><div class="stat-value" style="color:var(--accent)" id="dash-agency-count">12</div><div class="stat-sub"><span>↑ 4</span> this month</div></div>
-        <div class="stat-card red"><div class="stat-label">ACTIVE INCIDENTS</div><div class="stat-value" style="color:var(--accent2)" id="dash-incident-count">3</div><div class="stat-sub"><span style="color:var(--accent2)">HIGH</span> severity</div></div>
-        <div class="stat-card cyan"><div class="stat-label">AGENCIES ON FIELD</div><div class="stat-value" style="color:var(--accent3)" id="dash-active-agencies">8</div><div class="stat-sub">Active & Busy</div></div>
-        <div class="stat-card green"><div class="stat-label">RESOURCES DEPLOYED</div><div class="stat-value" style="color:var(--green)">74</div><div class="stat-sub"><span>92%</span> availability</div></div>
+<div class="app-container">
+  
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-icon"><i class="fa-solid fa-shield-halved"></i></div>
+      <div class="brand-text">
+        <h1>RALCA</h1>
+        <span>DISASTER COMMAND CENTER</span>
       </div>
-      <div class="map-container" style="margin-bottom:24px">
-        <div class="map-header">
-          <div class="map-title">🗺 LIVE AGENCY POSITIONS</div>
-          <div style="display:flex;align-items:center;gap:8px">
-            <div class="alert-pulse"></div>
-            <span style="font-size:12px;color:var(--accent3);font-family:var(--font-mono)">LIVE</span>
-            <button class="btn btn-ghost" onclick="navigate('map',document.querySelectorAll('.nav-item')[1])">Full Map →</button>
+    </div>
+
+    <div class="nav-menu">
+      <div class="nav-section">
+        <div class="nav-section-title">Operations</div>
+        <div class="nav-item active" onclick="app.navigate('dashboard', this)">
+          <i class="fa-solid fa-chart-line"></i> Dashboard
+        </div>
+        <div class="nav-item" onclick="app.navigate('map', this)">
+          <i class="fa-solid fa-map-location-dot"></i> Live Map
+        </div>
+        <div class="nav-item" onclick="app.navigate('alerts', this)">
+          <i class="fa-solid fa-bell"></i> Alerts <span class="badge" id="navAlertBadge">3</span>
+        </div>
+      </div>
+
+      <div class="nav-section">
+        <div class="nav-section-title">Registry</div>
+        <div class="nav-item" onclick="app.navigate('agencies', this)">
+          <i class="fa-solid fa-building-shield"></i> Agencies
+        </div>
+        <div class="nav-item" onclick="app.navigate('incidents', this)">
+          <i class="fa-solid fa-bolt"></i> Incidents
+        </div>
+        <div class="nav-item" onclick="app.navigate('resources', this)">
+          <i class="fa-solid fa-truck-medical"></i> Resources
+        </div>
+      </div>
+
+      <div class="nav-section">
+        <div class="nav-section-title">Communications</div>
+        <div class="nav-item" onclick="app.navigate('messaging', this)">
+          <i class="fa-solid fa-walkie-talkie"></i> Comms Hub
+        </div>
+      </div>
+    </div>
+
+    <div class="sidebar-footer">
+      <div class="user-avatar">AD</div>
+      <div class="user-info">
+        <div class="user-name">Gokul R.</div>
+        <div class="user-role">SYSTEM ADMIN</div>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main-content">
+    
+    <header class="topbar">
+      <div class="page-title" id="topbarTitle">
+        <i class="fa-solid fa-chart-line" style="color: var(--primary);"></i> Dashboard Overview
+      </div>
+      <div class="topbar-actions">
+        <div class="status-indicator">
+          <div class="pulse-dot"></div> ALL SYSTEMS ONLINE
+        </div>
+        <button class="btn btn-outline" onclick="app.showModal('modalNewAlert')">
+          <i class="fa-solid fa-bullhorn"></i> Broadcast
+        </button>
+        <button class="btn btn-danger" onclick="app.showModal('modalReportIncident')">
+          <i class="fa-solid fa-triangle-exclamation"></i> SOS / Report
+        </button>
+        <button class="btn-icon"><i class="fa-solid fa-gear"></i></button>
+      </div>
+    </header>
+
+    <div class="page-container" id="pageContainer">
+
+      <div class="page active" id="page-dashboard">
+        <div class="grid-4">
+          <div class="stat-card c-primary">
+            <i class="fa-solid fa-building-shield stat-icon"></i>
+            <div class="stat-label">Registered Agencies</div>
+            <div class="stat-value" id="statTotalAgencies">0</div>
+            <div class="stat-trend trend-up"><i class="fa-solid fa-arrow-trend-up"></i> Nationwide Grid</div>
+          </div>
+          <div class="stat-card c-danger">
+            <i class="fa-solid fa-fire stat-icon"></i>
+            <div class="stat-label">Active Incidents</div>
+            <div class="stat-value" id="statActiveIncidents">0</div>
+            <div class="stat-trend trend-down"><i class="fa-solid fa-triangle-exclamation"></i> Requires Attention</div>
+          </div>
+          <div class="stat-card c-info">
+            <i class="fa-solid fa-helicopter stat-icon"></i>
+            <div class="stat-label">Deployed Units</div>
+            <div class="stat-value" id="statDeployedUnits">0</div>
+            <div class="stat-trend trend-up"><i class="fa-solid fa-check-double"></i> Currently in field</div>
+          </div>
+          <div class="stat-card c-success">
+            <i class="fa-solid fa-users stat-icon"></i>
+            <div class="stat-label">Total Personnel</div>
+            <div class="stat-value" id="statTotalPersonnel">0</div>
+            <div class="stat-trend trend-up"><i class="fa-solid fa-user-shield"></i> Active force</div>
           </div>
         </div>
-        <div id="minimap" style="height:280px;width:100%; z-index:1;"></div>
-      </div>
-      <div class="two-col">
-        <div class="card">
-          <div class="card-header"><div class="card-title">⚠ RECENT ALERTS</div><button class="btn btn-ghost" onclick="navigate('alerts',document.querySelectorAll('.nav-item')[2])" style="font-size:11px">View All</button></div>
-          <div class="alert-list" id="dashboard-alerts"></div>
-        </div>
-        <div class="card">
-          <div class="card-header"><div class="card-title">🏛 ACTIVE AGENCIES</div><button class="btn btn-ghost" onclick="navigate('agencies',document.querySelectorAll('.nav-item')[3])" style="font-size:11px">View All</button></div>
-          <div class="card-body"><table><thead><tr><th>AGENCY</th><th>TYPE</th><th>STATUS</th></tr></thead><tbody id="dashboard-agencies"></tbody></table></div>
-        </div>
-      </div>
-    </div>
 
-    <div class="page" id="page-map">
-      <div class="section-header">
-        <div class="section-title">🗺 LIVE TRACKING MAP</div>
-        <div style="display:flex;gap:8px">
-          <button class="btn btn-ghost" onclick="addDemoPin()">+ Simulate Agency</button>
-          <button class="btn btn-primary" onclick="showModal('incident')">Report Incident</button>
-        </div>
-      </div>
-      <div class="map-container">
-        <div class="map-header">
-          <div class="map-filters">
-            <div class="filter-chip active" onclick="toggleFilter(this,'all')">All</div>
-            <div class="filter-chip" onclick="toggleFilter(this,'ndrf')">NDRF</div>
-            <div class="filter-chip" onclick="toggleFilter(this,'fire')">Fire</div>
-            <div class="filter-chip" onclick="toggleFilter(this,'medical')">Medical</div>
-            <div class="filter-chip" onclick="toggleFilter(this,'police')">Police</div>
-          </div>
-          <div class="map-coords" id="mapCoords">📍 20.5937° N, 78.9629° E</div>
-        </div>
-        <div id="fullmap" style="height:520px;width:100%; z-index:1;"></div>
-      </div>
-    </div>
-
-    <div class="page" id="page-alerts">
-      <div class="section-header">
-        <div class="section-title">🚨 ALERTS & NOTIFICATIONS</div>
-        <button class="btn btn-primary" onclick="showModal('newalert')">+ New Alert</button>
-      </div>
-      <div class="card" style="margin-bottom:16px">
-        <div class="card-header"><div class="card-title" style="color:var(--accent2)">🔴 CRITICAL</div></div>
-        <div class="alert-list" id="critical-alerts"></div>
-      </div>
-      <div class="card">
-        <div class="card-header"><div class="card-title" style="color:var(--yellow)">🟡 WARNING / INFO</div></div>
-        <div class="alert-list" id="warn-alerts"></div>
-      </div>
-    </div>
-
-    <div class="page" id="page-agencies">
-      <div class="section-header">
-        <div class="section-title">🏛 ALL AGENCIES</div>
-        <div style="display:flex;gap:8px">
-          <input type="text" placeholder="🔍 Search agency…" id="agencySearch" oninput="filterAgencies()" style="width:220px"/>
-          <button class="btn btn-primary" onclick="navigate('register',document.querySelectorAll('.nav-item')[4])">+ Register</button>
-        </div>
-      </div>
-      <div class="card">
-        <div class="card-body">
-          <table>
-            <thead><tr><th>AGENCY NAME</th><th>TYPE</th><th>LOCATION</th><th>RESOURCES</th><th>STATUS</th><th>ACTION</th></tr></thead>
-            <tbody id="agencies-table"></tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-
-    <div class="page" id="page-register">
-      <div class="section-title" style="margin-bottom:20px">➕ REGISTER NEW AGENCY</div>
-      <div class="form-section">
-        <div class="form-section-title"><div class="step-badge">1</div>Organization Details</div>
-        <div class="form-grid">
-          <div class="form-group"><label>AGENCY NAME *</label><input type="text" id="regName" placeholder="e.g. Tamil Nadu NDRF Battalion 7"/></div>
-          <div class="form-group"><label>AGENCY TYPE *</label><select id="regType"><option>NDRF</option><option>Fire & Rescue</option><option>Medical</option><option>Police</option><option>NGO</option><option>Civil Defence</option></select></div>
-          <div class="form-group"><label>REGISTRATION NUMBER *</label><input type="text" placeholder="Govt. Registration ID"/></div>
-          <div class="form-group"><label>YEAR ESTABLISHED</label><input type="number" placeholder="e.g. 2008"/></div>
-          <div class="form-group full"><label>HEAD OFFICE ADDRESS *</label><input type="text" id="regLoc" placeholder="Full address with city and PIN code"/></div>
-        </div>
-      </div>
-      <div class="form-section">
-        <div class="form-section-title"><div class="step-badge">2</div>Contact & Location</div>
-        <div class="form-grid">
-          <div class="form-group"><label>PRIMARY CONTACT NAME *</label><input type="text" placeholder="Officer in Charge"/></div>
-          <div class="form-group"><label>PHONE NUMBER *</label><input type="tel" placeholder="+91 XXXXXXXXXX"/></div>
-          <div class="form-group"><label>EMAIL ADDRESS *</label><input type="email" placeholder="agency@example.gov.in"/></div>
-          <div class="form-group"><label>DISTRICT</label><select><option>Chennai</option><option>Coimbatore</option><option>Madurai</option><option>Trichy</option><option>Salem</option><option>Tirunelveli</option></select></div>
-          <div class="form-group"><label>GPS LATITUDE</label><input type="text" placeholder="e.g. 13.0827" id="gpsLat"/></div>
-          <div class="form-group"><label>GPS LONGITUDE</label><input type="text" placeholder="e.g. 80.2707" id="gpsLng"/></div>
-          <div class="form-group full" style="flex-direction:row;align-items:center;gap:12px">
-            <button class="btn btn-ghost" onclick="captureGPS()">📍 Auto-Capture GPS</button>
-            <span id="gpsStatus" style="font-size:12px;color:var(--text-muted)"></span>
-          </div>
-        </div>
-      </div>
-      <div class="form-section">
-        <div class="form-section-title"><div class="step-badge">3</div>Resources & Capabilities</div>
-        <div class="form-grid">
-          <div class="form-group"><label>PERSONNEL COUNT</label><input type="number" id="regPersonnel" placeholder="Total trained staff"/></div>
-          <div class="form-group"><label>VEHICLES</label><input type="number" placeholder="Total vehicles available"/></div>
-          <div class="form-group"><label>SPECIALIZATION</label><select><option>Search & Rescue</option><option>Flood Relief</option><option>Earthquake Response</option><option>Fire Fighting</option><option>Medical Aid</option><option>Logistics</option></select></div>
-          <div class="form-group"><label>RESPONSE TIME</label><select><option>&lt; 30 minutes</option><option>30–60 minutes</option><option>1–2 hours</option><option>2+ hours</option></select></div>
-          <div class="form-group full"><label>ADDITIONAL NOTES</label><textarea placeholder="Equipment details, certifications, coverage area…"></textarea></div>
-          <div class="form-actions">
-            <button class="btn btn-ghost" onclick="document.querySelectorAll('#page-register input, #page-register textarea').forEach(el=>el.value='')">Clear Form</button>
-            <button class="btn btn-primary" onclick="submitRegistration()">✅ Register Agency</button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="page" id="page-resources">
-      <div class="section-header">
-        <div class="section-title">🎒 RESOURCE INVENTORY</div>
-        <button class="btn btn-primary" onclick="showModal('addresource')">+ Add Resource</button>
-      </div>
-      <div class="stats-grid" style="margin-bottom:24px">
-        <div class="stat-card orange"><div class="stat-label">TOTAL VEHICLES</div><div class="stat-value" style="color:var(--accent)">86</div><div class="stat-sub"><span>72</span> available</div></div>
-        <div class="stat-card cyan"><div class="stat-label">PERSONNEL</div><div class="stat-value" style="color:var(--accent3)">1,240</div><div class="stat-sub"><span>890</span> on standby</div></div>
-        <div class="stat-card green"><div class="stat-label">MEDICAL KITS</div><div class="stat-value" style="color:var(--green)">340</div><div class="stat-sub"><span>100%</span> stocked</div></div>
-        <div class="stat-card red"><div class="stat-label">RESCUE BOATS</div><div class="stat-value" style="color:var(--accent2)">24</div><div class="stat-sub"><span style="color:var(--accent2)">6</span> deployed</div></div>
-      </div>
-      <div class="resource-grid" id="resource-grid"></div>
-    </div>
-
-    <div class="page" id="page-messaging">
-      <div class="section-title" style="margin-bottom:20px">💬 INTER-AGENCY MESSAGING</div>
-      <div style="display:grid;grid-template-columns:260px 1fr;gap:16px;height:500px">
-        <div class="card" style="overflow:hidden;display:flex;flex-direction:column">
-          <div class="card-header"><div class="card-title" style="font-size:15px">Channels</div></div>
-          <div style="padding:8px;flex:1;overflow-y:auto" id="channel-list"></div>
-        </div>
-        <div class="card" style="overflow:hidden;display:flex;flex-direction:column">
-          <div class="card-header">
-            <div>
-              <div class="card-title" style="font-size:15px">🔴 Emergency — Chennai Flood</div>
-              <div style="font-size:11px;color:var(--text-muted);margin-top:2px">12 agencies · 34 members online</div>
+        <div class="grid-3-1" style="height: auto; margin-bottom: 24px;">
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title"><i class="fa-solid fa-earth-asia"></i> National Deployment Map</div>
+              <button class="btn btn-outline" style="padding: 4px 10px; font-size: 11px;" onclick="app.navigate('map', document.querySelectorAll('.nav-item')[1])">Expand Map</button>
+            </div>
+            <div class="card-body" style="padding: 0; position: relative;">
+              <div id="miniMap" class="map-wrapper" style="height: 350px;"></div>
             </div>
           </div>
-          <div style="flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px" id="chat-messages"></div>
-          <div style="padding:12px;border-top:1px solid var(--border);display:flex;gap:8px">
-            <input type="text" id="msgInput" placeholder="Type a message… (Enter to send)" style="flex:1" onkeydown="if(event.key==='Enter')sendMsg()"/>
-            <button class="btn btn-primary" onclick="sendMsg()">Send</button>
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title"><i class="fa-solid fa-chart-pie"></i> Agency Types</div>
+            </div>
+            <div class="card-body" style="display: flex; align-items: center; justify-content: center;">
+              <canvas id="agencyTypeChart" width="100" height="100"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title"><i class="fa-solid fa-bell"></i> Live Alerts Board</div>
+              <button class="btn btn-outline" style="padding: 4px 10px; font-size: 11px;" onclick="app.navigate('alerts', document.querySelectorAll('.nav-item')[2])">View All</button>
+            </div>
+            <div class="card-body" style="padding: 0;">
+              <div class="alert-list" id="dashAlertsList">
+                </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title"><i class="fa-solid fa-bolt"></i> Priority Incidents</div>
+            </div>
+            <div class="card-body" style="padding: 0;">
+              <div class="table-responsive">
+                <table>
+                  <thead>
+                    <tr><th>ID</th><th>Type</th><th>Location</th><th>Severity</th></tr>
+                  </thead>
+                  <tbody id="dashIncidentsTable">
+                    </tbody>
+                </table>
+              </div>
+            </div>
           </div>
         </div>
       </div>
-    </div>
 
-    <div class="page" id="page-incidents">
-      <div class="section-header">
-        <div class="section-title">⚡ INCIDENT MANAGEMENT</div>
-        <button class="btn btn-danger" onclick="showModal('incident')">🆘 New Incident</button>
-      </div>
-      <div class="card">
-        <div class="card-body">
-          <table>
-            <thead><tr><th>ID</th><th>TYPE</th><th>LOCATION</th><th>SEVERITY</th><th>AGENCIES</th><th>REPORTED</th><th>STATUS</th></tr></thead>
-            <tbody id="incidents-table"></tbody>
-          </table>
+      <div class="page" id="page-map">
+        <div class="card" style="height: calc(100vh - 120px);">
+          <div class="card-header">
+            <div class="filter-tabs">
+              <div class="filter-tab active" onclick="app.mapControl.filterMap('All', this)">All Agencies</div>
+              <div class="filter-tab" onclick="app.mapControl.filterMap('NDRF', this)">NDRF</div>
+              <div class="filter-tab" onclick="app.mapControl.filterMap('Fire', this)">Fire & Rescue</div>
+              <div class="filter-tab" onclick="app.mapControl.filterMap('Medical', this)">Medical/EMS</div>
+              <div class="filter-tab" onclick="app.mapControl.filterMap('Police', this)">Police</div>
+              <div class="filter-tab" onclick="app.mapControl.filterMap('Incident', this)">Incidents</div>
+            </div>
+            <div class="d-flex gap-2">
+              <button class="btn btn-outline" onclick="app.dataControl.simulateRandomAgency()"><i class="fa-solid fa-location-crosshairs"></i> Simulate Unit</button>
+            </div>
+          </div>
+          <div class="card-body" style="padding: 0; position: relative;">
+            <div id="fullMap" class="map-wrapper" style="height: 100%;"></div>
+          </div>
         </div>
       </div>
-    </div>
 
-  </div>
-</div>
-
-<div class="modal-bg" id="modal-incident" onclick="if(event.target===this)closeModal('incident')">
-  <div class="modal">
-    <div class="modal-title">🆘 Report Incident</div>
-    <div class="form-grid">
-      <div class="form-group"><label>INCIDENT TYPE</label><select id="incType"><option>Flood</option><option>Earthquake</option><option>Fire</option><option>Cyclone</option><option>Building Collapse</option><option>Chemical Hazard</option></select></div>
-      <div class="form-group"><label>SEVERITY</label><select id="incSeverity"><option>Critical</option><option>High</option><option>Medium</option><option>Low</option></select></div>
-      <div class="form-group full"><label>LOCATION / ADDRESS</label><input type="text" id="incLocation" placeholder="Street, area, city"/></div>
-      <div class="form-group full"><label>DESCRIPTION</label><textarea id="incDesc" placeholder="Describe the situation…"></textarea></div>
-      <div class="form-actions">
-        <button class="btn btn-ghost" onclick="closeModal('incident')">Cancel</button>
-        <button class="btn btn-danger" onclick="submitIncident()">🆘 Send Alert to All Agencies</button>
+      <div class="page" id="page-alerts">
+        <div class="d-flex justify-between align-center mb-4">
+          <div class="filter-tabs">
+            <div class="filter-tab active" onclick="app.uiControl.filterAlerts('All', this)">All Alerts</div>
+            <div class="filter-tab" onclick="app.uiControl.filterAlerts('Critical', this)">Critical</div>
+            <div class="filter-tab" onclick="app.uiControl.filterAlerts('Warning', this)">Warnings</div>
+            <div class="filter-tab" onclick="app.uiControl.filterAlerts('Info', this)">Info</div>
+          </div>
+          <button class="btn btn-primary" onclick="app.showModal('modalNewAlert')"><i class="fa-solid fa-plus"></i> Broadcast Alert</button>
+        </div>
+        <div class="card">
+          <div class="card-body" style="padding: 0;">
+            <div class="alert-list" id="fullAlertsList">
+              </div>
+          </div>
+        </div>
       </div>
+
+      <div class="page" id="page-agencies">
+        <div class="card">
+          <div class="card-header">
+            <div class="d-flex gap-4 align-center" style="width: 50%;">
+              <input type="text" class="form-control" id="searchAgencies" placeholder="Search agency by name, district, or ID..." oninput="app.uiControl.renderAgenciesTable()">
+            </div>
+            <button class="btn btn-primary" onclick="app.showModal('modalRegisterAgency')"><i class="fa-solid fa-plus"></i> Register Agency</button>
+          </div>
+          <div class="card-body" style="padding: 0;">
+            <div class="table-responsive">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Agency Info</th>
+                    <th>Type</th>
+                    <th>District</th>
+                    <th>Resources</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="agenciesTableBody">
+                  </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="page" id="page-incidents">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Incident Log</div>
+            <button class="btn btn-danger" onclick="app.showModal('modalReportIncident')"><i class="fa-solid fa-triangle-exclamation"></i> Log New Incident</button>
+          </div>
+          <div class="card-body" style="padding: 0;">
+            <div class="table-responsive">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Incident ID</th>
+                    <th>Details</th>
+                    <th>Location</th>
+                    <th>Severity</th>
+                    <th>Agencies Assigned</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="incidentsTableBody">
+                  </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="page" id="page-resources">
+        <div class="d-flex justify-between align-center mb-4">
+          <h2 style="font-family: var(--font-head); font-weight: normal; font-size: 24px;">National Asset Inventory</h2>
+          <button class="btn btn-primary" onclick="app.showModal('modalAddResource')"><i class="fa-solid fa-plus"></i> Update Inventory</button>
+        </div>
+        <div class="res-grid" id="resourcesGrid">
+          </div>
+        
+        <div class="card mt-4">
+          <div class="card-header"><div class="card-title">Resource Allocation Chart</div></div>
+          <div class="card-body" style="height: 300px; display: flex; justify-content: center;">
+            <canvas id="resourceChart"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <div class="page" id="page-messaging">
+        <div class="chat-layout">
+          <div class="chat-sidebar">
+            <div class="chat-header">Command Channels</div>
+            <div class="channel-list" id="channelList">
+              <div class="channel-item active">
+                <i class="fa-solid fa-globe channel-icon"></i>
+                <div class="channel-info">
+                  <div class="channel-name">Global Command</div>
+                  <div class="channel-meta">All registered units</div>
+                </div>
+              </div>
+              <div class="channel-item">
+                <i class="fa-solid fa-truck-medical channel-icon" style="color: var(--success);"></i>
+                <div class="channel-info">
+                  <div class="channel-name">Medical/EMS Network</div>
+                  <div class="channel-meta">Medical logistics only</div>
+                </div>
+              </div>
+              <div class="channel-item">
+                <i class="fa-solid fa-fire channel-icon" style="color: var(--danger);"></i>
+                <div class="channel-info">
+                  <div class="channel-name">Fire Ops Alpha</div>
+                  <div class="channel-meta">Active fire operations</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="chat-main">
+            <div class="chat-header d-flex justify-between">
+              <span><i class="fa-solid fa-globe" style="color: var(--primary);"></i> Global Command</span>
+              <span class="tag tag-active">Secure Encrypted Link</span>
+            </div>
+            <div class="chat-messages" id="chatMessages">
+              </div>
+            <form class="chat-input-area" id="chatForm">
+              <input type="text" class="chat-input" id="chatInput" placeholder="Transmit message to all units..." autocomplete="off" required>
+              <button type="submit" class="btn-send"><i class="fa-solid fa-paper-plane"></i></button>
+            </form>
+          </div>
+        </div>
+      </div>
+
+    </div> </main>
+</div>
+
+<div class="modal-overlay" id="modalReportIncident">
+  <div class="modal-content">
+    <div class="modal-header">
+      <div class="modal-title"><i class="fa-solid fa-triangle-exclamation" style="color: var(--danger);"></i> Log New Incident</div>
+      <button class="modal-close" onclick="app.closeModal('modalReportIncident')"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="modal-body">
+      <form id="formReportIncident">
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label">Incident Type *</label>
+            <select class="form-control" id="incType" required>
+              <option value="Flood">🌊 Flood / Water Rescue</option>
+              <option value="Fire">🔥 Industrial / Wildfire</option>
+              <option value="Earthquake">🏚️ Earthquake / Collapse</option>
+              <option value="Cyclone">🌀 Cyclone / Storm</option>
+              <option value="Medical">⚕️ Mass Medical Emergency</option>
+              <option value="Hazmat">☣️ Chemical / Hazmat</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Severity Level *</label>
+            <select class="form-control" id="incSeverity" required>
+              <option value="Critical">Critical (Immediate Life Threat)</option>
+              <option value="High">High (Severe Property/Risk)</option>
+              <option value="Medium">Medium (Contained Risk)</option>
+              <option value="Low">Low (Monitoring phase)</option>
+            </select>
+          </div>
+          <div class="form-group full">
+            <label class="form-label">Location Details *</label>
+            <input type="text" class="form-control" id="incLocation" placeholder="City, District, specific landmarks..." required>
+          </div>
+          <div class="form-group full">
+            <label class="form-label">Situation Description</label>
+            <textarea class="form-control" id="incDesc" placeholder="Provide details on casualties, structural damage, trapped individuals..." required></textarea>
+          </div>
+          <div class="form-group">
+            <label class="form-label">GPS Latitude</label>
+            <input type="text" class="form-control" id="incLat" placeholder="e.g. 11.0168">
+          </div>
+          <div class="form-group">
+            <label class="form-label">GPS Longitude</label>
+            <input type="text" class="form-control" id="incLng" placeholder="e.g. 76.9558">
+          </div>
+        </div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="app.closeModal('modalReportIncident')">Cancel</button>
+      <button class="btn btn-danger" onclick="document.getElementById('formReportIncident').dispatchEvent(new Event('submit'))"><i class="fa-solid fa-satellite-dish"></i> Broadcast Incident</button>
     </div>
   </div>
 </div>
 
-<div class="modal-bg" id="modal-newalert" onclick="if(event.target===this)closeModal('newalert')">
-  <div class="modal">
-    <div class="modal-title">⚠ Create Alert</div>
-    <div class="form-grid">
-      <div class="form-group"><label>ALERT TYPE</label><select id="alType"><option>Weather</option><option>Incident</option><option>Resource</option><option>System</option></select></div>
-      <div class="form-group"><label>TARGET</label><select><option>All Agencies</option><option>NDRF Only</option><option>Fire & Rescue</option><option>Medical</option></select></div>
-      <div class="form-group full"><label>MESSAGE</label><input type="text" id="alMsg" placeholder="Alert title/message…"/></div>
-      <div class="form-actions">
-        <button class="btn btn-ghost" onclick="closeModal('newalert')">Cancel</button>
-        <button class="btn btn-primary" onclick="submitNewAlert()">Send Alert</button>
-      </div>
+<div class="modal-overlay" id="modalRegisterAgency">
+  <div class="modal-content" style="max-width: 800px;">
+    <div class="modal-header">
+      <div class="modal-title"><i class="fa-solid fa-building-shield" style="color: var(--primary);"></i> Register New Agency</div>
+      <button class="modal-close" onclick="app.closeModal('modalRegisterAgency')"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="modal-body">
+      <form id="formRegisterAgency">
+        <h3 style="margin-bottom: 16px; font-family: var(--font-mono); color: var(--text-muted); font-size: 12px; text-transform: uppercase;">1. Organizational Details</h3>
+        <div class="form-grid mb-4">
+          <div class="form-group full">
+            <label class="form-label">Official Agency Name *</label>
+            <input type="text" class="form-control" id="regName" placeholder="e.g., Tamil Nadu SDRF Battalion 4" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Agency Type *</label>
+            <select class="form-control" id="regType" required>
+              <option value="NDRF">National Disaster Response Force (NDRF)</option>
+              <option value="SDRF">State Disaster Response Force (SDRF)</option>
+              <option value="Fire & Rescue">Fire & Rescue Services</option>
+              <option value="Medical">Medical / Paramedic Unit</option>
+              <option value="Police">Police / Security Force</option>
+              <option value="Coast Guard">Coast Guard / Marine Rescue</option>
+              <option value="Civil Defence">Civil Defence / NGO</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Govt Registration ID</label>
+            <input type="text" class="form-control" placeholder="e.g., GOV-TN-2024">
+          </div>
+        </div>
+
+        <h3 style="margin-bottom: 16px; font-family: var(--font-mono); color: var(--text-muted); font-size: 12px; text-transform: uppercase; border-top: 1px solid var(--border-light); padding-top: 16px;">2. Location & Contact</h3>
+        <div class="form-grid mb-4">
+          <div class="form-group">
+            <label class="form-label">District / Zone *</label>
+            <input type="text" class="form-control" id="regDistrict" placeholder="e.g., Coimbatore" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Contact Officer</label>
+            <input type="text" class="form-control" placeholder="Officer Name">
+          </div>
+          <div class="form-group">
+            <label class="form-label">GPS Latitude</label>
+            <input type="text" class="form-control" id="regLat" placeholder="e.g. 11.0168">
+          </div>
+          <div class="form-group">
+            <label class="form-label">GPS Longitude</label>
+            <input type="text" class="form-control" id="regLng" placeholder="e.g. 76.9558">
+          </div>
+          <div class="form-group full">
+            <button type="button" class="btn btn-outline" id="btnCaptureGps" style="width: max-content;"><i class="fa-solid fa-location-arrow"></i> Auto-Capture Current GPS</button>
+            <span id="gpsStatusText" style="font-size: 12px; color: var(--success); margin-left: 10px; font-family: var(--font-mono);"></span>
+          </div>
+        </div>
+
+        <h3 style="margin-bottom: 16px; font-family: var(--font-mono); color: var(--text-muted); font-size: 12px; text-transform: uppercase; border-top: 1px solid var(--border-light); padding-top: 16px;">3. Assets & Capabilities</h3>
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label">Active Personnel Count *</label>
+            <input type="number" class="form-control" id="regPersonnel" placeholder="Number of trained staff" required min="1">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Vehicles Available</label>
+            <input type="number" class="form-control" id="regVehicles" placeholder="Trucks, Boats, Engines, etc.">
+          </div>
+        </div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="app.closeModal('modalRegisterAgency')">Cancel</button>
+      <button class="btn btn-primary" onclick="document.getElementById('formRegisterAgency').dispatchEvent(new Event('submit'))"><i class="fa-solid fa-check"></i> Submit Registration</button>
     </div>
   </div>
 </div>
 
-<div class="modal-bg" id="modal-addresource" onclick="if(event.target===this)closeModal('addresource')">
-  <div class="modal">
-    <div class="modal-title">🎒 Add Resource</div>
-    <div class="form-grid">
-      <div class="form-group"><label>RESOURCE TYPE</label><select id="resType">
-        <option value="Fire Engines">Fire Engines</option>
-        <option value="Ambulances">Ambulances</option>
-        <option value="Helicopters">Helicopters</option>
-        <option value="Rescue Boats">Rescue Boats</option>
-        <option value="Relief Tents">Relief Tents</option>
-        <option value="Medical Kits">Medical Kits</option>
-        <option value="Generators">Generators</option>
-      </select></div>
-      <div class="form-group"><label>QUANTITY ADDED</label><input type="number" id="resQty" placeholder="0"/></div>
-      <div class="form-group"><label>AGENCY</label><select><option>NDRF Unit 7</option><option>Chennai Fire Dept.</option><option>TNEMS</option></select></div>
-      <div class="form-group"><label>CONDITION</label><select><option>Operational</option><option>Needs Maintenance</option></select></div>
-      <div class="form-actions">
-        <button class="btn btn-ghost" onclick="closeModal('addresource')">Cancel</button>
-        <button class="btn btn-primary" onclick="submitResource()">Add</button>
-      </div>
+<div class="modal-overlay" id="modalNewAlert">
+  <div class="modal-content">
+    <div class="modal-header">
+      <div class="modal-title"><i class="fa-solid fa-tower-broadcast" style="color: var(--info);"></i> Broadcast System Alert</div>
+      <button class="modal-close" onclick="app.closeModal('modalNewAlert')"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="modal-body">
+      <form id="formNewAlert">
+        <div class="form-grid">
+          <div class="form-group full">
+            <label class="form-label">Alert Category</label>
+            <select class="form-control" id="alertCategory">
+              <option value="Info">General Information (Info)</option>
+              <option value="Warning">Weather/Risk Advisory (Warning)</option>
+              <option value="Critical">Immediate Action Required (Critical)</option>
+            </select>
+          </div>
+          <div class="form-group full">
+            <label class="form-label">Alert Headline</label>
+            <input type="text" class="form-control" id="alertTitle" placeholder="Brief, clear headline..." required>
+          </div>
+          <div class="form-group full">
+            <label class="form-label">Detailed Message</label>
+            <textarea class="form-control" id="alertMsg" placeholder="Full context of the broadcast..." required></textarea>
+          </div>
+        </div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="app.closeModal('modalNewAlert')">Cancel</button>
+      <button class="btn btn-info" style="background: var(--info); color: white;" onclick="document.getElementById('formNewAlert').dispatchEvent(new Event('submit'))"><i class="fa-solid fa-paper-plane"></i> Transmit</button>
     </div>
   </div>
 </div>
+
+<div class="toast-container" id="toastContainer"></div>
+
 
 <script>
-// Data Store
-let alerts = [
-  {type:'critical',icon:'🌊',title:'Flash Flood — Tambaram Region',meta:'Chennai · 3 agencies deployed',time:'14 min ago'},
-  {type:'critical',icon:'🔥',title:'Industrial Fire — Ambattur',meta:'2 casualties reported · NDRF + Fire dispatched',time:'32 min ago'},
-  {type:'warning',icon:'🌀',title:'Cyclone Watch — Bay of Bengal',meta:'Expected landfall in 48 hrs',time:'2 hrs ago'},
-  {type:'info',icon:'💧',title:'Water Level Rising — Adyar River',meta:'Alert level 3 · Monitoring',time:'5 hrs ago'},
-  {type:'info',icon:'⚡',title:'Power Outage — North Chennai',meta:'6 localities affected',time:'6 hrs ago'},
-];
-
-let incidents = [
-  {id:'INC-001',type:'Flood',location:'Tambaram, Chennai',severity:'Critical',agencies:3,time:'14 min ago',status:'active'},
-  {id:'INC-002',type:'Fire',location:'Ambattur Industrial',severity:'High',agencies:2,time:'32 min ago',status:'active'},
-  {id:'INC-003',type:'Building Collapse',location:'Egmore',severity:'Medium',agencies:1,time:'2 hrs ago',status:'resolved'},
-  {id:'INC-004',type:'Cyclone Prep',location:'Marina Beach',severity:'High',agencies:5,time:'1 day ago',status:'monitoring'},
-];
-
-let resources = [
-  {icon:'🚒',name:'Fire Engines',total:28,avail:22},
-  {icon:'🚑',name:'Ambulances',total:45,avail:38},
-  {icon:'🚁',name:'Helicopters',total:8,avail:6},
-  {icon:'⛵',name:'Rescue Boats',total:24,avail:18},
-  {icon:'🏕️',name:'Relief Tents',total:500,avail:320},
-  {icon:'💊',name:'Medical Kits',total:340,avail:340},
-  {icon:'🔋',name:'Generators',total:60,avail:48},
-  {icon:'🚛',name:'Trucks',total:35,avail:28},
-  {icon:'📡',name:'Comm Sets',total:120,avail:95},
-];
-
-let channels = [
-  {icon:'🔴',name:'Emergency — Chennai Flood',count:12,unread:5},
-  {icon:'🟠',name:'NDRF Command Channel',count:8,unread:2},
-  {icon:'🟡',name:'Medical Coordination',count:5,unread:0},
-  {icon:'🔵',name:'Logistics & Supply',count:9,unread:1},
-  {icon:'⚪',name:'General Broadcast',count:48,unread:0},
-];
-
-let messages = [
-  {sender:'Gokul R',role:'ADMIN',msg:'All units – flood water level at +2.3m in Tambaram. Proceed with evacuations.',time:'14:32'},
-  {sender:'Unit 7 NDRF',role:'NDRF',msg:'Confirmed. 3 boats deployed. ETA to zone 8 minutes.',time:'14:33'},
-  {sender:'Chennai Fire',role:'FIRE',msg:'Coordinating with TNEMS at junction point Alpha.',time:'14:35'},
-  {sender:'TNEMS Unit 3',role:'MEDICAL',msg:'Medical camp at Tambaram Govt School. Requesting 20 additional kits.',time:'14:37'},
-  {sender:'Gokul R',role:'ADMIN',msg:'Resource request approved. Logistics team dispatching now.',time:'14:38'},
-];
-
-const typeColors = {NDRF:'#f97316','Fire & Rescue':'#ef4444',Medical:'#10b981',Police:'#22d3ee',NGO:'#fbbf24','Civil Defence':'#94a3b8'};
-
-let agenciesGeo = [
-  {id:'AGY001',name:'NDRF Battalion 7',type:'NDRF',location:'Chennai, Tamil Nadu',resources:48,status:'active',lat:13.0827,lng:80.2707},
-  {id:'AGY002',name:'Chennai Fire Dept',type:'Fire & Rescue',location:'Chennai, Tamil Nadu',resources:22,status:'active',lat:13.05,lng:80.21},
-  {id:'AGY003',name:'TNEMS Unit 3',type:'Medical',location:'Trichy, Tamil Nadu',resources:15,status:'standby',lat:10.7905,lng:78.7047},
-  {id:'AGY004',name:'TN Police SRT',type:'Police',location:'Madurai, Tamil Nadu',resources:30,status:'active',lat:9.9252,lng:78.1198},
-  {id:'AGY005',name:'Rotary Disaster Team',type:'NGO',location:'Mumbai, Maharashtra',resources:10,status:'standby',lat:19.076,lng:72.8777},
-  {id:'AGY006',name:'Civil Defence Corp',type:'Civil Defence',location:'Coimbatore, Tamil Nadu',resources:20,status:'busy',lat:11.0168,lng:76.9558},
-  {id:'AGY007',name:'NDRF Unit Delhi',type:'NDRF',location:'New Delhi',resources:60,status:'active',lat:28.6139,lng:77.209},
-  {id:'AGY008',name:'Kolkata Fire Brigade',type:'Fire & Rescue',location:'Kolkata, West Bengal',resources:18,status:'active',lat:22.5726,lng:88.3639},
-  {id:'AGY009',name:'Hyderabad EMRI',type:'Medical',location:'Hyderabad, Telangana',resources:25,status:'standby',lat:17.385,lng:78.4867},
-  {id:'AGY010',name:'Bangalore City Police',type:'Police',location:'Bangalore, Karnataka',resources:40,status:'active',lat:12.9716,lng:77.5946},
-  {id:'AGY011',name:'Gujarat SDRF',type:'NDRF',location:'Ahmedabad, Gujarat',resources:35,status:'active',lat:23.0225,lng:72.5714},
-  {id:'AGY012',name:'Rajasthan Relief NGO',type:'NGO',location:'Jaipur, Rajasthan',resources:12,status:'standby',lat:26.9124,lng:75.7873},
-];
-
-let incidentZones = [
-  {lat:13.05,lng:80.22,label:'🌊 Flood - Tambaram',color:'#ef4444'},
-  {lat:19.076,lng:72.88,label:'🌀 Cyclone Alert',color:'#f97316'},
-  {lat:28.61,lng:77.20,label:'⚡ Power Crisis',color:'#fbbf24'},
-];
-
-let miniLeafMap=null, fullLeafMap=null, miniMarkers=[], fullMarkers=[];
-
-// Dynamic UI Updaters
-function updateGlobalStats() {
-  document.getElementById('dash-agency-count').textContent = agenciesGeo.length;
-  document.getElementById('dash-incident-count').textContent = incidents.filter(i=>i.status==='active').length;
-  document.getElementById('dash-active-agencies').textContent = agenciesGeo.filter(a=>a.status==='active'||a.status==='busy').length;
-  document.getElementById('alertBadge').textContent = alerts.length;
-}
-
-function makeIcon(color){
-  return L.divIcon({className:'',html:`<div style="width:16px;height:16px;border-radius:50%;background:${color};border:2.5px solid #fff;box-shadow:0 0 10px ${color}"></div>`,iconSize:[16,16],iconAnchor:[8,8]});
-}
-
-function initMiniMap(){
-  if(miniLeafMap) {
-    miniLeafMap.eachLayer(l => { if(l instanceof L.Marker || l instanceof L.Circle) miniLeafMap.removeLayer(l); });
-  } else {
-    miniLeafMap = L.map('minimap',{zoomControl:false,scrollWheelZoom:false,dragging:false,attributionControl:false}).setView([20.5937,78.9629],4);
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{maxZoom:18}).addTo(miniLeafMap);
-  }
+/**
+ * RALCA - Single File Enterprise Architecture
+ * Encapsulated in a modular IIFE pattern to prevent global scope pollution.
+ */
+const app = (function() {
   
-  agenciesGeo.forEach(a=>{
-    L.marker([a.lat,a.lng],{icon:makeIcon(typeColors[a.type]||'#94a3b8')}).addTo(miniLeafMap).bindTooltip(`<b>${a.name}</b><br>${a.type}`,{direction:'top'});
-  });
-  incidentZones.forEach(z=>{
-    L.circle([z.lat,z.lng],{color:z.color,fillColor:z.color,fillOpacity:0.12,radius:30000,weight:2,dashArray:'6,4'}).addTo(miniLeafMap);
-  });
-}
+  // ==========================================
+  // STATE MANAGEMENT (In-Memory Database)
+  // ==========================================
+  const state = {
+    agencies: [],
+    incidents: [],
+    alerts: [],
+    resources: [
+      { id: 'res1', icon: 'fa-truck-medical', name: 'Ambulances', total: 450, available: 312, color: 'var(--success)' },
+      { id: 'res2', icon: 'fa-fire-truck', name: 'Fire Engines', total: 280, available: 190, color: 'var(--danger)' },
+      { id: 'res3', icon: 'fa-ship', name: 'Rescue Boats', total: 150, available: 120, color: 'var(--info)' },
+      { id: 'res4', icon: 'fa-helicopter', name: 'Helicopters', total: 35, available: 18, color: 'var(--primary)' },
+      { id: 'res5', icon: 'fa-tent', name: 'Relief Tents', total: 5000, available: 3800, color: 'var(--warning)' },
+      { id: 'res6', icon: 'fa-kit-medical', name: 'Trauma Kits', total: 2500, available: 2100, color: 'var(--success)' },
+    ],
+    messages: [
+      { sender: 'SYSTEM', role: 'BOT', msg: 'Global command channel encrypted and online. Awaiting transmissions.', time: '00:00' }
+    ],
+    config: {
+      typeColors: {
+        'NDRF': '#f97316', 'SDRF': '#f59e0b', 'Fire & Rescue': '#ef4444', 
+        'Medical': '#10b981', 'Police': '#3b82f6', 'Coast Guard': '#0ea5e9', 'Civil Defence': '#8b5cf6'
+      },
+      typeIcons: {
+        'NDRF': 'fa-shield', 'SDRF': 'fa-shield-halved', 'Fire & Rescue': 'fa-fire', 
+        'Medical': 'fa-briefcase-medical', 'Police': 'fa-building-shield', 'Coast Guard': 'fa-anchor', 'Civil Defence': 'fa-hands-holding-child'
+      }
+    },
+    maps: {
+      mini: null,
+      full: null,
+      markers: { agencies: [], incidents: [] }
+    },
+    charts: {
+      agencyType: null,
+      resource: null
+    }
+  };
 
-function initFullMap(){
-  if(fullLeafMap) {
-    fullMarkers.forEach(fm => fullLeafMap.removeLayer(fm.marker));
-    fullMarkers = [];
-  } else {
-    fullLeafMap = L.map('fullmap',{zoomControl:true,attributionControl:false}).setView([20.5937,78.9629],5);
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{maxZoom:18}).addTo(fullLeafMap);
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}{r}.png',{maxZoom:18,opacity:0.7}).addTo(fullLeafMap);
+  // ==========================================
+  // DATA GENERATOR (Simulating a real backend)
+  // ==========================================
+  const DataGenerator = {
+    generateAgencies: function(count) {
+      const types = Object.keys(state.config.typeColors);
+      const districts = ['Chennai', 'Coimbatore', 'Madurai', 'Tiruchirappalli', 'Salem', 'Tirunelveli', 'Erode', 'Vellore', 'Thoothukudi', 'Dindigul', 'Mumbai', 'Delhi', 'Bangalore', 'Hyderabad', 'Ahmedabad', 'Kolkata', 'Pune', 'Jaipur'];
+      const statuses = ['active', 'active', 'active', 'standby', 'standby', 'deployed']; // Weighting
+      
+      for(let i=1; i<=count; i++) {
+        let type = types[Math.floor(Math.random() * types.length)];
+        let district = districts[Math.floor(Math.random() * districts.length)];
+        let status = statuses[Math.floor(Math.random() * statuses.length)];
+        
+        // India approximate bounding box (Lat: 8.4 to 37.6, Lng: 68.7 to 97.2)
+        // Weighting towards south/cities for realism
+        let lat = 10 + Math.random() * 18; 
+        let lng = 72 + Math.random() * 16;
+        
+        state.agencies.push({
+          id: `AGY-${1000 + i}`,
+          name: `${district} ${type} Unit ${Math.floor(Math.random()*20)+1}`,
+          type: type,
+          district: district,
+          resources: Math.floor(Math.random() * 150) + 20,
+          vehicles: Math.floor(Math.random() * 20) + 2,
+          status: status,
+          lat: lat,
+          lng: lng,
+          registeredAt: new Date(Date.now() - Math.random() * 10000000000).toISOString()
+        });
+      }
+    },
     
-    // Add legend only once
-    const legend = L.control({position:'bottomleft'});
-    legend.onAdd = function(){
-      const div = L.DomUtil.create('div');
-      div.style.cssText = 'background:rgba(10,14,26,.9);border:1px solid #1e2d47;border-radius:8px;padding:10px 14px;font-family:DM Sans,sans-serif;font-size:12px;color:#e2e8f0;z-index:1000;';
-      div.innerHTML = Object.entries(typeColors).map(([t,c])=>`<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px"><div style="width:10px;height:10px;border-radius:50%;background:${c};border:2px solid #fff"></div>${t}</div>`).join('');
-      return div;
-    };
-    legend.addTo(fullLeafMap);
+    generateInitialIncidents: function() {
+      state.incidents.push(
+        { id: 'INC-9901', type: 'Flood', severity: 'Critical', location: 'Tambaram, Chennai', desc: 'Severe waterlogging. 500+ stranded.', lat: 12.9249, lng: 80.1000, agenciesAssigned: 4, status: 'active', time: '1 hr ago' },
+        { id: 'INC-9902', type: 'Fire', severity: 'High', location: 'Ambattur Industrial Estate', desc: 'Chemical fire at plastic manufacturing plant.', lat: 13.1143, lng: 80.1481, agenciesAssigned: 3, status: 'active', time: '3 hrs ago' },
+        { id: 'INC-9903', type: 'Cyclone', severity: 'Medium', location: 'Nagapattinam Coast', desc: 'Pre-emptive evacuation underway.', lat: 10.7656, lng: 79.8424, agenciesAssigned: 8, status: 'monitoring', time: '12 hrs ago' }
+      );
+      
+      // Correlating alerts
+      state.alerts.push(
+        { id: 'ALT-1', type: 'Critical', title: 'Flash Flood Warning - Chennai', desc: 'Adyar river crossing danger mark. Evacuate low-lying areas.', time: '1 hr ago' },
+        { id: 'ALT-2', type: 'Warning', title: 'Industrial Fire - Ambattur', desc: 'Toxicity alert. Wear masks in 5km radius.', time: '3 hrs ago' },
+        { id: 'ALT-3', type: 'Info', title: 'Weather Advisory', desc: 'Heavy rainfall expected in coastal districts over next 48h.', time: '5 hrs ago' }
+      );
+    }
+  };
+
+  // ==========================================
+  // UI CONTROLLERS
+  // ==========================================
+  const UI = {
+    formatTime: function() {
+      const now = new Date();
+      return `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+    },
     
-    fullLeafMap.on('mousemove', e => {
-      const el = document.getElementById('mapCoords');
-      if(el) el.textContent = `📍 ${e.latlng.lat.toFixed(4)}° N, ${e.latlng.lng.toFixed(4)}° E`;
-    });
-  }
+    showToast: function(title, message, type = 'success') {
+      const container = document.getElementById('toastContainer');
+      const toast = document.createElement('div');
+      toast.className = `toast ${type}`;
+      
+      const icon = type === 'success' ? 'fa-circle-check' : 'fa-circle-exclamation';
+      
+      toast.innerHTML = `
+        <div class="toast-icon"><i class="fa-solid ${icon}"></i></div>
+        <div class="toast-content">
+          <div class="toast-title">${title}</div>
+          <div class="toast-msg">${message}</div>
+        </div>
+      `;
+      
+      container.appendChild(toast);
+      
+      // Trigger animation
+      setTimeout(() => toast.classList.add('show'), 10);
+      
+      // Remove after 4 seconds
+      setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => toast.remove(), 300);
+      }, 4000);
+    },
 
-  agenciesGeo.forEach(a=>{
-    const m = L.marker([a.lat,a.lng],{icon:makeIcon(typeColors[a.type]||'#94a3b8')}).addTo(fullLeafMap)
-      .bindPopup(`<div style="font-family:'DM Sans',sans-serif;min-width:180px;color:#333;"><div style="font-weight:700;font-size:14px;margin-bottom:4px">${a.name}</div><div style="color:#64748b;font-size:12px;margin-bottom:6px">📍 ${a.location}</div><span style="background:rgba(249,115,22,.2);color:#f97316;padding:2px 8px;border-radius:10px;font-size:11px">${a.type}</span> <span style="background:rgba(16,185,129,.2);color:#10b981;padding:2px 8px;border-radius:10px;font-size:11px">${a.status.toUpperCase()}</span><div style="margin-top:6px;font-size:12px;color:#475569">👥 ${a.resources} resources</div></div>`,{maxWidth:220});
-    fullMarkers.push({marker:m,type:a.type});
-  });
+    updateDashStats: function() {
+      document.getElementById('statTotalAgencies').textContent = state.agencies.length;
+      document.getElementById('statActiveIncidents').textContent = state.incidents.filter(i => i.status === 'active').length;
+      document.getElementById('statDeployedUnits').textContent = state.agencies.filter(a => a.status === 'deployed').length;
+      
+      const totalPer = state.agencies.reduce((sum, a) => sum + parseInt(a.resources), 0);
+      document.getElementById('statTotalPersonnel').textContent = totalPer.toLocaleString();
+      
+      document.getElementById('navAlertBadge').textContent = state.alerts.length;
+    },
 
-  incidentZones.forEach(z=>{
-    L.circle([z.lat,z.lng],{color:z.color,fillColor:z.color,fillOpacity:0.15,radius:50000,weight:2,dashArray:'8,4'}).addTo(fullLeafMap).bindPopup(`<b>${z.label}</b><br><span style="color:#ef4444">Active Incident Zone</span>`);
-  });
-}
+    renderAlerts: function(filterType = 'All') {
+      let filtered = filterType === 'All' ? state.alerts : state.alerts.filter(a => a.type === filterType);
+      
+      const getIconHtml = (type) => {
+        if(type === 'Critical') return `<div class="alert-icon icon-critical"><i class="fa-solid fa-radiation"></i></div>`;
+        if(type === 'Warning') return `<div class="alert-icon icon-warning"><i class="fa-solid fa-triangle-exclamation"></i></div>`;
+        return `<div class="alert-icon icon-info"><i class="fa-solid fa-circle-info"></i></div>`;
+      };
 
-function filterMapByType(type){
-  if(!fullLeafMap) return;
-  fullMarkers.forEach(({marker,type:t})=>{
-    if(type==='all' || t.toLowerCase().includes(type)) fullLeafMap.addLayer(marker);
-    else fullLeafMap.removeLayer(marker);
-  });
-}
+      const generateHtml = (alertsArray, limit = null) => {
+        let arr = limit ? alertsArray.slice(0, limit) : alertsArray;
+        if(arr.length === 0) return `<div style="padding: 20px; text-align: center; color: var(--text-muted);">No alerts found.</div>`;
+        return arr.map(a => `
+          <div class="alert-item">
+            ${getIconHtml(a.type)}
+            <div class="alert-details">
+              <div class="alert-title">${a.title}</div>
+              <div class="alert-desc">${a.desc}</div>
+            </div>
+            <div class="alert-time">${a.time}</div>
+          </div>
+        `).join('');
+      };
 
-function toggleFilter(el,type){
-  document.querySelectorAll('.filter-chip').forEach(c=>c.classList.remove('active'));
-  el.classList.add('active');
-  filterMapByType(type);
-}
+      // Update Dashboard Alerts (Limit 4)
+      const dashContainer = document.getElementById('dashAlertsList');
+      if(dashContainer) dashContainer.innerHTML = generateHtml(state.alerts, 4);
 
-function addDemoPin(){
-  const types = Object.keys(typeColors);
-  const t = types[Math.floor(Math.random()*types.length)];
-  const lat = 8 + Math.random()*28, lng = 68 + Math.random()*22;
-  const a = {name:'Demo Unit '+Math.floor(Math.random()*99), type:t, location:'Field Deployed', resources:15, status:'standby', id:'AGY'+Math.floor(Math.random()*999), lat, lng};
-  agenciesGeo.push(a);
-  
-  if(fullLeafMap){
-    const m = L.marker([lat,lng],{icon:makeIcon(typeColors[t])}).addTo(fullLeafMap).bindPopup(`<div style="color:#333;"><b>${a.name}</b><br>${t}</div>`);
-    fullMarkers.push({marker:m, type:t});
-  }
-  
-  showNotif('New simulated agency added to map!');
-  renderAgencies();
-  renderDashboardAgencies();
-  updateGlobalStats();
-}
+      // Update Full Alerts Page
+      const fullContainer = document.getElementById('fullAlertsList');
+      if(fullContainer) fullContainer.innerHTML = generateHtml(filtered);
+    },
 
-function navigate(page, navItem){
-  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-  document.getElementById('page-'+page).classList.add('active');
-  if(navItem){
-    document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
-    navItem.classList.add('active');
-  }
-  const titles = {dashboard:'Dashboard',map:'Live Tracking Map',alerts:'Alerts & Notifications',agencies:'All Agencies',register:'Register Agency',resources:'Resource Inventory',messaging:'Inter-Agency Messaging',incidents:'Incident Management'};
-  document.getElementById('pageTitle').textContent = titles[page] || page;
-  
-  if(page === 'map'){ setTimeout(()=>{ initFullMap(); if(fullLeafMap) fullLeafMap.invalidateSize(); },100); }
-  if(page === 'dashboard'){ setTimeout(()=>{ initMiniMap(); if(miniLeafMap) miniLeafMap.invalidateSize(); },100); }
-}
+    renderAgenciesTable: function() {
+      const search = document.getElementById('searchAgencies')?.value.toLowerCase() || '';
+      const tbody = document.getElementById('agenciesTableBody');
+      const dashTbody = document.getElementById('dashboard-agencies');
+      
+      if(!tbody || !dashTbody) return;
 
-function renderDashboardAlerts(){
-  document.getElementById('dashboard-alerts').innerHTML = alerts.slice(0,3).map(a=>`<div class="alert-item"><div class="alert-icon ${a.type}">${a.icon}</div><div class="alert-content"><div class="alert-title">${a.title}</div><div class="alert-meta">${a.meta}</div></div><div class="alert-time">${a.time}</div></div>`).join('');
-}
+      const filtered = state.agencies.filter(a => 
+        a.name.toLowerCase().includes(search) || 
+        a.district.toLowerCase().includes(search) || 
+        a.id.toLowerCase().includes(search)
+      );
 
-function renderDashboardAgencies(){
-  const sm = {active:'badge-active',standby:'badge-standby',busy:'badge-busy'};
-  document.getElementById('dashboard-agencies').innerHTML = agenciesGeo.filter(a=>a.status==='active'||a.status==='busy').slice(0,4).map(a=>`<tr><td><strong>${a.name}</strong></td><td style="color:var(--text-muted)">${a.type}</td><td><span class="badge ${sm[a.status]}">${a.status.toUpperCase()}</span></td></tr>`).join('');
-}
+      const getTagClass = (status) => {
+        if(status === 'active') return 'tag-active';
+        if(status === 'standby') return 'tag-standby';
+        return 'tag-deployed';
+      };
 
-function renderAlerts(){
-  document.getElementById('critical-alerts').innerHTML = alerts.filter(a=>a.type==='critical').map(a=>`<div class="alert-item"><div class="alert-icon critical">${a.icon}</div><div class="alert-content"><div class="alert-title">${a.title}</div><div class="alert-meta">${a.meta}</div></div><div class="alert-time">${a.time}</div></div>`).join('');
-  document.getElementById('warn-alerts').innerHTML = alerts.filter(a=>a.type!=='critical').map(a=>`<div class="alert-item"><div class="alert-icon ${a.type}">${a.icon}</div><div class="alert-content"><div class="alert-title">${a.title}</div><div class="alert-meta">${a.meta}</div></div><div class="alert-time">${a.time}</div></div>`).join('');
-  updateGlobalStats();
-}
+      // Full Table
+      tbody.innerHTML = filtered.map(a => `
+        <tr>
+          <td>
+            <div style="font-weight: 600; color: #fff;">${a.name}</div>
+            <div style="font-family: var(--font-mono); font-size: 11px; color: var(--text-muted);">${a.id}</div>
+          </td>
+          <td><span style="color: ${state.config.typeColors[a.type]};"><i class="fa-solid ${state.config.typeIcons[a.type]}"></i> ${a.type}</span></td>
+          <td>${a.district}</td>
+          <td><i class="fa-solid fa-users text-muted"></i> ${a.resources} &nbsp; <i class="fa-solid fa-truck text-muted"></i> ${a.vehicles}</td>
+          <td><span class="tag ${getTagClass(a.status)}">${a.status}</span></td>
+          <td>
+            <button class="table-action-btn" title="View on Map" onclick="app.navigate('map'); app.mapControl.focusAgency(${a.lat}, ${a.lng})"><i class="fa-solid fa-location-dot"></i></button>
+            <button class="table-action-btn" title="Dispatch"><i class="fa-solid fa-paper-plane"></i></button>
+          </td>
+        </tr>
+      `).join('');
 
-function renderAgencies(filter=''){
-  const sm = {active:'badge-active',standby:'badge-standby',busy:'badge-busy'};
-  document.getElementById('agencies-table').innerHTML = agenciesGeo.filter(a=>a.name.toLowerCase().includes(filter.toLowerCase())||a.type.toLowerCase().includes(filter.toLowerCase())).map(a=>`<tr><td><strong>${a.name}</strong><br><span style="font-size:11px;color:var(--text-muted);font-family:var(--font-mono)">${a.id}</span></td><td>${a.type}</td><td>${a.location}</td><td>${a.resources}</td><td><span class="badge ${sm[a.status]}">${a.status.toUpperCase()}</span></td><td><button class="btn btn-ghost" style="font-size:11px;padding:4px 10px">View</button> <button class="btn btn-success" style="font-size:11px;padding:4px 10px">Request</button></td></tr>`).join('');
-}
+      // Dash Table (Top 5 Active/Deployed)
+      const dashData = state.agencies.filter(a => a.status !== 'standby').slice(0, 5);
+      dashTbody.innerHTML = dashData.map(a => `
+        <tr>
+          <td><div style="font-weight: 600; color: #fff;">${a.name}</div></td>
+          <td style="font-size: 12px; color: ${state.config.typeColors[a.type]};">${a.type}</td>
+          <td><span class="tag ${getTagClass(a.status)}">${a.status}</span></td>
+        </tr>
+      `).join('');
+    },
 
-function renderResources(){
-  document.getElementById('resource-grid').innerHTML = resources.map(r=>{
-    const p = Math.round((r.avail/r.total)*100);
-    return`<div class="resource-card"><div class="resource-icon">${r.icon}</div><div class="resource-name">${r.name}</div><div class="resource-count">${r.avail}<span style="font-size:14px;color:var(--text-muted)">/${r.total}</span></div><div class="resource-avail">${p}% available</div><div class="progress-bar"><div class="progress-fill" style="width:${p}%;background:${p>70?'var(--green)':p>40?'var(--yellow)':'var(--accent2)'}"></div></div></div>`;
-  }).join('');
-}
+    renderIncidentsTable: function() {
+      const tbody = document.getElementById('incidentsTableBody');
+      const dashTbody = document.getElementById('dashIncidentsTable');
+      
+      const getSevClass = (sev) => {
+        if(sev === 'Critical') return 'tag-critical';
+        if(sev === 'High') return 'tag-standby'; // using warning color
+        if(sev === 'Medium') return 'tag-deployed'; // info color
+        return 'tag-active';
+      };
 
-function renderMessaging(){
-  document.getElementById('channel-list').innerHTML = channels.map((c,i)=>`<div style="padding:10px;border-radius:8px;cursor:pointer;${i===0?'background:rgba(249,115,22,.1);':''}display:flex;align-items:center;gap:8px;margin-bottom:4px"><span>${c.icon}</span><div style="flex:1"><div style="font-size:13px;font-weight:500">${c.name}</div><div style="font-size:11px;color:var(--text-muted)">${c.count} agencies</div></div>${c.unread?`<span class="nav-badge">${c.unread}</span>`:''}</div>`).join('');
-  const mEl = document.getElementById('chat-messages');
-  mEl.innerHTML = messages.map(m=>`<div style="display:flex;gap:10px;align-items:flex-start"><div class="avatar" style="width:30px;height:30px;font-size:11px;flex-shrink:0">${m.sender.charAt(0)}</div><div><div style="display:flex;align-items:center;gap:8px;margin-bottom:4px"><span style="font-size:13px;font-weight:600">${m.sender}</span><span class="badge badge-pending" style="font-size:10px">${m.role}</span><span style="font-size:11px;color:var(--text-muted)">${m.time}</span></div><div style="background:var(--surface2);padding:8px 12px;border-radius:0 8px 8px 8px;font-size:13px;line-height:1.5">${m.msg}</div></div></div>`).join('');
-  mEl.scrollTop = mEl.scrollHeight;
-}
+      const getStatClass = (stat) => stat === 'active' ? 'tag-critical' : stat === 'monitoring' ? 'tag-standby' : 'tag-active';
 
-function renderIncidents(){
-  const sv = {Critical:'badge-busy',High:'badge-standby',Medium:'badge-pending',Low:'badge-active'};
-  const st = {active:'badge-busy',resolved:'badge-active',monitoring:'badge-standby'};
-  document.getElementById('incidents-table').innerHTML = incidents.map(i=>`<tr><td style="font-family:var(--font-mono);color:var(--accent3)">${i.id}</td><td><strong>${i.type}</strong></td><td>${i.location}</td><td><span class="badge ${sv[i.severity]}">${i.severity}</span></td><td>${i.agencies} units</td><td style="font-size:12px;color:var(--text-muted)">${i.time}</td><td><span class="badge ${st[i.status]}">${i.status.toUpperCase()}</span></td></tr>`).join('');
-  updateGlobalStats();
-}
+      const rowHtml = (i) => `
+        <tr>
+          <td style="font-family: var(--font-mono); color: var(--text-muted);">${i.id}</td>
+          <td>
+            <div style="font-weight: 600; color: #fff;"><i class="fa-solid fa-triangle-exclamation" style="color: var(--danger);"></i> ${i.type}</div>
+            <div style="font-size: 11px; color: var(--text-muted); max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${i.desc}</div>
+          </td>
+          <td>${i.location}</td>
+          <td><span class="tag ${getSevClass(i.severity)}">${i.severity}</span></td>
+          <td>${i.agenciesAssigned} Units</td>
+          <td><span class="tag ${getStatClass(i.status)}">${i.status}</span></td>
+          <td><button class="table-action-btn">Manage</button></td>
+        </tr>
+      `;
 
-function showModal(id){ document.getElementById('modal-'+id).classList.add('open'); }
-function closeModal(id){ document.getElementById('modal-'+id).classList.remove('open'); }
+      if(tbody) tbody.innerHTML = state.incidents.map(rowHtml).join('');
+      if(dashTbody) dashTbody.innerHTML = state.incidents.slice(0,4).map(i => `
+        <tr>
+          <td style="font-family: var(--font-mono);">${i.id}</td>
+          <td>${i.type}</td>
+          <td>${i.location}</td>
+          <td><span class="tag ${getSevClass(i.severity)}">${i.severity}</span></td>
+        </tr>
+      `).join('');
+    },
 
-function captureGPS(){
-  document.getElementById('gpsStatus').textContent = 'Capturing…';
-  setTimeout(()=>{
-    document.getElementById('gpsLat').value = '11.0168';
-    document.getElementById('gpsLng').value = '76.9558';
-    document.getElementById('gpsStatus').textContent = '✅ GPS Captured: Coimbatore, TN';
-    document.getElementById('gpsStatus').style.color = 'var(--green)';
-  }, 1200);
-}
+    renderResources: function() {
+      const grid = document.getElementById('resourcesGrid');
+      if(!grid) return;
 
-// Interactive Forms
-function submitRegistration(){
-  const name = document.getElementById('regName').value || 'New Agency';
-  const type = document.getElementById('regType').value;
-  const loc = document.getElementById('regLoc').value || 'Local HQ';
-  const personnel = parseInt(document.getElementById('regPersonnel').value) || 20;
-  const lat = parseFloat(document.getElementById('gpsLat').value) || (10 + Math.random()*15);
-  const lng = parseFloat(document.getElementById('gpsLng').value) || (70 + Math.random()*15);
-  
-  agenciesGeo.unshift({
-    id: 'AGY' + Math.floor(Math.random()*900 + 100),
-    name: name,
-    type: type,
-    location: loc,
-    resources: personnel,
-    status: 'standby',
-    lat: lat,
-    lng: lng
-  });
-  
-  document.querySelectorAll('#page-register input, #page-register textarea').forEach(el=>el.value='');
-  showNotif('Agency registered successfully!');
-  renderAgencies();
-  renderDashboardAgencies();
-  initMiniMap(); // Refresh minimap
-  updateGlobalStats();
-  navigate('agencies', document.querySelectorAll('.nav-item')[3]);
-}
+      grid.innerHTML = state.resources.map(r => {
+        const percentage = Math.round((r.available / r.total) * 100);
+        return `
+          <div class="res-card">
+            <div class="res-header">
+              <div class="res-icon" style="color: ${r.color}; background: ${r.color.replace(')', ', 0.15)').replace('var', 'rgba')}"><i class="fa-solid ${r.icon}"></i></div>
+              <div class="res-stats">
+                <div class="res-total">${r.available}</div>
+                <div class="res-label">Available</div>
+              </div>
+            </div>
+            <div class="res-name">${r.name}</div>
+            <div class="res-progress-container">
+              <div class="res-progress-bar" style="width: ${percentage}%; background: ${r.color};"></div>
+            </div>
+            <div class="res-meta">
+              <span>${percentage}% Capacity</span>
+              <span>Total: ${r.total}</span>
+            </div>
+          </div>
+        `;
+      }).join('');
+    },
 
-function submitIncident(){
-  const type = document.getElementById('incType').value;
-  const severity = document.getElementById('incSeverity').value;
-  const loc = document.getElementById('incLocation').value || 'Unknown Location';
-  const desc = document.getElementById('incDesc').value || 'Incident reported';
-  
-  const id = 'INC-' + Math.floor(Math.random()*900 + 100);
-  incidents.unshift({id: id, type: type, location: loc, severity: severity, agencies: 0, time: 'Just now', status: 'active'});
-  
-  let alertType = severity === 'Critical' || severity === 'High' ? 'critical' : 'warning';
-  let alertIcon = type === 'Fire' ? '🔥' : type === 'Flood' ? '🌊' : '⚡';
-  alerts.unshift({type: alertType, icon: alertIcon, title: `${type} — ${loc}`, meta: desc.substring(0,30)+'...', time: 'Just now'});
-  
-  closeModal('incident');
-  showNotif('🆘 SOS sent! All nearby agencies alerted.');
-  renderIncidents();
-  renderAlerts();
-  renderDashboardAlerts();
-}
+    renderChat: function() {
+      const container = document.getElementById('chatMessages');
+      if(!container) return;
 
-function submitNewAlert(){
-  const type = document.getElementById('alType').value;
-  const msg = document.getElementById('alMsg').value || 'New system alert broadcasted.';
-  alerts.unshift({type: 'info', icon: 'ℹ️', title: type + ' Broadcast', meta: msg, time: 'Just now'});
-  
-  closeModal('newalert');
-  showNotif('Alert successfully sent to agencies!');
-  renderAlerts();
-  renderDashboardAlerts();
-}
+      container.innerHTML = state.messages.map(m => {
+        const isOwn = m.sender === 'Admin Control';
+        return `
+          <div class="msg-wrapper ${isOwn ? 'own' : ''}">
+            <div class="msg-avatar">${m.sender.charAt(0)}</div>
+            <div class="msg-content">
+              <div class="msg-header">
+                <span class="msg-sender">${m.sender}</span>
+                <span class="tag tag-deployed" style="font-size: 8px; padding: 2px 6px;">${m.role}</span>
+                <span class="msg-time">${m.time}</span>
+              </div>
+              <div class="msg-bubble">${m.msg}</div>
+            </div>
+          </div>
+        `;
+      }).join('');
+      
+      container.scrollTop = container.scrollHeight;
+    }
+  };
 
-function submitResource(){
-  const type = document.getElementById('resType').value;
-  const qty = parseInt(document.getElementById('resQty').value) || 1;
-  
-  let res = resources.find(r => r.name === type);
-  if(res) {
-    res.total += qty;
-    res.avail += qty;
-  }
-  
-  closeModal('addresource');
-  showNotif(`Added ${qty} ${type} to inventory!`);
-  renderResources();
-}
+  // ==========================================
+  // CHART.JS CONTROLLERS
+  // ==========================================
+  const ChartsControl = {
+    init: function() {
+      // 1. Agency Type Donut Chart
+      const ctxAgency = document.getElementById('agencyTypeChart');
+      if(ctxAgency) {
+        // Aggregate data
+        const counts = {};
+        state.agencies.forEach(a => { counts[a.type] = (counts[a.type] || 0) + 1; });
+        
+        const labels = Object.keys(counts);
+        const data = Object.values(counts);
+        const bgColors = labels.map(l => state.config.typeColors[l]);
 
-function sendMsg(){
-  const inp = document.getElementById('msgInput');
-  const txt = inp.value.trim();
-  if(!txt) return;
-  messages.push({sender:'Gokul R', role:'ADMIN', msg:txt, time: new Date().toTimeString().slice(0,5)});
-  inp.value = '';
-  renderMessaging();
-}
+        if(state.charts.agencyType) state.charts.agencyType.destroy();
+        
+        state.charts.agencyType = new Chart(ctxAgency, {
+          type: 'doughnut',
+          data: { labels: labels, datasets: [{ data: data, backgroundColor: bgColors, borderWidth: 0 }] },
+          options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { 
+              legend: { position: 'right', labels: { color: '#9ca3af', font: { family: "'DM Sans', sans-serif", size: 11 } } }
+            },
+            cutout: '75%'
+          }
+        });
+      }
 
-let notifTimer;
-function showNotif(msg){
-  document.querySelectorAll('.notif').forEach(n=>n.remove());
-  const n = document.createElement('div');
-  n.className = 'notif';
-  n.innerHTML = `<div class="notif-title">🔔 Notification</div><div class="notif-body">${msg||'System update received.'}</div>`;
-  document.body.appendChild(n);
-  clearTimeout(notifTimer);
-  notifTimer = setTimeout(()=>n.remove(), 3500);
-}
+      // 2. Resource Bar Chart
+      const ctxRes = document.getElementById('resourceChart');
+      if(ctxRes) {
+        const labels = state.resources.map(r => r.name);
+        const availData = state.resources.map(r => r.available);
+        const usedData = state.resources.map(r => r.total - r.available);
 
-function filterAgencies(){
-  renderAgencies(document.getElementById('agencySearch').value);
-}
+        if(state.charts.resource) state.charts.resource.destroy();
 
-// Boot up renders
-renderDashboardAlerts();
-renderDashboardAgencies();
-renderAlerts();
-renderAgencies();
-renderResources();
-renderMessaging();
-renderIncidents();
-updateGlobalStats();
-setTimeout(initMiniMap, 200);
+        state.charts.resource = new Chart(ctxRes, {
+          type: 'bar',
+          data: {
+            labels: labels,
+            datasets: [
+              { label: 'Available', data: availData, backgroundColor: '#10b981' },
+              { label: 'Deployed/Used', data: usedData, backgroundColor: '#374151' }
+            ]
+          },
+          options: {
+            responsive: true, maintainAspectRatio: false,
+            scales: {
+              x: { stacked: true, grid: { display: false } },
+              y: { stacked: true, grid: { color: '#1e2d47' } }
+            },
+            plugins: {
+              legend: { labels: { color: '#9ca3af' } }
+            }
+          }
+        });
+      }
+    },
+    update: function() {
+      this.init(); // Simple re-init for this scale
+    }
+  };
+
+  // ==========================================
+  // LEAFLET MAP CONTROLLERS
+  // ==========================================
+  const MapControl = {
+    customIcon: function(color, iconClass) {
+      return L.divIcon({
+        className: 'custom-map-marker',
+        html: `
+          <div style="position: relative; display: flex; justify-content: center; align-items: center;">
+            <div style="width: 24px; height: 24px; background: ${color}; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 0 10px rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; z-index: 2;">
+              <i class="fa-solid ${iconClass}" style="color: #fff; font-size: 10px;"></i>
+            </div>
+            <div style="position: absolute; width: 36px; height: 36px; background: ${color}; border-radius: 50%; opacity: 0.3; animation: pulse 2s infinite; z-index: 1;"></div>
+          </div>
+        `,
+        iconSize: [24, 24], iconAnchor: [12, 12], popupAnchor: [0, -12]
+      });
+    },
+
+    incidentIcon: function() {
+      return L.divIcon({
+        className: 'incident-marker',
+        html: `<div style="font-size: 32px; filter: drop-shadow(0 4px 4px rgba(0,0,0,0.5)); animation: bounce 1s infinite alternate;">⚠️</div>`,
+        iconSize: [32, 32], iconAnchor: [16, 32], popupAnchor: [0, -32]
+      });
+    },
+
+    initMaps: function() {
+      const mapOptions = { zoomControl: false, attributionControl: false };
+      const tileLayer = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
+
+      // Mini Map
+      if(!state.maps.mini && document.getElementById('miniMap')) {
+        state.maps.mini = L.map('miniMap', { ...mapOptions, dragging: false, scrollWheelZoom: false }).setView([22.0, 79.0], 4);
+        L.tileLayer(tileLayer).addTo(state.maps.mini);
+      }
+
+      // Full Map
+      if(!state.maps.full && document.getElementById('fullMap')) {
+        state.maps.full = L.map('fullMap', { attributionControl: false }).setView([22.0, 79.0], 5);
+        
+        // Base Layers
+        const darkMap = L.tileLayer(tileLayer);
+        const satMap = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}');
+        
+        darkMap.addTo(state.maps.full);
+        L.control.layers({ "Dark Command View": darkMap, "Satellite Intel": satMap }).addTo(state.maps.full);
+        
+        // Custom Zoom Control
+        L.control.zoom({ position: 'bottomright' }).addTo(state.maps.full);
+      }
+
+      this.plotMarkers();
+    },
+
+    plotMarkers: function() {
+      // Clear existing
+      [state.maps.mini, state.maps.full].forEach(map => {
+        if(!map) return;
+        map.eachLayer(layer => {
+          if(layer instanceof L.Marker || layer instanceof L.Circle) map.removeLayer(layer);
+        });
+        // Re-add tile layer if wiped (hacky, but safe for this scope)
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png').addTo(map);
+      });
+
+      state.maps.markers.agencies = [];
+
+      // Plot Agencies
+      state.agencies.forEach(a => {
+        const color = state.config.typeColors[a.type] || '#fff';
+        const iconClass = state.config.typeIcons[a.type] || 'fa-building';
+        const icon = this.customIcon(color, iconClass);
+        
+        const popupContent = `
+          <div style="font-family: var(--font-body); color: #111827; min-width: 200px;">
+            <div style="font-family: var(--font-head); font-size: 18px; margin-bottom: 4px; border-bottom: 1px solid #e5e7eb; padding-bottom: 4px;">${a.name}</div>
+            <div style="font-size: 12px; color: #4b5563; margin-bottom: 8px;"><i class="fa-solid fa-location-dot"></i> ${a.district} District</div>
+            <div style="display: flex; gap: 4px; margin-bottom: 8px;">
+              <span style="background: ${color}22; color: ${color}; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold;">${a.type}</span>
+              <span style="background: #e5e7eb; color: #4b5563; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; text-transform: uppercase;">${a.status}</span>
+            </div>
+            <div style="font-size: 12px; color: #4b5563;"><i class="fa-solid fa-users"></i> ${a.resources} Personnel</div>
+            <button style="margin-top: 10px; width: 100%; padding: 6px; background: var(--border-light); color: #fff; border: none; border-radius: 4px; cursor: pointer;">Dispatch Orders</button>
+          </div>
+        `;
+
+        // Mini Map Plot
+        if(state.maps.mini) L.marker([a.lat, a.lng], {icon: icon}).addTo(state.maps.mini);
+
+        // Full Map Plot
+        if(state.maps.full) {
+          const marker = L.marker([a.lat, a.lng], {icon: icon}).bindPopup(popupContent);
+          marker.agencyData = a; // attach data for filtering
+          marker.addTo(state.maps.full);
+          state.maps.markers.agencies.push(marker);
+        }
+      });
+
+      // Plot Incidents (Full Map Only)
+      if(state.maps.full) {
+        state.incidents.forEach(inc => {
+          if(!inc.lat || !inc.lng) return; // skip if no coords
+          const color = inc.severity === 'Critical' ? '#ef4444' : '#f59e0b';
+          
+          L.circle([inc.lat, inc.lng], { color: color, fillColor: color, fillOpacity: 0.2, radius: 25000, weight: 2, dashArray: '5,5' }).addTo(state.maps.full);
+          
+          L.marker([inc.lat, inc.lng], {icon: this.incidentIcon()})
+            .bindPopup(`<div style="color: #111827;"><b>${inc.type} Emergency</b><br>${inc.location}<br><span style="color:${color};font-weight:bold;">${inc.severity} Severity</span></div>`)
+            .addTo(state.maps.full);
+        });
+      }
+    },
+
+    filterMap: function(type, btnElement) {
+      // UI Tab update
+      document.querySelectorAll('#page-map .filter-tab').forEach(el => el.classList.remove('active'));
+      btnElement.classList.add('active');
+
+      if(!state.maps.full) return;
+
+      // Filter Logic
+      state.maps.markers.agencies.forEach(marker => {
+        if(type === 'All' || marker.agencyData.type.includes(type)) {
+          if(!state.maps.full.hasLayer(marker)) state.maps.full.addLayer(marker);
+        } else {
+          if(state.maps.full.hasLayer(marker)) state.maps.full.removeLayer(marker);
+        }
+      });
+    },
+
+    focusAgency: function(lat, lng) {
+      if(state.maps.full) {
+        state.maps.full.setView([lat, lng], 10);
+      }
+    }
+  };
+
+  // ==========================================
+  // FORM & ACTION HANDLERS
+  // ==========================================
+  const Actions = {
+    setupFormListeners: function() {
+      // Prevent default form submits
+      document.querySelectorAll('form').forEach(f => {
+        f.addEventListener('submit', (e) => e.preventDefault());
+      });
+
+      // Register Agency Submit
+      document.getElementById('formRegisterAgency').addEventListener('submit', function() {
+        const name = document.getElementById('regName').value;
+        const type = document.getElementById('regType').value;
+        const dist = document.getElementById('regDistrict').value;
+        const per = document.getElementById('regPersonnel').value;
+        const lat = parseFloat(document.getElementById('regLat').value) || (10 + Math.random()*15);
+        const lng = parseFloat(document.getElementById('regLng').value) || (72 + Math.random()*15);
+
+        if(!name || !dist || !per) { UI.showToast('Error', 'Please fill required fields.', 'danger'); return; }
+
+        state.agencies.unshift({
+          id: `AGY-${Math.floor(Math.random()*9000)+1000}`,
+          name, type, district: dist, resources: per, vehicles: document.getElementById('regVehicles').value || 0,
+          status: 'active', lat, lng, registeredAt: new Date().toISOString()
+        });
+
+        UI.showToast('Success', `${name} has been integrated into the command grid.`);
+        app.closeModal('modalRegisterAgency');
+        this.reset();
+        document.getElementById('gpsStatusText').textContent = '';
+        
+        // Deep UI Update
+        UI.updateDashStats(); UI.renderAgenciesTable(); MapControl.plotMarkers(); ChartsControl.update();
+      });
+
+      // Report Incident Submit
+      document.getElementById('formReportIncident').addEventListener('submit', function() {
+        const type = document.getElementById('incType').value;
+        const sev = document.getElementById('incSeverity').value;
+        const loc = document.getElementById('incLocation').value;
+        const desc = document.getElementById('incDesc').value;
+        const lat = parseFloat(document.getElementById('incLat').value) || null;
+        const lng = parseFloat(document.getElementById('incLng').value) || null;
+
+        if(!loc || !desc) { UI.showToast('Error', 'Location and description required.', 'danger'); return; }
+
+        state.incidents.unshift({
+          id: `INC-${Math.floor(Math.random()*9000)+1000}`,
+          type, severity: sev, location: loc, desc, lat, lng, agenciesAssigned: 0, status: 'active', time: 'Just now'
+        });
+
+        // Auto-generate Alert
+        state.alerts.unshift({
+          id: `ALT-${Date.now()}`,
+          type: (sev === 'Critical' || sev === 'High') ? 'Critical' : 'Warning',
+          title: `SOS: ${type} at ${loc}`,
+          desc: desc.substring(0, 50) + '...',
+          time: 'Just now'
+        });
+
+        UI.showToast('Alert Broadcasted', 'All nearby units have been notified.', 'danger');
+        app.closeModal('modalReportIncident');
+        this.reset();
+        
+        UI.updateDashStats(); UI.renderIncidentsTable(); UI.renderAlerts(); MapControl.plotMarkers();
+      });
+
+      // New Alert Submit
+      document.getElementById('formNewAlert').addEventListener('submit', function() {
+        const type = document.getElementById('alertCategory').value;
+        const title = document.getElementById('alertTitle').value;
+        const msg = document.getElementById('alertMsg').value;
+
+        if(!title || !msg) return;
+
+        state.alerts.unshift({
+          id: `ALT-${Date.now()}`, type, title, desc: msg, time: 'Just now'
+        });
+
+        UI.showToast('Transmission Sent', 'Message broadcasted across secure channels.');
+        app.closeModal('modalNewAlert');
+        this.reset();
+        
+        UI.updateDashStats(); UI.renderAlerts();
+      });
+
+      // Chat Message Submit
+      document.getElementById('chatForm').addEventListener('submit', function() {
+        const input = document.getElementById('chatInput');
+        if(!input.value.trim()) return;
+
+        state.messages.push({
+          sender: 'Admin Control', role: 'COMMAND', msg: input.value, time: UI.formatTime()
+        });
+
+        input.value = '';
+        UI.renderChat();
+      });
+    },
+
+    simulateGPS: function() {
+      const btn = document.getElementById('btnCaptureGps');
+      const status = document.getElementById('gpsStatusText');
+      
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Communicating with Satellite...';
+      btn.disabled = true;
+
+      setTimeout(() => {
+        document.getElementById('regLat').value = (10 + Math.random()*15).toFixed(4);
+        document.getElementById('regLng').value = (72 + Math.random()*15).toFixed(4);
+        btn.innerHTML = '<i class="fa-solid fa-location-arrow"></i> Auto-Capture Current GPS';
+        btn.disabled = false;
+        status.textContent = 'Coordinates Locked ✓';
+      }, 1500);
+    }
+  };
+
+  // ==========================================
+  // PUBLIC API / EXPORTS
+  // ==========================================
+  return {
+    init: function() {
+      // 1. Generate Data
+      DataGenerator.generateAgencies(250); // Large dataset
+      DataGenerator.generateInitialIncidents();
+
+      // 2. Initial Renders
+      UI.updateDashStats();
+      UI.renderAlerts();
+      UI.renderAgenciesTable();
+      UI.renderIncidentsTable();
+      UI.renderResources();
+      UI.renderChat();
+      
+      // 3. Setup Listeners
+      Actions.setupFormListeners();
+      
+      // Hook GPS button
+      document.getElementById('btnCaptureGps').addEventListener('click', Actions.simulateGPS);
+
+      // 4. Init Maps & Charts (slight delay to ensure DOM is ready)
+      setTimeout(() => {
+        MapControl.initMaps();
+        ChartsControl.init();
+      }, 100);
+
+      console.log("RALCA Command Center Initialized. Subsystems nominal.");
+    },
+
+    navigate: function(pageId, navElement) {
+      // Hide all pages
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      
+      // Show target page
+      const target = document.getElementById('page-' + pageId);
+      if(target) target.classList.add('active');
+
+      // Update sidebar
+      if(navElement) {
+        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+        navElement.classList.add('active');
+      }
+
+      // Update Topbar Title
+      const titles = {
+        'dashboard': '<i class="fa-solid fa-chart-line" style="color: var(--primary);"></i> Dashboard Overview',
+        'map': '<i class="fa-solid fa-map-location-dot" style="color: var(--info);"></i> Tactical Map',
+        'alerts': '<i class="fa-solid fa-bell" style="color: var(--warning);"></i> Active Alerts',
+        'agencies': '<i class="fa-solid fa-building-shield" style="color: var(--success);"></i> Agency Registry',
+        'incidents': '<i class="fa-solid fa-bolt" style="color: var(--danger);"></i> Incident Logs',
+        'resources': '<i class="fa-solid fa-truck-medical" style="color: var(--primary);"></i> Resource Management',
+        'messaging': '<i class="fa-solid fa-walkie-talkie" style="color: var(--info);"></i> Communications Hub'
+      };
+      document.getElementById('topbarTitle').innerHTML = titles[pageId] || pageId;
+
+      // Re-trigger map renders if needed due to display:none issues
+      if(pageId === 'map' && state.maps.full) {
+        setTimeout(() => state.maps.full.invalidateSize(), 100);
+      }
+      if(pageId === 'dashboard' && state.maps.mini) {
+        setTimeout(() => state.maps.mini.invalidateSize(), 100);
+      }
+    },
+
+    showModal: function(modalId) {
+      const modal = document.getElementById(modalId);
+      if(modal) modal.classList.add('active');
+    },
+
+    closeModal: function(modalId) {
+      const modal = document.getElementById(modalId);
+      if(modal) {
+        modal.classList.remove('active');
+        // Reset form inside if exists
+        const form = modal.querySelector('form');
+        if(form) form.reset();
+        if(document.getElementById('gpsStatusText')) document.getElementById('gpsStatusText').textContent = '';
+      }
+    },
+
+    // Expose specific internal functions for HTML onclick handlers
+    uiControl: UI,
+    mapControl: MapControl,
+    dataControl: {
+      simulateRandomAgency: function() {
+        DataGenerator.generateAgencies(1);
+        UI.updateDashStats();
+        UI.renderAgenciesTable();
+        MapControl.plotMarkers();
+        ChartsControl.update();
+        UI.showToast('Unit Deployed', 'A new simulated unit has entered the grid.');
+      }
+    }
+  };
+
+})();
+
+// Bootstrap the application on load
+window.addEventListener('DOMContentLoaded', app.init);
+
 </script>
 </body>
 </html>
