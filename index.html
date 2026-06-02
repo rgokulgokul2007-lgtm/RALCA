@@ -827,12 +827,27 @@ const authenticAgencies = [
 ];
 
 let agencies = [];
-
-// Helper to assign correct coordinates if a user registers manually in the UI
+// Fallback helper in case of a typo or network error
 function getRandomCityCoords() {
-  const base = authenticAgencies[Math.floor(Math.random() * authenticAgencies.length)];
-  return { lat: base.lat, lng: base.lng };
+  const base = authenticAgencies[Math.floor(Math.random() * authenticAgencies.length)];
+  return { lat: base.lat + (Math.random() - 0.5) * 0.5, lng: base.lng + (Math.random() - 0.5) * 0.5 };
 }
+
+// LIVE GEOCODING API: Converts District text into real map coordinates
+async function getCoordinatesFromDistrict(districtName) {
+  try {
+    // Appends ", India" to ensure precise nationwide searching
+    const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(districtName + ', India')}`);
+    const data = await response.json();
+    if (data && data.length > 0) {
+      return { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
+    }
+  } catch(e) {
+    console.error("Geocoding failed", e);
+  }
+  return getRandomCityCoords(); // Uses fallback if city is completely misspelled
+}
+
 
 function loadAuthentic100Agencies() {
   const statusList = ['active', 'standby', 'deployed'];
@@ -932,12 +947,15 @@ function doLogin(role) {
   }
 }
 
-function doRegister() {
-  const n=document.getElementById('regAgName').value.trim();
-  const d=document.getElementById('regAgDistrict').value.trim();
-  if(!n||!d){showToast('Please fill required fields','error');return;}
-  const coords = getRandomCityCoords();
-  const newAg = {
+async function doRegister() {
+  const n=document.getElementById('regAgName').value.trim();
+  const d=document.getElementById('regAgDistrict').value.trim();
+  if(!n||!d){showToast('Please fill required fields','error');return;}
+  
+  showToast('Locating district on live map...', 'standby'); // Shows while searching
+  const coords = await getCoordinatesFromDistrict(d);
+  
+  const newAg = {
     id: Date.now(), name:n, type:document.getElementById('regAgType').value,
     district:d, contact:document.getElementById('regAgPhone').value,
     email:document.getElementById('regAgEmail').value,
@@ -1207,13 +1225,15 @@ function exportSingleAgency(id) {
   showToast('Exported agency details','success');
 }
 
-function registerAgencyFull() {
-  const n=document.getElementById('mRegName').value.trim();
-  const d=document.getElementById('mRegDistrict').value.trim();
-  if(!n||!d){showToast('Name and district are required','error');return;}
-  const coords = getRandomCityCoords();
-  
-  const newAg={
+async function registerAgencyFull() {
+  const n=document.getElementById('mRegName').value.trim();
+  const d=document.getElementById('mRegDistrict').value.trim();
+  if(!n||!d){showToast('Name and district are required','error');return;}
+  
+  showToast('Locating district on live map...', 'standby');
+  const coords = await getCoordinatesFromDistrict(d);
+  
+  const newAg={
     id:Date.now(), name:n, type:document.getElementById('mRegType').value,
     district:d, contact:document.getElementById('mRegPhone').value,
     email:document.getElementById('mRegEmail').value,
