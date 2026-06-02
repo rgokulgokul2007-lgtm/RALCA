@@ -292,9 +292,10 @@ body{font-family:var(--font-body);background:var(--gray-50);color:var(--gray-900
   <div class="login-right">
     <div class="login-right-title">Welcome Back</div>
     <div class="login-right-sub">Sign in to your agency portal</div>
-    <div class="tab-switcher">
-      <button class="tab-btn active" onclick="switchLoginTab('agency')">Agency Login</button>
-      <button class="tab-btn" onclick="switchLoginTab('admin')">Admin Login</button>
+   <div class="tab-switcher" style="display:grid; grid-template-columns: 1fr 1fr 1fr 1fr;">
+      <button class="tab-btn active" onclick="switchLoginTab('agency')">Agency</button>
+      <button class="tab-btn" onclick="switchLoginTab('admin')">Admin</button>
+      <button class="tab-btn" onclick="switchLoginTab('civilian')">Civilian</button>
       <button class="tab-btn" onclick="switchLoginTab('register')">Register</button>
     </div>
 
@@ -322,8 +323,22 @@ body{font-family:var(--font-body);background:var(--gray-50);color:var(--gray-900
         <input class="form-input" type="password" id="adPass" placeholder="••••••••" />
       </div>
       <button class="btn-login" onclick="doLogin('admin')">Sign In as Admin</button>
-      <div class="login-error" id="adError">Invalid credentials. Try admin@rescuenet.gov.in / admin123</div>
+<div class="login-error" id="adError">Invalid credentials. Try admin@rescuenet.gov.in / admin123</div>
       <div class="login-hint"><strong>Demo:</strong> admin@rescuenet.gov.in &nbsp;|&nbsp; admin123</div>
+    </div>
+
+    <div id="tabCivilian" style="display:none">
+      <div class="form-group">
+        <label class="form-label">Civilian Email</label>
+        <input class="form-input" id="civLogin" placeholder="citizen@email.com" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        <input class="form-input" type="password" id="civPass" placeholder="••••••••" />
+      </div>
+      <button class="btn-login" onclick="doLogin('civilian')">Sign In as Civilian</button>
+      <div class="login-error" id="civError">Invalid credentials. Try citizen@email.com / citizen123</div>
+      <div class="login-hint"><strong>Demo:</strong> citizen@email.com &nbsp;|&nbsp; citizen123<br><strong>Note:</strong> Civilians have view-only access.</div>
     </div>
 
     <div id="tabRegister" style="display:none">
@@ -916,37 +931,46 @@ let sidebarFilter = 'all';
 // ─── AUTH ────────────────────────────────────────────
 const CREDS = {
   agency:['demo@agency.com','rescue123'],
-  admin:['admin@rescuenet.gov.in','admin123']
+  admin:['admin@rescuenet.gov.in','admin123'],
+  civilian:['citizen@email.com','citizen123']
 };
 
 function switchLoginTab(tab) {
-  ['agency','admin','register'].forEach(t=>{
-    document.getElementById('tab'+t.charAt(0).toUpperCase()+t.slice(1)).style.display='none';
+  ['agency','admin','civilian','register'].forEach(t=>{
+    const el = document.getElementById('tab'+t.charAt(0).toUpperCase()+t.slice(1));
+    if(el) el.style.display='none';
   });
-  document.getElementById('tab'+tab.charAt(0).toUpperCase()+tab.slice(1)).style.display='block';
+  const activeTab = document.getElementById('tab'+tab.charAt(0).toUpperCase()+tab.slice(1));
+  if(activeTab) activeTab.style.display='block';
+  
   document.querySelectorAll('.tab-btn').forEach((b,i)=>{
-    b.classList.toggle('active', ['agency','admin','register'][i]===tab);
+    b.classList.toggle('active', ['agency','admin','civilian','register'][i]===tab);
   });
 }
 
 function doLogin(role) {
-  const email = document.getElementById(role==='agency'?'agLogin':'adLogin').value.trim();
-  const pass  = document.getElementById(role==='agency'?'agPass':'adPass').value;
-  const errEl = document.getElementById(role==='agency'?'agError':'adError');
+  const emailId = role==='agency'?'agLogin': role==='admin'?'adLogin':'civLogin';
+  const passId = role==='agency'?'agPass': role==='admin'?'adPass':'civPass';
+  const errId = role==='agency'?'agError': role==='admin'?'adError':'civError';
+  
+  const email = document.getElementById(emailId).value.trim();
+  const pass  = document.getElementById(passId).value;
+  const errEl = document.getElementById(errId);
   const [ce,cp] = CREDS[role];
+  
   if(email===ce && pass===cp) {
-    currentUser = {role, email, name: role==='admin'?'Admin Control':'Agency Officer'};
+    const roleNames = {'admin':'Admin Control', 'agency':'Agency Officer', 'civilian':'Civilian Observer'};
+    currentUser = {role, email, name: roleNames[role]};
     document.getElementById('userName').textContent = currentUser.name;
     document.getElementById('userAvatar').textContent = currentUser.name.split(' ').map(w=>w[0]).join('').slice(0,2);
     document.getElementById('loginScreen').classList.remove('active');
     document.getElementById('appScreen').classList.add('active');
-    errEl.style.display='none';
+    if(errEl) errEl.style.display='none';
     initApp();
   } else {
-    errEl.style.display='block';
+    if(errEl) errEl.style.display='block';
   }
 }
-
 async function doRegister() {
   const n=document.getElementById('regAgName').value.trim();
   const d=document.getElementById('regAgDistrict').value.trim();
