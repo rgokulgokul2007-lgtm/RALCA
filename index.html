@@ -613,16 +613,21 @@ body{font-family:var(--font-body);background:var(--gray-50);color:var(--gray-900
         </div>
       </div>
 
-      <div class="page" id="pageResources">
+ <div class="page" id="pageResources">
         <div class="page-header">
           <div>
             <div class="page-title">Resource Inventory</div>
             <div class="page-sub">Live tracking of equipment and personnel across all active agencies</div>
           </div>
-          <button class="btn-secondary" onclick="exportData('resources')">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
-            Export CSV
-          </button>
+          <div style="display:flex; gap:8px;">
+            <button class="btn-secondary" onclick="exportData('resources')">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+              Export CSV
+            </button>
+            <button class="btn-primary" id="appAddResourceBtn" style="background: var(--gold); color: var(--navy);" onclick="openAddResourceModal()">
+              + Add Resource
+            </button>
+          </div>
         </div>
         <div class="resources-layout" style="display:block; padding: 24px; overflow-y: auto;">
           <div class="res-summary-row" id="resSummaryRow"></div>
@@ -783,9 +788,52 @@ body{font-family:var(--font-body);background:var(--gray-50);color:var(--gray-900
       <label class="form-label">Special Equipment / Capabilities</label>
       <textarea class="form-textarea" id="mRegEquip" placeholder="e.g. Boats, Helicopters, Heavy Rescue Equipment..." style="min-height:60px"></textarea>
     </div>
-    <div class="modal-footer">
+   <div class="modal-footer">
       <button class="btn-cancel" onclick="closeModal('registerModal')">Cancel</button>
       <button class="btn-primary" onclick="registerAgencyFull()">Register Agency</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADD RESOURCE MODAL -->
+<div class="modal-overlay" id="addResourceModal">
+  <div class="modal-box" style="width: 480px;">
+    <div class="modal-header">
+      <div class="modal-title">🎒 Add Resource</div>
+      <button class="modal-close" onclick="closeModal('addResourceModal')">✕</button>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Resource Type</label>
+        <select class="form-select" id="rResType">
+          <option value="vehicles">Vehicles (Trucks/Engines)</option>
+          <option value="personnel">Personnel (Troops/Medics)</option>
+          <option value="boats">Rescue Boats</option>
+          <option value="medical">Medical Kits</option>
+          <option value="heavy">Heavy Equipment / Generators</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Quantity</label>
+        <input class="form-input" id="rResQty" type="number" placeholder="0" />
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Assign To Agency</label>
+        <select class="form-select" id="rResAgency"></select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Condition</label>
+        <select class="form-select" id="rResCondition">
+          <option value="operational">Operational</option>
+          <option value="standby">Standby / Reserve</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModal('addResourceModal')">Cancel</button>
+      <button class="btn-primary" style="background: var(--gold); color: var(--navy);" onclick="submitAddResource()">Add</button>
     </div>
   </div>
 </div>
@@ -1067,11 +1115,12 @@ function initApp() {
   // Hide management features from Civilians
   const appRegBtn = document.getElementById('appRegAgencyBtn');
   if(appRegBtn) appRegBtn.style.display = (currentUser && currentUser.role === 'civilian') ? 'none' : 'flex';
+  const appAddResBtn = document.getElementById('appAddResourceBtn');
+  if(appAddResBtn) appAddResBtn.style.display = (currentUser && currentUser.role === 'civilian') ? 'none' : 'flex';
   
   // Show SOS button ONLY for Civilians
   const sosBtn = document.getElementById('civilianSosBtn');
   if(sosBtn) sosBtn.style.display = (currentUser && currentUser.role === 'civilian') ? 'block' : 'none';
-  
   // Initialize Leaflet Map
   if (!leafletMap) {
     leafletMap = L.map('mainMapSvg').setView([22.5937, 78.9629], 5); // Center on India
@@ -1667,6 +1716,42 @@ function toggleLiveTracking(id) {
     window.firebaseSet(window.firebaseRef(window.db, 'agencies/' + id), ag);
   }, 3000);
   closeDrawer();
+}
+  // 5. RESOURCE MANAGEMENT LOGIC
+function openAddResourceModal() {
+  const sel = document.getElementById('rResAgency');
+  sel.innerHTML = agencies.map(a => `<option value="${a.id}">${a.name} (${a.type})</option>`).join('');
+  document.getElementById('rResQty').value = '';
+  openModal('addResourceModal');
+}
+
+function submitAddResource() {
+  const agId = parseInt(document.getElementById('rResAgency').value);
+  const type = document.getElementById('rResType').value;
+  const qty = parseInt(document.getElementById('rResQty').value);
+  
+  if(!qty || qty <= 0) { showToast('Please enter a valid quantity', 'error'); return; }
+  
+  const ag = agencies.find(a => a.id === agId);
+  if(!ag) return;
+
+  // Add the resources to the agency's Firebase record
+  if(type === 'vehicles' || type === 'boats') {
+    ag.vehicles = (ag.vehicles || 0) + qty;
+    if(type === 'boats' && !ag.equipment.toLowerCase().includes('boat')) ag.equipment += ', Rescue Boats';
+  } else if(type === 'personnel') {
+    ag.personnel = (ag.personnel || 0) + qty;
+  } else if(type === 'medical') {
+    if(!ag.equipment.toLowerCase().includes('medical')) ag.equipment += ', Medical Kits';
+  } else if(type === 'heavy') {
+    if(!ag.equipment.toLowerCase().includes('heavy') && !ag.equipment.toLowerCase().includes('generator')) ag.equipment += ', Heavy Equipment';
+  }
+
+  // Push to Firebase -> The UI grid will instantly auto-update!
+  window.firebaseSet(window.firebaseRef(window.db, 'agencies/' + agId), ag).then(() => {
+    showToast(`Successfully added ${qty} resources to ${ag.name}`, 'success');
+    closeModal('addResourceModal');
+  });
 }
 </script>
 </body>
