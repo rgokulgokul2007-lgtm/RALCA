@@ -1165,11 +1165,7 @@ function renderDashboard() {
   renderMapPins();
   renderRpIncidents();
 }
-function renderMapPins() {
-  if (!markersLayer) return;
-  markersLayer.clearLayers();
-  
-  const filterVal = document.getElementById('advFilterResource')?.value || 'all';
+
   
   agencies.forEach(ag => {
     let show = true;
