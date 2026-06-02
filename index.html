@@ -787,48 +787,58 @@ const TYPE_META = {
 const STATUS_COLOR = { active:'#1E8449', standby:'#E67E22', deployed:'#C0392B' };
 const STATUS_BG    = { active:'#D5F5E3', standby:'#FDEBD0', deployed:'#FADBD8' };
 
+// Helper to keep agencies strictly on Indian landmass
+function getLandCoords() {
+  const landNodes = [
+    [28.61, 77.20], [19.07, 72.87], [13.08, 80.27], [22.57, 88.36], [12.97, 77.59],
+    [17.38, 78.48], [23.02, 72.57], [26.91, 75.78], [21.17, 72.83], [18.52, 73.85],
+    [26.84, 80.94], [26.14, 91.73], [23.25, 77.41], [25.59, 85.13], [31.10, 77.16],
+    [20.30, 85.82], [21.15, 79.08], [22.30, 70.80], [15.31, 75.71], [11.01, 76.95],
+    [30.73, 76.77], [24.58, 73.68], [27.17, 78.00], [28.40, 77.31], [16.50, 80.64]
+  ];
+  const base = landNodes[Math.floor(Math.random() * landNodes.length)];
+  return { lat: base[0] + (Math.random() - 0.5) * 1.5, lng: base[1] + (Math.random() - 0.5) * 1.5 };
+}
+
 // We will programmatically generate the 100 Agencies requested
 const baseAgenciesPattern = [
-  { cat: 'NDRF Battalion', type: 'Disaster Management' },
-  { cat: 'SDRF', type: 'Disaster Management' },
-  { cat: 'Fire & Rescue', type: 'Fire & Rescue' },
-  { cat: 'Civil Defence', type: 'Police / Security' },
-  { cat: 'Home Guards', type: 'Police / Security' },
-  { cat: 'Red Cross', type: 'Medical / EMS' },
-  { cat: 'Medical Response', type: 'Medical / EMS' },
-  { cat: 'Coast Guard Unit', type: 'Coast Guard' }
+  { cat: 'NDRF Battalion', type: 'Disaster Management' },
+  { cat: 'SDRF', type: 'Disaster Management' },
+  { cat: 'Fire & Rescue', type: 'Fire & Rescue' },
+  { cat: 'Civil Defence', type: 'Police / Security' },
+  { cat: 'Home Guards', type: 'Police / Security' },
+  { cat: 'Red Cross', type: 'Medical / EMS' },
+  { cat: 'Medical Response', type: 'Medical / EMS' },
+  { cat: 'Coast Guard Unit', type: 'Coast Guard' }
 ];
 
 let agencies = [];
 
 function generate100Agencies() {
-  const statusOptions = ['active', 'standby', 'deployed'];
-  for(let i=1; i<=100; i++) {
-    let base = baseAgenciesPattern[(i-1) % 8];
-    // Random placement within India SVG constraints (roughly)
-    let randomX = 140 + Math.random() * 200;
-    let randomY = 100 + Math.random() * 250;
-    
-    agencies.push({
-      id: i,
-      name: `${base.cat} Agency ${i}`,
-      type: base.type,
-      district: `Regional Office ${i}, India`,
-      contact: `+91-90000000${i.toString().padStart(2, '0')}`,
-      email: `agency${i}@rescuenet.gov.in`,
-      personnel: 30 + Math.floor(Math.random() * 80),
-      vehicles: 3 + Math.floor(Math.random() * 12),
-      status: statusOptions[Math.floor(Math.random() * 3)],
-      equipment: 'Rescue boats, ambulances, rescue vehicles, communication equipment',
-      registered: '2024-01-01',
-      x: randomX,
-      y: randomY
-    });
-  }
+  const statusOptions = ['active', 'standby', 'deployed'];
+  for(let i=1; i<=100; i++) {
+    let base = baseAgenciesPattern[(i-1) % 8];
+    const coords = getLandCoords();
+    
+    agencies.push({
+      id: i,
+      name: `${base.cat} Agency ${i}`,
+      type: base.type,
+      district: `Regional Office ${i}, India`,
+      contact: `+91-90000000${i.toString().padStart(2, '0')}`,
+      email: `agency${i}@rescuenet.gov.in`,
+      personnel: 30 + Math.floor(Math.random() * 80),
+      vehicles: 3 + Math.floor(Math.random() * 12),
+      status: statusOptions[Math.floor(Math.random() * 3)],
+      equipment: 'Rescue boats, ambulances, rescue vehicles, communication equipment',
+      registered: '2024-01-01',
+      lat: coords.lat,
+      lng: coords.lng
+    });
+  }
 }
 // Run the Generator immediately to set the Data array
 generate100Agencies();
-
 
 let incidents = [
   {id:1,title:'Major Flooding — Regional Office 4',type:'Flood',severity:'high',district:'Regional Office 4',area:'Zone 4',desc:'Severe flooding affecting residents. Immediate evacuation needed.',affected:3200,agency:'Civil Defence Agency 4',status:'active',time:'2 hrs ago',reporter:'Admin'},
@@ -875,25 +885,28 @@ function doLogin(role) {
 }
 
 function doRegister() {
-  const n=document.getElementById('regAgName').value.trim();
-  const d=document.getElementById('regAgDistrict').value.trim();
-  if(!n||!d){showToast('Please fill required fields','error');return;}
-  const newAg = {
-    id: Date.now(), name:n, type:document.getElementById('regAgType').value,
-    district:d, contact:document.getElementById('regAgPhone').value,
-    email:document.getElementById('regAgEmail').value,
-    personnel:30, vehicles:4, status:'standby', equipment:'Standard kit',
-    registered:new Date().toISOString().slice(0,10),
-    x:140+Math.random()*200, y:100+Math.random()*250
-  };
-  agencies.push(newAg);
-  showToast('Agency registered! Please wait for approval.','success');
-  currentUser={role:'agency',email:newAg.email||'new@agency.com',name:newAg.name};
-  document.getElementById('userName').textContent=newAg.name.slice(0,20);
-  document.getElementById('userAvatar').textContent=getInitials(newAg.name);
-  document.getElementById('loginScreen').classList.remove('active');
-  document.getElementById('appScreen').classList.add('active');
-  initApp();
+  const n=document.getElementById('regAgName').value.trim();
+  const d=document.getElementById('regAgDistrict').value.trim();
+  if(!n||!d){showToast('Please fill required fields','error');return;}
+  const coords = getLandCoords();
+  const newAg = {
+    id: Date.now(), name:n, type:document.getElementById('regAgType').value,
+    district:d, contact:document.getElementById('regAgPhone').value,
+    email:document.getElementById('regAgEmail').value,
+    personnel:30, vehicles:4, status:'standby', equipment:'Standard kit',
+    registered:new Date().toISOString().slice(0,10),
+    lat: coords.lat, lng: coords.lng
+  };
+
+  window.firebaseSet(window.firebaseRef(window.db, 'agencies/' + newAg.id), newAg).then(() => {
+    showToast('Agency registered! Please wait for approval.','success');
+    currentUser={role:'agency',email:newAg.email||'new@agency.com',name:newAg.name};
+    document.getElementById('userName').textContent=newAg.name.slice(0,20);
+    document.getElementById('userAvatar').textContent=getInitials(newAg.name);
+    document.getElementById('loginScreen').classList.remove('active');
+    document.getElementById('appScreen').classList.add('active');
+    initApp();
+  });
 }
 
 function doLogout() {
@@ -1007,25 +1020,31 @@ function renderDashboard() {
   renderRpIncidents();
 }
 function renderMapPins() {
-  if (!markersLayer) return;
-  markersLayer.clearLayers();
-  
-  agencies.forEach(ag => {
-    // Generate mock India coordinates if missing
-    const lat = ag.lat || (10 + Math.random() * 20); 
-    const lng = ag.lng || (70 + Math.random() * 20);
+  if (!markersLayer) return;
+  markersLayer.clearLayers();
+  
+  agencies.forEach(ag => {
+    let lat = ag.lat;
+    let lng = ag.lng;
     
-    const marker = L.circleMarker([lat, lng], {
-      color: STATUS_COLOR[ag.status],
-      fillColor: STATUS_COLOR[ag.status],
-      fillOpacity: 0.9,
-      radius: 6,
-      weight: 2
-    }).addTo(markersLayer);
-    
-    marker.bindTooltip(`<b>${ag.name}</b><br>${ag.type}`, { direction: 'top' });
-    marker.on('click', () => openAgencyDrawer(ag.id));
-  });
+    // Safely assign land coordinates if missing or broken
+    if (!lat || !lng || lat < 5) {
+      const safeCoords = getLandCoords();
+      lat = safeCoords.lat;
+      lng = safeCoords.lng;
+    }
+    
+    const marker = L.circleMarker([lat, lng], {
+      color: STATUS_COLOR[ag.status],
+      fillColor: STATUS_COLOR[ag.status],
+      fillOpacity: 0.9,
+      radius: 6,
+      weight: 2
+    }).addTo(markersLayer);
+    
+    marker.bindTooltip(`<b>${ag.name}</b><br>${ag.type}`, { direction: 'top' });
+    marker.on('click', () => openAgencyDrawer(ag.id));
+  });
 }
 function switchRpTab(tab,el) {
   document.querySelectorAll('.rp-tab').forEach(t=>t.classList.remove('active'));
@@ -1146,32 +1165,33 @@ function exportSingleAgency(id) {
 }
 
 function registerAgencyFull() {
-  const n=document.getElementById('mRegName').value.trim();
-  const d=document.getElementById('mRegDistrict').value.trim();
-  if(!n||!d){showToast('Name and district are required','error');return;}
-  
-  const newAg={
-    id:Date.now(), name:n, type:document.getElementById('mRegType').value,
-    district:d, contact:document.getElementById('mRegPhone').value,
-    email:document.getElementById('mRegEmail').value,
-    personnel:parseInt(document.getElementById('mRegPersonnel').value)||20,
-    vehicles:parseInt(document.getElementById('mRegVehicles').value)||4,
-    status:document.getElementById('mRegStatus').value,
-    equipment:document.getElementById('mRegEquip').value||'Standard kit',
-    registered:new Date().toISOString().slice(0,10),
-    lat: 10 + Math.random() * 20, 
-    lng: 70 + Math.random() * 20
-  };
+  const n=document.getElementById('mRegName').value.trim();
+  const d=document.getElementById('mRegDistrict').value.trim();
+  if(!n||!d){showToast('Name and district are required','error');return;}
+  const coords = getLandCoords();
+  
+  const newAg={
+    id:Date.now(), name:n, type:document.getElementById('mRegType').value,
+    district:d, contact:document.getElementById('mRegPhone').value,
+    email:document.getElementById('mRegEmail').value,
+    personnel:parseInt(document.getElementById('mRegPersonnel').value)||20,
+    vehicles:parseInt(document.getElementById('mRegVehicles').value)||4,
+    status:document.getElementById('mRegStatus').value,
+    equipment:document.getElementById('mRegEquip').value||'Standard kit',
+    registered:new Date().toISOString().slice(0,10),
+    lat: coords.lat, 
+    lng: coords.lng
+  };
 
-  // Push directly to Firebase - map and UI update automatically
-  window.firebaseSet(window.firebaseRef(window.db, 'agencies/' + newAg.id), newAg)
-    .then(() => {
-      closeModal('registerModal');
-      showToast('Agency registered successfully!','success');
-      ['mRegName','mRegDistrict','mRegPhone','mRegEmail','mRegPersonnel','mRegVehicles','mRegEquip'].forEach(id=>{
-        const el=document.getElementById(id); if(el) el.value='';
-      });
-    });
+  // Push directly to Firebase - map and UI update automatically
+  window.firebaseSet(window.firebaseRef(window.db, 'agencies/' + newAg.id), newAg)
+    .then(() => {
+      closeModal('registerModal');
+      showToast('Agency registered successfully!','success');
+      ['mRegName','mRegDistrict','mRegPhone','mRegEmail','mRegPersonnel','mRegVehicles','mRegEquip'].forEach(id=>{
+        const el=document.getElementById(id); if(el) el.value='';
+      });
+    });
 }
 
 // ─── INCIDENTS ───────────────────────────────────────
