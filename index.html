@@ -778,16 +778,28 @@ body{font-family:var(--font-body);background:var(--gray-50);color:var(--gray-900
   import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-analytics.js";
   import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
 
-  const firebaseConfig = {
-    apiKey: "AIzaSyBTHohDW-10f7EolWpW8CUlfLCIJNDZmF8",
-    authDomain: "ralca-59e0a.firebaseapp.com",
-    databaseURL: "https://ralca-59e0a-default-rtdb.asia-southeast1.firebasedatabase.app",
-    projectId: "ralca-59e0a",
-    storageBucket: "ralca-59e0a.firebasestorage.app",
-    messagingSenderId: "48983338103",
-    appId: "1:48983338103:web:56e63507811b1c0cca6a72",
-    measurementId: "G-ZTJ9HMKVYJ"
-  };
+// Import the functions you need from the SDKs you need
+import { initializeApp } from "firebase/app";
+import { getAnalytics } from "firebase/analytics";
+// TODO: Add SDKs for Firebase products that you want to use
+// https://firebase.google.com/docs/web/setup#available-libraries
+
+// Your web app's Firebase configuration
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+const firebaseConfig = {
+  apiKey: "AIzaSyBTHohDW-10f7EolWpW8CUlfLCIJNDZmF8",
+  authDomain: "ralca-59e0a.firebaseapp.com",
+  databaseURL: "https://ralca-59e0a-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "ralca-59e0a",
+  storageBucket: "ralca-59e0a.firebasestorage.app",
+  messagingSenderId: "48983338103",
+  appId: "1:48983338103:web:56e63507811b1c0cca6a72",
+  measurementId: "G-ZTJ9HMKVYJ"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const analytics = getAnalytics(app);
 
   const app = initializeApp(firebaseConfig);
   const analytics = getAnalytics(app);
@@ -1295,24 +1307,5 @@ function exportData(type) {
 }
 function generateFullReport(){exportData('full')}
 </script>
-
-<!-- APP3 FEATURE INTEGRATION BLOCK -->
-<div id="app3Features" style="display:none">
-<h2>APP3 Integrated Modules</h2>
-<ul>
-<li>Live GIS Map</li>
-<li>Agency GPS Tracking</li>
-<li>SOS Emergency System</li>
-<li>Alert Center</li>
-<li>Agency Registration</li>
-<li>Resource Inventory</li>
-<li>Incident Management</li>
-<li>Messaging</li>
-<li>Resource Deployment Tracking</li>
-<li>Status Monitoring</li>
-</ul>
-</div>
-<!-- END APP3 FEATURE INTEGRATION BLOCK -->
-
 </body>
 </html>
