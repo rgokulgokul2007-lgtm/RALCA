@@ -380,7 +380,7 @@ body{font-family:var(--font-body);background:var(--gray-50);color:var(--gray-900
         <label class="form-label">Full Name / Organization Name</label>
         <input class="form-input" id="regAgName" placeholder="Your name or agency name" />
       </div>
-<div class="form-group">
+      <div class="form-group">
         <label class="form-label">Email</label>
         <input class="form-input" id="regAgEmail" placeholder="your@email.com" />
       </div>
@@ -491,7 +491,7 @@ body{font-family:var(--font-body);background:var(--gray-50);color:var(--gray-900
             <div class="stat-sub">Total on ground</div>
           </div>
         </div>
-<div class="dashboard-body">
+        <div class="dashboard-body">
           <div class="map-wrap">
             <div class="map-overlay-top">
               <select class="filter-select" id="advFilterResource" onchange="renderMapPins()">
@@ -617,7 +617,7 @@ body{font-family:var(--font-body);background:var(--gray-50);color:var(--gray-900
         </div>
       </div>
 
- <div class="page" id="pageResources">
+      <div class="page" id="pageResources">
         <div class="page-header">
           <div>
             <div class="page-title">Resource Inventory</div>
@@ -635,7 +635,6 @@ body{font-family:var(--font-body);background:var(--gray-50);color:var(--gray-900
         </div>
         <div class="resources-layout" style="display:block; padding: 24px; overflow-y: auto;">
           <div class="res-summary-row" id="resSummaryRow"></div>
-          
           <div class="res-grid" id="resGrid"></div>
         </div>
       </div>
@@ -871,7 +870,6 @@ body{font-family:var(--font-body);background:var(--gray-50);color:var(--gray-900
   const db = getDatabase(app);
   const auth = getAuth(app);
   
-  // Expose methods globally for the standard script below
   window.db = db;
   window.auth = auth;
   window.firebaseRef = ref;
@@ -899,9 +897,7 @@ const TYPE_META = {
 const STATUS_COLOR = { active:'#1E8449', standby:'#E67E22', deployed:'#C0392B' };
 const STATUS_BG    = { active:'#D5F5E3', standby:'#FDEBD0', deployed:'#FADBD8' };
 
-// ─── 100% AUTHENTIC NDRF & DISASTER RESPONSE DATA ────────────────────────
 const authenticAgencies = [
-  // Core NDRF Battalions
   { name: "1st Battalion NDRF", type: "Disaster Management", district: "Guwahati, Assam", lat: 26.1158, lng: 91.6024, contact: "0361-2840284", email: "assam01-ndrf@nic.in", equip: "CSSR, Medical First Response, Flood Rescue" },
   { name: "2nd Battalion NDRF", type: "Disaster Management", district: "Nadia, West Bengal", lat: 22.9556, lng: 88.5333, contact: "033-25875032", email: "wb02-ndrf@nic.in", equip: "CSSR, Flood Rescue, Deep Diving" },
   { name: "3rd Battalion NDRF", type: "Disaster Management", district: "Cuttack, Odisha", lat: 20.4371, lng: 85.7360, contact: "0671-2879711", email: "ori03-ndrf@nic.in", equip: "Cyclone Response, CSSR, Animal Rescue" },
@@ -918,102 +914,59 @@ const authenticAgencies = [
   { name: "14th Battalion NDRF", type: "Disaster Management", district: "Kangra, Himachal Pradesh", lat: 32.2982, lng: 75.8906, contact: "01893-292602", email: "co14.ndrf@gov.in", equip: "Mountain Rescue, Forest Fire" },
   { name: "15th Battalion NDRF", type: "Disaster Management", district: "Udhamsingh Nagar, Uttarakhand", lat: 29.0345, lng: 79.2559, contact: "05949-231198", email: "co15.ndrf@gov.in", equip: "Mountain Rescue, CSSR" },
   { name: "16th Battalion NDRF", type: "Disaster Management", district: "Dwarka, New Delhi", lat: 28.5833, lng: 77.0667, contact: "011-20892672", email: "co16.ndrf@gov.in", equip: "Urban Search & Rescue, CBRN" },
-
-  // Coast Guard Regional Headquarters
   { name: "Coast Guard RHQ West", type: "Coast Guard", district: "Mumbai, MH", lat: 19.0166, lng: 72.8166, contact: "022-24371932", email: "rhq-west@indiancoastguard.nic.in", equip: "Patrol Vessels, Interceptor Boats" },
   { name: "Coast Guard RHQ East", type: "Coast Guard", district: "Chennai, TN", lat: 13.0900, lng: 80.2800, contact: "044-23460405", email: "rhq-east@indiancoastguard.nic.in", equip: "Offshore Patrol, Dornier Aircraft" },
   { name: "Coast Guard RHQ NE", type: "Coast Guard", district: "Kolkata, WB", lat: 22.5726, lng: 88.3639, contact: "033-23204907", email: "rhq-ne@indiancoastguard.nic.in", equip: "Hovercraft, Search & Rescue" },
   { name: "Coast Guard RHQ NW", type: "Coast Guard", district: "Gandhinagar, GJ", lat: 23.2156, lng: 72.6369, contact: "079-23243296", email: "rhq-nw@indiancoastguard.nic.in", equip: "Pollution Control, Rescue Vessels" },
-  
-  // Major Fire Services
   { name: "Delhi Fire Services HQ", type: "Fire & Rescue", district: "New Delhi, DL", lat: 28.6324, lng: 77.2187, contact: "101", email: "delhifire@nic.in", equip: "Hydraulic Platforms, Turn-table Ladders" },
   { name: "TN Fire & Rescue HQ", type: "Fire & Rescue", district: "Chennai, TN", lat: 13.0674, lng: 80.2600, contact: "044-28512500", email: "tnfire@nic.in", equip: "Fire Tenders, Rescue Vehicles" },
   { name: "Mumbai Fire Brigade HQ", type: "Fire & Rescue", district: "Mumbai, MH", lat: 19.0144, lng: 72.8278, contact: "101", email: "mfb@mcgm.gov.in", equip: "Hazmat Vehicles, Aerial Ladders" },
-  
-  // Major EMS & Medical Response
   { name: "AIIMS Trauma Center EMS", type: "Medical / EMS", district: "New Delhi, DL", lat: 28.5672, lng: 77.2014, contact: "011-26588500", email: "admin@aiims.edu", equip: "ALS Ambulances, Trauma Kits" },
   { name: "GVK EMRI 108 HQ", type: "Medical / EMS", district: "Hyderabad, TS", lat: 17.2917, lng: 78.4357, contact: "108", email: "info@emri.in", equip: "Advanced Life Support, Neonatal" },
-  
-  // State Disaster Management Authorities
   { name: "GSDMA HQ", type: "Disaster Management", district: "Gandhinagar, GJ", lat: 23.2156, lng: 72.6369, contact: "079-23259220", email: "info@gsdma.org", equip: "Emergency Operations Center" },
   { name: "OSDMA HQ", type: "Disaster Management", district: "Bhubaneswar, OD", lat: 20.2961, lng: 85.8245, contact: "0674-2395398", email: "osdma@osdma.org", equip: "Cyclone Shelters, Comm Gear" },
   { name: "TNSDMA HQ", type: "Disaster Management", district: "Chennai, TN", lat: 13.0674, lng: 80.2800, contact: "1070", email: "tnsdma@tn.gov.in", equip: "Flood Relief, Evacuation Boats" }
 ];
 
 let agencies = [];
-// Fallback helper in case of a typo or network error
+
 function getRandomCityCoords() {
   const base = authenticAgencies[Math.floor(Math.random() * authenticAgencies.length)];
   return { lat: base.lat + (Math.random() - 0.5) * 0.5, lng: base.lng + (Math.random() - 0.5) * 0.5 };
 }
 
-// LIVE GEOCODING API: Converts District text into real map coordinates
 async function getCoordinatesFromDistrict(districtName) {
   try {
-    // Appends ", India" to ensure precise nationwide searching
     const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(districtName + ', India')}`);
     const data = await response.json();
-    if (data && data.length > 0) {
-      return { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
-    }
-  } catch(e) {
-    console.error("Geocoding failed", e);
-  }
-  return getRandomCityCoords(); // Uses fallback if city is completely misspelled
+    if (data && data.length > 0) return { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
+  } catch(e) { console.error("Geocoding failed", e); }
+  return getRandomCityCoords();
 }
 
 function loadAuthentic100Agencies() {
   const statusList = ['active', 'standby', 'deployed'];
-  
-  // 1. Load the 28 Real Core Headquarters first
   for (let i = 0; i < authenticAgencies.length; i++) {
     let realAg = authenticAgencies[i];
     agencies.push({
-      id: i + 1,
-      name: realAg.name,
-      type: realAg.type,
-      district: realAg.district,
-      contact: realAg.contact,
-      email: realAg.email,
-      personnel: 150 + Math.floor(Math.random() * 100),
-      vehicles: 12 + Math.floor(Math.random() * 10),
-      status: statusList[i % 3],
-      equipment: realAg.equip,
-      registered: '2010-01-01',
-      lat: realAg.lat,
-      lng: realAg.lng
+      id: i + 1, name: realAg.name, type: realAg.type, district: realAg.district, contact: realAg.contact,
+      email: realAg.email, personnel: 150 + Math.floor(Math.random() * 100), vehicles: 12 + Math.floor(Math.random() * 10),
+      status: statusList[i % 3], equipment: realAg.equip, registered: '2010-01-01', lat: realAg.lat, lng: realAg.lng
     });
   }
-
-  // 2. Map the 72 Regional Response Centres (RRCs) to fill out the 100
   let currentId = authenticAgencies.length + 1;
   for (let i = 0; i < (100 - authenticAgencies.length); i++) {
     let parentHQ = authenticAgencies[i % authenticAgencies.length];
-    
-    // Spread the substations geographically around their HQ
-    let latOffset = (Math.random() - 0.5) * 1.5;
-    let lngOffset = (Math.random() - 0.5) * 1.5;
-
     agencies.push({
-      id: currentId,
-      name: `${parentHQ.district.split(',')[0]} Field Unit ${currentId}`,
-      type: parentHQ.type,
-      district: `${parentHQ.district.split(',')[0]} Sub-Division`,
-      contact: parentHQ.contact.slice(0, -2) + Math.floor(10 + Math.random() * 89).toString(),
-      email: `fieldunit${currentId}@${parentHQ.email.split('@')[1]}`,
-      personnel: 30 + Math.floor(Math.random() * 40),
-      vehicles: 3 + Math.floor(Math.random() * 5),
-      status: statusList[i % 3],
-      equipment: parentHQ.equip,
-      registered: '2024-01-01',
-      lat: parentHQ.lat + latOffset,
-      lng: parentHQ.lng + lngOffset
+      id: currentId, name: `${parentHQ.district.split(',')[0]} Field Unit ${currentId}`, type: parentHQ.type,
+      district: `${parentHQ.district.split(',')[0]} Sub-Division`, contact: parentHQ.contact.slice(0, -2) + Math.floor(10 + Math.random() * 89).toString(),
+      email: `fieldunit${currentId}@${parentHQ.email.split('@')[1]}`, personnel: 30 + Math.floor(Math.random() * 40),
+      vehicles: 3 + Math.floor(Math.random() * 5), status: statusList[i % 3], equipment: parentHQ.equip,
+      registered: '2024-01-01', lat: parentHQ.lat + (Math.random() - 0.5) * 1.5, lng: parentHQ.lng + (Math.random() - 0.5) * 1.5
     });
     currentId++;
   }
 }
-
-// Execute on load
 loadAuthentic100Agencies();
 
 let incidents = [
@@ -1081,7 +1034,7 @@ async function doLogin(role) {
     if (snapshot.exists()) {
       const userData = snapshot.val();
       if(userData.role !== role) {
-         showToast(`Error: Please log in using the ${userData.role.toUpperCase()} tab!`, 'error');
+         alert(`Error: Please log in using the ${userData.role.toUpperCase()} tab!`);
          return;
       }
       currentUser = { role: userData.role, email: email, name: userData.name };
@@ -1095,7 +1048,7 @@ async function doLogin(role) {
       if(errEl) errEl.style.display='block';
     }
   } catch (error) {
-    showToast('Login failed. Check credentials.', 'error');
+    alert('Login failed: ' + error.message);
     if(errEl) errEl.style.display='block';
   }
 }
@@ -1107,7 +1060,8 @@ async function doRegister() {
   const email = document.getElementById('regAgEmail').value.trim();
   const pass = document.getElementById('regAgPass').value;
 
-  if(!n||!d||!email||!pass){showToast('Please fill all fields','error');return;}
+  if(!n||!d||!email||!pass) { alert('Please fill all fields'); return; }
+  if(pass.length < 6) { alert('Firebase requires a password of at least 6 characters!'); return; }
   
   try {
     showToast('Registering user in Firebase...', 'standby');
@@ -1155,121 +1109,8 @@ async function doRegister() {
     initApp();
     
   } catch (error) {
-    if(error.code === 'auth/email-already-in-use') {
-       showToast('Email is already registered!', 'error');
-    } else if (error.code === 'auth/weak-password') {
-       showToast('Password must be at least 6 characters.', 'error');
-    } else {
-       showToast('Error: ' + error.message, 'error');
-    }
+     alert('Firebase Registration Error: ' + error.message + '\n\nMake sure your GitHub link is in the Authorized Domains in Firebase Settings!');
   }
-}
-  
-  // 1. Keep Demo Accounts active for the Judges!
-  const [ce,cp] = CREDS[role];
-  if(email===ce && pass===cp) {
-    const roleNames = {'admin':'Admin Control', 'agency':'Agency Officer', 'civilian':'Civilian Observer'};
-    currentUser = {role, email, name: roleNames[role]};
-    document.getElementById('userName').textContent = currentUser.name;
-    document.getElementById('userAvatar').textContent = currentUser.name.split(' ').map(w=>w[0]).join('').slice(0,2);
-    document.getElementById('loginScreen').classList.remove('active');
-    document.getElementById('appScreen').classList.add('active');
-    if(errEl) errEl.style.display='none';
-    initApp();
-    return;
-  }
-
-  // 2. Check Custom Registered Users in Firebase
-  try {
-    const dbRef = window.firebaseRef(window.db);
-    const snapshot = await window.firebaseGet(window.firebaseChild(dbRef, 'users'));
-    
-    if (snapshot.exists()) {
-      const users = snapshot.val();
-      let foundUser = null;
-      
-      for (const key in users) {
-        if (users[key].email === email && users[key].password === pass) {
-          foundUser = users[key];
-          break;
-        }
-      }
-
-      if (foundUser) {
-        if(foundUser.role !== role) {
-           showToast(`Error: Please log in using the ${foundUser.role.toUpperCase()} tab!`, 'error');
-           return;
-        }
-        currentUser = { role: foundUser.role, email: foundUser.email, name: foundUser.name };
-        document.getElementById('userName').textContent = currentUser.name;
-        document.getElementById('userAvatar').textContent = currentUser.name.split(' ').map(w=>w[0]).join('').slice(0,2);
-        document.getElementById('loginScreen').classList.remove('active');
-        document.getElementById('appScreen').classList.add('active');
-        if(errEl) errEl.style.display='none';
-        initApp();
-        return;
-      }
-    }
-    
-    // If not found or wrong password
-    if(errEl) errEl.style.display='block';
-  } catch (error) {
-    showToast('Login failed. Check connection.', 'error');
-  }
-}
-
-async function doRegister() {
-  const role = document.getElementById('regRole').value;
-  const n=document.getElementById('regAgName').value.trim();
-  const d=document.getElementById('regAgDistrict').value.trim();
-  const email = document.getElementById('regAgEmail').value.trim();
-  const pass = document.getElementById('regAgPass').value;
-
-  if(!n||!d||!email||!pass){showToast('Please fill all fields','error');return;}
-  
-  const userId = 'usr_' + Date.now();
-
-  if (role === 'civilian') {
-    // 1. Create Civilian in Firebase
-    const newUser = { name: n, email: email, password: pass, role: 'civilian' };
-    await window.firebaseSet(window.firebaseRef(window.db, 'users/' + userId), newUser);
-
-    showToast('Civilian registered successfully!','success');
-    currentUser={role:'civilian', email:email, name:n};
-    document.getElementById('userName').textContent=n.slice(0,20);
-    document.getElementById('userAvatar').textContent=getInitials(n);
-    document.getElementById('loginScreen').classList.remove('active');
-    document.getElementById('appScreen').classList.add('active');
-    initApp();
-    return;
-  }
-  
-  showToast('Locating district on live map...', 'standby');
-  const coords = await getCoordinatesFromDistrict(d);
-  
-  const newAg = {
-    id: Date.now(), name:n, type:document.getElementById('regAgType').value,
-    district:d, contact:document.getElementById('regAgPhone').value,
-    email:email,
-    personnel:30, vehicles:4, status:'standby', equipment:'Standard kit',
-    registered:new Date().toISOString().slice(0,10),
-    lat: coords.lat, lng: coords.lng
-  };
-
-  // 2. Create Agency Profile
-  await window.firebaseSet(window.firebaseRef(window.db, 'agencies/' + newAg.id), newAg);
-  
-  // 3. Create Agency Login Credentials
-  const newUser = { name: n, email: email, password: pass, role: 'agency', agencyId: newAg.id };
-  await window.firebaseSet(window.firebaseRef(window.db, 'users/' + userId), newUser);
-
-  showToast('Agency registered! You can now log in.','success');
-  currentUser={role:'agency', email:email, name:newAg.name};
-  document.getElementById('userName').textContent=newAg.name.slice(0,20);
-  document.getElementById('userAvatar').textContent=getInitials(newAg.name);
-  document.getElementById('loginScreen').classList.remove('active');
-  document.getElementById('appScreen').classList.add('active');
-  initApp();
 }
 
 function doLogout() {
@@ -1283,32 +1124,26 @@ let leafletMap = null;
 let markersLayer = null;
 
 function initApp() {
-  // Hide management features from Civilians
   const appRegBtn = document.getElementById('appRegAgencyBtn');
   if(appRegBtn) appRegBtn.style.display = (currentUser && currentUser.role === 'civilian') ? 'none' : 'flex';
   const appAddResBtn = document.getElementById('appAddResourceBtn');
   if(appAddResBtn) appAddResBtn.style.display = (currentUser && currentUser.role === 'civilian') ? 'none' : 'flex';
-  
-  // Show SOS button ONLY for Civilians
   const sosBtn = document.getElementById('civilianSosBtn');
   if(sosBtn) sosBtn.style.display = (currentUser && currentUser.role === 'civilian') ? 'block' : 'none';
-  // Initialize Leaflet Map
+  
   if (!leafletMap) {
-    leafletMap = L.map('mainMapSvg').setView([22.5937, 78.9629], 5); // Center on India
+    leafletMap = L.map('mainMapSvg').setView([22.5937, 78.9629], 5);
     L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
       attribution: '&copy; OpenStreetMap &copy; CARTO'
     }).addTo(leafletMap);
     markersLayer = L.layerGroup().addTo(leafletMap);
   }
 
-// Real-time listener for Agencies
+  // Real-time listener for Agencies with Sanitization Shield
   window.firebaseOnValue(window.firebaseRef(window.db, 'agencies'), (snapshot) => {
     const data = snapshot.val();
-    
-    // 1. Filter out nulls to prevent array crashes
     agencies = data ? Object.values(data).filter(a => a !== null && typeof a === 'object') : [];
     
-    // 2. Data Sanitization Shield: Fixes broken Firebase data on the fly so UI never crashes
     agencies.forEach(ag => {
       ag.name = ag.name || 'Unknown Unit';
       ag.district = ag.district || 'Unknown Location';
@@ -1346,16 +1181,10 @@ function showPage(name, btn) {
   document.getElementById('page'+name.charAt(0).toUpperCase()+name.slice(1)).classList.add('active');
   if(btn) btn.classList.add('active');
   closeDrawer();
-  // Fix Leaflet map sizing issue on tab switch
-  if(name === 'dashboard' && leafletMap) {
-    setTimeout(() => leafletMap.invalidateSize(), 100);
-  }
+  if(name === 'dashboard' && leafletMap) { setTimeout(() => leafletMap.invalidateSize(), 100); }
 }
 
-// ─── UTILS ───────────────────────────────────────────
-function getInitials(name) {
-  return name.split(/[\s—\-]+/).filter(w=>w.length>2).slice(0,2).map(w=>w[0]).join('').toUpperCase()||name.slice(0,2).toUpperCase();
-}
+function getInitials(name) { return name.split(/[\s—\-]+/).filter(w=>w.length>2).slice(0,2).map(w=>w[0]).join('').toUpperCase()||name.slice(0,2).toUpperCase(); }
 function showToast(msg,type='') {
   const t=document.getElementById('toast');
   t.textContent=msg; t.className='toast '+(type||'');
@@ -1366,7 +1195,6 @@ function openModal(id){document.getElementById(id).classList.add('open')}
 function closeModal(id){document.getElementById(id).classList.remove('open')}
 function openRegisterModal(){openModal('registerModal')}
 
-// ─── SIDEBAR ─────────────────────────────────────────
 function filterSidebar(f,el) {
   sidebarFilter=f;
   document.querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));
@@ -1392,7 +1220,6 @@ function renderSidebar() {
   }).join('');
 }
 
-// ─── DASHBOARD ───────────────────────────────────────
 function updateStats() {
   document.getElementById('ds1').textContent=agencies.length;
   document.getElementById('ds2').textContent=agencies.filter(a=>a.status==='active').length;
@@ -1409,7 +1236,6 @@ function renderDashboard() {
 function renderMapPins() {
   if (!markersLayer) return;
   markersLayer.clearLayers();
-  
   const filterVal = document.getElementById('advFilterResource')?.value || 'all';
 
   agencies.forEach(ag => {
@@ -1469,7 +1295,6 @@ function renderRpActivity() {
     </div>`).join('');
 }
 
-// ─── AGENCIES GRID ───────────────────────────────────
 function renderAgenciesGrid() {
   const q=(document.getElementById('agencySearch')?.value||'').toLowerCase();
   const sf=document.getElementById('agencyStatusFilter')?.value||'';
@@ -1500,7 +1325,6 @@ function renderAgenciesGrid() {
   }).join('');
 }
 
-// ─── AGENCY DETAIL DRAWER ────────────────────────────
 function openAgencyDrawer(id) {
   const ag=agencies.find(a=>a.id===id);
   if(!ag) return;
@@ -1522,7 +1346,6 @@ let actionButtons = `
     <button class="dd-action-btn primary-action" onclick="callAgency('${ag.contact}')">📞 Contact Agency</button>
     <button class="dd-action-btn" onclick="exportSingleAgency(${ag.id})">📥 Export Details</button>`;
 
-  // Only allow Admins and Agencies to modify statuses, track, or delete records
   if (currentUser && currentUser.role !== 'civilian') {
     actionButtons += `
     <button class="dd-action-btn" style="background:#D5F5E3; color:#1E8449; border-color:#1E8449;" onclick="toggleLiveTracking(${ag.id})">📡 Start Live Tracking</button>
@@ -1534,10 +1357,7 @@ let actionButtons = `
 }
 function closeDrawer(){document.getElementById('detailDrawer').classList.remove('open')}
 function callAgency(c){
-  // showToast is your existing UI feedback
   showToast('Connecting to: ' + c, 'success');
-  
-  // This triggers the device's native dialer
   window.location.href = 'tel:' + c.replace(/\s+/g, '');
 }
 function changeStatus(id) {
@@ -1546,8 +1366,6 @@ function changeStatus(id) {
   const ns=prompt(`Change status for ${ag.name}\nOptions: ${opts.join(', ')}`);
   if(ns&&['active','standby','deployed'].includes(ns.toLowerCase())) {
     ag.status=ns.toLowerCase();
-    
-    // Save to Firebase
     window.firebaseSet(window.firebaseRef(window.db, 'agencies/' + id), ag).then(() => {
       showToast('Status updated to: '+ag.status,'success');
       openAgencyDrawer(id);
@@ -1556,8 +1374,6 @@ function changeStatus(id) {
 }
 function removeAgency(id) {
   if(!confirm('Remove this agency from the registry?')) return;
-  
-  // Remove from Firebase
   window.firebaseRemove(window.firebaseRef(window.db, 'agencies/' + id)).then(() => {
     closeDrawer();
     showToast('Agency removed','error');
@@ -1570,39 +1386,6 @@ function exportSingleAgency(id) {
   showToast('Exported agency details','success');
 }
 
-async function registerAgencyFull() {
-  const n=document.getElementById('mRegName').value.trim();
-  const d=document.getElementById('mRegDistrict').value.trim();
-  if(!n||!d){showToast('Name and district are required','error');return;}
-  
-  showToast('Locating district on live map...', 'standby');
-  const coords = await getCoordinatesFromDistrict(d);
-  
-  const newAg={
-    id:Date.now(), name:n, type:document.getElementById('mRegType').value,
-    district:d, contact:document.getElementById('mRegPhone').value,
-    email:document.getElementById('mRegEmail').value,
-    personnel:parseInt(document.getElementById('mRegPersonnel').value)||20,
-    vehicles:parseInt(document.getElementById('mRegVehicles').value)||4,
-    status:document.getElementById('mRegStatus').value,
-    equipment:document.getElementById('mRegEquip').value||'Standard kit',
-    registered:new Date().toISOString().slice(0,10),
-    lat: coords.lat, 
-    lng: coords.lng
-  };
-
-  // Push directly to Firebase - map and UI update automatically
-  window.firebaseSet(window.firebaseRef(window.db, 'agencies/' + newAg.id), newAg)
-    .then(() => {
-      closeModal('registerModal');
-      showToast('Agency registered successfully!','success');
-      ['mRegName','mRegDistrict','mRegPhone','mRegEmail','mRegPersonnel','mRegVehicles','mRegEquip'].forEach(id=>{
-        const el=document.getElementById(id); if(el) el.value='';
-      });
-    });
-}
-
-// ─── INCIDENTS ───────────────────────────────────────
 function populateIncidentAgencySelect() {
   const sel=document.getElementById('incAgency');
   if(!sel) return;
@@ -1623,10 +1406,7 @@ function submitIncident() {
     desc:document.getElementById('incDesc').value, affected:parseInt(document.getElementById('incAffected').value)||0,
     agency:document.getElementById('incAgency').value, status:'active', time:'Just now', reporter:currentUser?.name||'User'
   };
-  
-  // Push directly to Firebase
-  window.firebaseSet(window.firebaseRef(window.db, 'incidents/' + newInc.id), newInc)
-    .then(() => {
+  window.firebaseSet(window.firebaseRef(window.db, 'incidents/' + newInc.id), newInc).then(() => {
       ['incTitle','incDistrict','incArea','incDesc','incAffected'].forEach(id=>{document.getElementById(id).value='';});
       showToast('Incident reported successfully!','success');
     });
@@ -1663,19 +1443,15 @@ function resolveIncident(id,btn) {
   const inc=incidents.find(i=>i.id===id);
   if(inc) { 
     inc.status='resolved'; 
-    window.firebaseSet(window.firebaseRef(window.db, 'incidents/' + id), inc).then(() => {
-      showToast('Incident marked resolved','success'); 
-    });
+    window.firebaseSet(window.firebaseRef(window.db, 'incidents/' + id), inc).then(() => showToast('Incident marked resolved','success'));
   }
 }
 
-// ─── VISUAL RESOURCES DASHBOARD ─────────────────────────────────
 function renderResourcesTable() {
   const summaryRow = document.getElementById('resSummaryRow');
   const grid = document.getElementById('resGrid');
   if (!summaryRow || !grid) return;
 
-  // 1. Calculate live totals from Firebase Data
   let totalVehicles = 0; let activeVehicles = 0;
   let totalPersonnel = 0; let activePersonnel = 0;
   let totalBoats = 0; let activeBoats = 0;
@@ -1698,7 +1474,6 @@ function renderResourcesTable() {
     }
   });
 
-  // 2. Render Top Summary Cards
   summaryRow.innerHTML = `
     <div class="res-sum-card">
       <div class="res-sum-title">Total Vehicles</div>
@@ -1722,7 +1497,6 @@ function renderResourcesTable() {
     </div>
   `;
 
-  // 3. Render Visual Grid (Mimicking your SIH Design)
   const resItems = [
     { title: 'Fire Engines', icon: '🚒', total: Math.floor(totalVehicles * 0.3), active: Math.floor(activeVehicles * 0.3), color: 'var(--red)' },
     { title: 'Ambulances', icon: '🚑', total: Math.floor(totalVehicles * 0.4), active: Math.floor(activeVehicles * 0.4), color: 'var(--green)' },
@@ -1756,7 +1530,6 @@ function renderResourcesTable() {
   }).join('');
 }
 
-// ─── EXPORT ──────────────────────────────────────────
 function downloadCSV(content, filename) {
   const blob=new Blob([content],{type:'text/csv;charset=utf-8;'});
   const url=URL.createObjectURL(blob);
@@ -1802,8 +1575,6 @@ function exportData(type) {
 }
 function generateFullReport(){exportData('full')}
 
-
-// 2. CIVILIAN SOS WITH DEVICE GPS
 function triggerCivilianSOS() {
   showToast('Acquiring satellite GPS lock...', 'standby');
   if (navigator.geolocation) {
@@ -1811,8 +1582,6 @@ function triggerCivilianSOS() {
       (position) => {
         const lat = position.coords.latitude;
         const lng = position.coords.longitude;
-        
-        // 1. Create a blinking SOS Pin on the map
         const sosPin = {
           id: Date.now(), name: "CIVILIAN SOS ALERT", type: "Civilian SOS",
           district: "Live GPS Location", contact: currentUser.email, email: currentUser.email,
@@ -1820,8 +1589,6 @@ function triggerCivilianSOS() {
           registered: new Date().toISOString(), lat: lat, lng: lng
         };
         window.firebaseSet(window.firebaseRef(window.db, 'agencies/' + sosPin.id), sosPin);
-
-        // 2. Push it to the Incidents Board
         const newInc = {
           id: Date.now() + 1, title: 'CRITICAL: Civilian SOS Signal', type: 'Search & Rescue',
           severity: 'high', district: `GPS: ${lat.toFixed(4)}, ${lng.toFixed(4)}`, area: 'Live Location',
@@ -1829,24 +1596,18 @@ function triggerCivilianSOS() {
           agency: 'Unassigned', status: 'active', time: 'Just now', reporter: currentUser.name
         };
         window.firebaseSet(window.firebaseRef(window.db, 'incidents/' + newInc.id), newInc);
-        
         showToast('SOS Broadcasted to all agencies!', 'success');
       },
       (error) => { showToast('GPS Access Denied. Ensure location is enabled.', 'error'); },
       { enableHighAccuracy: true }
     );
-  } else {
-    showToast('Geolocation not supported by this browser.', 'error');
-  }
+  } else { showToast('Geolocation not supported by this browser.', 'error'); }
 }
 
-// 3. DYNAMIC ROAD ROUTING
 let routingControl = null;
 async function drawRouteToIncident(districtStr) {
   if(!leafletMap) return;
   showToast('Calculating fastest route...', 'standby');
-  
-  // Clean up district string (e.g., "GPS: 11.0, 77.0" or "Coimbatore")
   let targetCoords;
   if(districtStr.includes('GPS:')) {
     const parts = districtStr.replace('GPS:', '').split(',');
@@ -1854,34 +1615,24 @@ async function drawRouteToIncident(districtStr) {
   } else {
     targetCoords = await getCoordinatesFromDistrict(districtStr);
   }
-
-  // Find nearest active agency (Simplified logic: grab first active agency for demo)
   const activeAgencies = agencies.filter(a => a.status === 'active' || a.status === 'standby');
   if(activeAgencies.length === 0) { showToast('No active agencies available to route.', 'error'); return; }
   const startAgency = activeAgencies[0]; 
 
   if (routingControl) leafletMap.removeControl(routingControl);
-
   routingControl = L.Routing.control({
-    waypoints: [
-      L.latLng(startAgency.lat, startAgency.lng),
-      L.latLng(targetCoords.lat, targetCoords.lng)
-    ],
-    routeWhileDragging: false,
-    lineOptions: { styles: [{ color: '#E74C3C', weight: 4 }] },
-    show: false // Hides the turn-by-turn text box to save UI space
+    waypoints: [ L.latLng(startAgency.lat, startAgency.lng), L.latLng(targetCoords.lat, targetCoords.lng) ],
+    routeWhileDragging: false, lineOptions: { styles: [{ color: '#E74C3C', weight: 4 }] }, show: false
   }).addTo(leafletMap);
   
   showToast(`Route plotted for ${startAgency.name}`, 'success');
-  showPage('dashboard', document.querySelector('.nav-link')); // Switch to map tab
+  showPage('dashboard', document.querySelector('.nav-link'));
 }
 
-// 4. LIVE FLEET TRACKING (Simulated movement for demo)
 let trackingInterval = null;
 function toggleLiveTracking(id) {
   const ag = agencies.find(a => a.id === id);
   if(!ag) return;
-  
   if (trackingInterval) {
     clearInterval(trackingInterval);
     trackingInterval = null;
@@ -1889,11 +1640,8 @@ function toggleLiveTracking(id) {
     closeDrawer();
     return;
   }
-
   showToast(`GPS Live Sync activated for ${ag.name}`, 'success');
-  ag.status = 'deployed'; // Auto-deploy them
-  
-  // Move the agency slightly every 3 seconds to simulate driving
+  ag.status = 'deployed';
   trackingInterval = setInterval(() => {
     ag.lat += (Math.random() - 0.5) * 0.05; 
     ag.lng += (Math.random() - 0.5) * 0.05;
@@ -1901,7 +1649,7 @@ function toggleLiveTracking(id) {
   }, 3000);
   closeDrawer();
 }
-  // 5. RESOURCE MANAGEMENT LOGIC
+
 function openAddResourceModal() {
   const sel = document.getElementById('rResAgency');
   sel.innerHTML = agencies.map(a => `<option value="${a.id}">${a.name} (${a.type})</option>`).join('');
@@ -1913,13 +1661,10 @@ function submitAddResource() {
   const agId = parseInt(document.getElementById('rResAgency').value);
   const type = document.getElementById('rResType').value;
   const qty = parseInt(document.getElementById('rResQty').value);
-  
   if(!qty || qty <= 0) { showToast('Please enter a valid quantity', 'error'); return; }
-  
   const ag = agencies.find(a => a.id === agId);
   if(!ag) return;
 
-  // Add the resources to the agency's Firebase record
   if(type === 'vehicles' || type === 'boats') {
     ag.vehicles = (ag.vehicles || 0) + qty;
     if(type === 'boats' && !ag.equipment.toLowerCase().includes('boat')) ag.equipment += ', Rescue Boats';
@@ -1931,7 +1676,6 @@ function submitAddResource() {
     if(!ag.equipment.toLowerCase().includes('heavy') && !ag.equipment.toLowerCase().includes('generator')) ag.equipment += ', Heavy Equipment';
   }
 
-  // Push to Firebase -> The UI grid will instantly auto-update!
   window.firebaseSet(window.firebaseRef(window.db, 'agencies/' + agId), ag).then(() => {
     showToast(`Successfully added ${qty} resources to ${ag.name}`, 'success');
     closeModal('addResourceModal');
