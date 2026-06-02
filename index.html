@@ -4,8 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>RescueNet — National Disaster Relief Registry</title>
+
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Syne:wght@600;700;800&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -35,16 +39,16 @@ body{font-family:var(--font-body);background:var(--gray-50);color:var(--gray-900
 #loginScreen{background:var(--navy);align-items:stretch;overflow:hidden;position:relative}
 .login-left{flex:1;background:linear-gradient(135deg,var(--navy) 0%,var(--navy-light) 100%);display:flex;flex-direction:column;justify-content:center;padding:60px;position:relative;overflow:hidden}
 .login-left::before{content:'';position:absolute;inset:0;background:url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")}
-.login-brand{margin-bottom:60px}
+.login-brand{margin-bottom:60px; position:relative; z-index:2;}
 .login-logo{display:flex;align-items:center;gap:14px;margin-bottom:20px}
 .login-logo-icon{width:52px;height:52px;background:var(--red);border-radius:14px;display:flex;align-items:center;justify-content:center}
 .login-logo-icon svg{width:28px;height:28px;fill:white}
 .brand-name{font-family:var(--font-display);font-size:28px;font-weight:800;color:white;letter-spacing:-0.5px}
 .brand-tagline{font-size:13px;color:rgba(255,255,255,0.5);letter-spacing:2px;text-transform:uppercase}
-.login-headline{font-family:var(--font-display);font-size:42px;font-weight:700;color:white;line-height:1.15;margin-bottom:20px}
+.login-headline{font-family:var(--font-display);font-size:42px;font-weight:700;color:white;line-height:1.15;margin-bottom:20px; position:relative; z-index:2;}
 .login-headline span{color:var(--gold)}
-.login-desc{font-size:15px;color:rgba(255,255,255,0.6);line-height:1.7;max-width:420px}
-.login-stats{display:flex;gap:40px;margin-top:50px}
+.login-desc{font-size:15px;color:rgba(255,255,255,0.6);line-height:1.7;max-width:420px; position:relative; z-index:2;}
+.login-stats{display:flex;gap:40px;margin-top:50px; position:relative; z-index:2;}
 .ls{text-align:left}
 .ls-num{font-family:var(--font-display);font-size:32px;font-weight:700;color:var(--gold)}
 .ls-lbl{font-size:12px;color:rgba(255,255,255,0.5);margin-top:2px;text-transform:uppercase;letter-spacing:1px}
@@ -64,11 +68,10 @@ body{font-family:var(--font-body);background:var(--gray-50);color:var(--gray-900
 .btn-login:active{transform:scale(0.98)}
 .login-error{background:#FADBD8;color:var(--red-dark);padding:10px 14px;border-radius:var(--radius-sm);font-size:13px;margin-top:12px;display:none}
 .login-hint{font-size:12px;color:var(--gray-500);margin-top:16px;padding:12px;background:var(--gray-50);border-radius:var(--radius-sm);line-height:1.6}
-.login-hint strong{color:var(--gray-700)}
 
 /* ── MAIN APP ── */
 #appScreen{flex-direction:column}
-.topnav{height:56px;background:var(--navy);display:flex;align-items:center;padding:0 20px;gap:16px;z-index:100;box-shadow:var(--shadow-md);flex-shrink:0}
+.topnav{height:56px;background:var(--navy);display:flex;align-items:center;padding:0 20px;gap:16px;z-index:1000;box-shadow:var(--shadow-md);flex-shrink:0}
 .topnav-logo{display:flex;align-items:center;gap:10px;margin-right:20px}
 .topnav-logo-icon{width:30px;height:30px;background:var(--red);border-radius:8px;display:flex;align-items:center;justify-content:center}
 .topnav-logo-icon svg{width:16px;height:16px;fill:white}
@@ -94,7 +97,6 @@ body{font-family:var(--font-body);background:var(--gray-50);color:var(--gray-900
 .sidebar-section-title{font-size:10px;font-weight:700;color:var(--gray-500);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:8px;padding-left:4px}
 .agency-card-mini{border-radius:var(--radius-md);border:1px solid var(--gray-200);padding:10px 12px;margin-bottom:6px;cursor:pointer;transition:all .15s}
 .agency-card-mini:hover{border-color:var(--gray-300);background:var(--gray-50)}
-.agency-card-mini.selected{border-color:var(--red);background:#FEF9F9}
 .acm-top{display:flex;align-items:center;gap:9px;margin-bottom:5px}
 .acm-icon{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0}
 .acm-name{font-size:12px;font-weight:600;color:var(--gray-900);line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
@@ -106,8 +108,6 @@ body{font-family:var(--font-body);background:var(--gray-50);color:var(--gray-900
 .chip{padding:4px 10px;border-radius:20px;font-size:11px;border:1px solid var(--gray-200);background:white;color:var(--gray-700);cursor:pointer;transition:all .15s}
 .chip.active{background:var(--navy);color:white;border-color:var(--navy)}
 .sidebar-list{flex:1;overflow-y:auto;padding:0 8px 12px}
-.sidebar-list::-webkit-scrollbar{width:4px}
-.sidebar-list::-webkit-scrollbar-thumb{background:var(--gray-200);border-radius:4px}
 
 /* ── MAIN CONTENT ── */
 .main-content{flex:1;overflow:hidden;display:flex;flex-direction:column}
@@ -117,28 +117,20 @@ body{font-family:var(--font-body);background:var(--gray-50);color:var(--gray-900
 .page.active{display:flex;flex-direction:column}
 
 /* ── DASHBOARD PAGE ── */
-.stats-row{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;padding:14px 16px;background:white;border-bottom:1px solid var(--gray-200)}
+.stats-row{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;padding:14px 16px;background:white;border-bottom:1px solid var(--gray-200); flex-shrink: 0;}
 .stat-card{background:var(--gray-50);border-radius:var(--radius-md);padding:12px 14px;border:1px solid var(--gray-200)}
 .stat-val{font-family:var(--font-display);font-size:26px;font-weight:700;line-height:1;margin-bottom:3px}
 .stat-lbl{font-size:11px;color:var(--gray-500);font-weight:500}
-.stat-sub{font-size:10px;color:var(--gray-500);margin-top:2px}
-.dashboard-body{flex:1;display:grid;grid-template-columns:1fr 320px;overflow:hidden;gap:0}
-.map-wrap{position:relative;overflow:hidden;background:#dce8dc}
-.map-svg-full{width:100%;height:100%}
-.map-ctrl{position:absolute;top:12px;right:12px;display:flex;flex-direction:column;gap:6px}
-.map-btn{width:32px;height:32px;background:white;border:1px solid var(--gray-200);border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:var(--shadow-sm)}
-.map-btn svg{width:15px;height:15px;fill:var(--gray-700)}
-.map-legend-box{position:absolute;bottom:12px;left:12px;background:white;border-radius:var(--radius-md);border:1px solid var(--gray-200);padding:10px 13px;box-shadow:var(--shadow-sm)}
-.ml-item{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--gray-700);margin-bottom:4px}
-.ml-item:last-child{margin-bottom:0}
-.ml-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
-.right-panel{border-left:1px solid var(--gray-200);background:white;display:flex;flex-direction:column;overflow:hidden}
+.dashboard-body{flex:1;display:grid;grid-template-columns:1fr 340px;overflow:hidden;gap:0}
+.map-wrap{position:relative; width:100%; height:100%; background:#e5e9ec; z-index: 1;}
+#leafletMap { width: 100%; height: 100%; z-index: 1; }
+
+.right-panel{border-left:1px solid var(--gray-200);background:white;display:flex;flex-direction:column;overflow:hidden; z-index: 2;}
 .rp-tabs{display:flex;border-bottom:1px solid var(--gray-200)}
 .rp-tab{flex:1;padding:11px 8px;font-size:12px;font-weight:500;text-align:center;color:var(--gray-500);cursor:pointer;border-bottom:2px solid transparent;transition:all .15s}
 .rp-tab.active{color:var(--navy);border-bottom-color:var(--navy)}
 .rp-body{flex:1;overflow-y:auto;padding:12px}
-.incident-item{padding:10px 12px;border-radius:var(--radius-md);border:1px solid var(--gray-200);margin-bottom:8px;cursor:pointer;transition:border-color .15s}
-.incident-item:hover{border-color:var(--gray-300)}
+.incident-item{padding:10px 12px;border-radius:var(--radius-md);border:1px solid var(--gray-200);margin-bottom:8px;}
 .ii-top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:4px}
 .ii-title{font-size:12px;font-weight:600;color:var(--gray-900)}
 .severity{font-size:10px;padding:2px 7px;border-radius:20px;font-weight:600}
@@ -146,15 +138,14 @@ body{font-family:var(--font-body);background:var(--gray-50);color:var(--gray-900
 .sev-med{background:var(--amber-light);color:#784212}
 .sev-low{background:var(--green-light);color:var(--green)}
 .ii-loc{font-size:11px;color:var(--gray-500);margin-bottom:3px}
-.ii-time{font-size:10px;color:var(--gray-500)}
 
 /* ── AGENCIES PAGE ── */
 .page-header{padding:16px 20px;background:white;border-bottom:1px solid var(--gray-200);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
 .page-title{font-family:var(--font-display);font-size:18px;font-weight:700;color:var(--gray-900)}
 .page-sub{font-size:13px;color:var(--gray-500);margin-top:2px}
-.btn-primary{padding:9px 16px;background:var(--red);color:white;border:none;border-radius:var(--radius-md);font-size:13px;font-weight:600;font-family:var(--font-body);cursor:pointer;display:flex;align-items:center;gap:6px;transition:background .15s}
+.btn-primary{padding:9px 16px;background:var(--red);color:white;border:none;border-radius:var(--radius-md);font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px;}
 .btn-primary:hover{background:var(--red-dark)}
-.btn-secondary{padding:9px 16px;background:white;color:var(--gray-700);border:1px solid var(--gray-300);border-radius:var(--radius-md);font-size:13px;font-weight:500;font-family:var(--font-body);cursor:pointer;display:flex;align-items:center;gap:6px;transition:all .15s}
+.btn-secondary{padding:9px 16px;background:white;color:var(--gray-700);border:1px solid var(--gray-300);border-radius:var(--radius-md);font-size:13px;font-weight:500;cursor:pointer;display:flex;align-items:center;gap:6px;}
 .btn-secondary:hover{background:var(--gray-50)}
 .agencies-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;padding:16px;overflow-y:auto;flex:1}
 .ag-card{background:white;border:1px solid var(--gray-200);border-radius:var(--radius-lg);padding:16px;cursor:pointer;transition:all .2s;position:relative}
@@ -165,19 +156,14 @@ body{font-family:var(--font-body);background:var(--gray-50);color:var(--gray-900
 .ag-name{font-size:14px;font-weight:600;color:var(--gray-900);margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ag-type{font-size:11px;color:var(--gray-500)}
 .ag-status-badge{position:absolute;top:14px;right:14px;font-size:10px;padding:3px 8px;border-radius:20px;font-weight:600}
-.ag-details{display:grid;grid-template-columns:1fr 1fr;gap:6px}
-.ag-detail-item{background:var(--gray-50);border-radius:var(--radius-sm);padding:6px 9px}
-.ag-detail-lbl{font-size:10px;color:var(--gray-500);margin-bottom:1px}
-.ag-detail-val{font-size:12px;font-weight:600;color:var(--gray-900)}
 .search-bar{padding:10px 16px;background:white;border-bottom:1px solid var(--gray-200);display:flex;align-items:center;gap:8px;flex-shrink:0}
-.search-input{flex:1;padding:8px 12px;border:1px solid var(--gray-200);border-radius:var(--radius-md);font-size:13px;font-family:var(--font-body);outline:none;transition:border-color .2s}
+.search-input{flex:1;padding:8px 12px;border:1px solid var(--gray-200);border-radius:var(--radius-md);font-size:13px;outline:none;}
 .search-input:focus{border-color:var(--red)}
 
 /* ── INCIDENTS PAGE ── */
 .incidents-layout{display:grid;grid-template-columns:1fr 360px;flex:1;overflow:hidden}
 .incidents-list{overflow-y:auto;padding:14px}
-.incident-card{background:white;border:1px solid var(--gray-200);border-radius:var(--radius-lg);padding:14px 16px;margin-bottom:10px;cursor:pointer;transition:all .15s;border-left:4px solid transparent}
-.incident-card:hover{box-shadow:var(--shadow-sm)}
+.incident-card{background:white;border:1px solid var(--gray-200);border-radius:var(--radius-lg);padding:14px 16px;margin-bottom:10px; border-left:4px solid transparent}
 .incident-card.high{border-left-color:var(--red)}
 .incident-card.medium{border-left-color:var(--amber)}
 .incident-card.low{border-left-color:var(--green)}
@@ -189,15 +175,14 @@ body{font-family:var(--font-body);background:var(--gray-50);color:var(--gray-900
 .ic-footer{display:flex;align-items:center;justify-content:space-between}
 .ic-meta{display:flex;gap:14px}
 .ic-meta span{font-size:11px;color:var(--gray-500);display:flex;align-items:center;gap:3px}
-.ic-footer-btn{padding:5px 12px;border-radius:var(--radius-sm);border:1px solid var(--gray-200);background:white;font-size:11px;font-weight:500;cursor:pointer;transition:all .15s}
+.ic-footer-btn{padding:5px 12px;border-radius:var(--radius-sm);border:1px solid var(--gray-200);background:white;font-size:11px;font-weight:500;cursor:pointer;}
 .report-form-panel{border-left:1px solid var(--gray-200);background:white;overflow-y:auto;padding:16px}
 .form-section{margin-bottom:20px}
 .form-section-title{font-size:12px;font-weight:700;color:var(--navy);text-transform:uppercase;letter-spacing:.8px;margin-bottom:12px;padding-bottom:6px;border-bottom:1px solid var(--gray-200)}
 .form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.form-textarea{width:100%;padding:10px 12px;border:1.5px solid var(--gray-200);border-radius:var(--radius-md);font-size:13px;font-family:var(--font-body);color:var(--gray-900);resize:vertical;min-height:80px;outline:none;transition:border-color .2s}
-.form-textarea:focus{border-color:var(--red)}
+.form-textarea{width:100%;padding:10px 12px;border:1.5px solid var(--gray-200);border-radius:var(--radius-md);font-size:13px;resize:vertical;min-height:80px;outline:none;}
 .severity-pills{display:flex;gap:6px}
-.sev-pill{padding:7px 14px;border:1.5px solid var(--gray-200);border-radius:20px;font-size:12px;font-weight:500;cursor:pointer;transition:all .15s}
+.sev-pill{padding:7px 14px;border:1.5px solid var(--gray-200);border-radius:20px;font-size:12px;font-weight:500;cursor:pointer;}
 .sev-pill.active-high{background:#FADBD8;border-color:var(--red);color:var(--red-dark)}
 .sev-pill.active-med{background:var(--amber-light);border-color:var(--amber);color:#784212}
 .sev-pill.active-low{background:var(--green-light);border-color:var(--green);color:var(--green)}
@@ -207,12 +192,10 @@ body{font-family:var(--font-body);background:var(--gray-50);color:var(--gray-900
 .resource-table{width:100%;border-collapse:collapse;background:white;border-radius:var(--radius-lg);overflow:hidden;box-shadow:var(--shadow-sm)}
 .resource-table th{padding:11px 14px;background:var(--gray-50);font-size:11px;font-weight:700;color:var(--gray-500);text-align:left;text-transform:uppercase;letter-spacing:.8px;border-bottom:1px solid var(--gray-200)}
 .resource-table td{padding:11px 14px;font-size:12px;color:var(--gray-700);border-bottom:1px solid var(--gray-100)}
-.resource-table tr:last-child td{border-bottom:none}
-.resource-table tr:hover td{background:var(--gray-50)}
 .progress-bar{height:6px;background:var(--gray-200);border-radius:3px;overflow:hidden;width:100px}
 .progress-fill{height:100%;border-radius:3px;transition:width .3s}
 
-/* ── DATA/REPORTS PAGE ── */
+/* ── REPORTS PAGE ── */
 .reports-layout{flex:1;display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:14px;overflow-y:auto}
 .report-card{background:white;border:1px solid var(--gray-200);border-radius:var(--radius-lg);padding:18px;cursor:pointer;transition:all .2s}
 .report-card:hover{box-shadow:var(--shadow-md);border-color:var(--gray-300)}
@@ -221,13 +204,10 @@ body{font-family:var(--font-body);background:var(--gray-50);color:var(--gray-900
 .rc-title{font-size:14px;font-weight:600;color:var(--gray-900);margin-bottom:4px}
 .rc-desc{font-size:12px;color:var(--gray-500);line-height:1.5;margin-bottom:14px}
 .rc-footer{display:flex;align-items:center;justify-content:space-between}
-.rc-meta{font-size:11px;color:var(--gray-500)}
-.btn-download{padding:7px 14px;background:var(--navy);color:white;border:none;border-radius:var(--radius-sm);font-size:12px;font-weight:500;cursor:pointer;display:flex;align-items:center;gap:5px;transition:background .15s}
-.btn-download:hover{background:var(--navy-mid)}
-.dl-icon{width:14px;height:14px;fill:white}
+.btn-download{padding:7px 14px;background:var(--navy);color:white;border:none;border-radius:var(--radius-sm);font-size:12px;font-weight:500;cursor:pointer;display:flex;align-items:center;gap:5px;}
 
-/* ── MODAL ── */
-.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:1000;display:none}
+/* ── MODAL & DRAWERS ── */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:2000;display:none}
 .modal-overlay.open{display:flex}
 .modal-box{background:white;border-radius:var(--radius-xl);padding:24px;width:520px;max-width:95vw;max-height:90vh;overflow-y:auto;box-shadow:var(--shadow-lg)}
 .modal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
@@ -236,14 +216,7 @@ body{font-family:var(--font-body);background:var(--gray-50);color:var(--gray-900
 .modal-footer{display:flex;gap:8px;justify-content:flex-end;margin-top:20px;padding-top:16px;border-top:1px solid var(--gray-200)}
 .btn-cancel{padding:9px 16px;background:white;color:var(--gray-700);border:1px solid var(--gray-200);border-radius:var(--radius-md);font-size:13px;cursor:pointer}
 
-/* ── TOAST ── */
-.toast{position:fixed;bottom:24px;right:24px;background:var(--navy);color:white;padding:12px 18px;border-radius:var(--radius-md);font-size:13px;font-weight:500;z-index:2000;transform:translateY(100px);opacity:0;transition:all .3s;box-shadow:var(--shadow-lg)}
-.toast.show{transform:translateY(0);opacity:1}
-.toast.success{background:var(--green)}
-.toast.error{background:var(--red)}
-
-/* ── DETAIL DRAWER ── */
-.detail-drawer{position:fixed;right:0;top:56px;bottom:0;width:340px;background:white;border-left:1px solid var(--gray-200);z-index:200;transform:translateX(100%);transition:transform .3s;overflow-y:auto;box-shadow:var(--shadow-lg)}
+.detail-drawer{position:fixed;right:0;top:56px;bottom:0;width:340px;background:white;border-left:1px solid var(--gray-200);z-index:1500;transform:translateX(100%);transition:transform .3s;overflow-y:auto;box-shadow:var(--shadow-lg)}
 .detail-drawer.open{transform:translateX(0)}
 .dd-header{padding:16px 18px;border-bottom:1px solid var(--gray-200);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:white;z-index:1}
 .dd-title{font-size:14px;font-weight:600;color:var(--gray-900)}
@@ -253,19 +226,24 @@ body{font-family:var(--font-body);background:var(--gray-50);color:var(--gray-900
 .dd-sub{font-size:12px;color:var(--gray-500);margin-bottom:16px}
 .info-grid{display:grid;grid-template-columns:1fr;gap:0}
 .info-row{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--gray-100)}
-.info-row:last-child{border-bottom:none}
 .ir-label{font-size:11px;color:var(--gray-500)}
 .ir-val{font-size:12px;font-weight:600;color:var(--gray-900);text-align:right}
 .dd-actions{padding:14px 18px;border-top:1px solid var(--gray-200);display:flex;flex-direction:column;gap:8px;position:sticky;bottom:0;background:white}
 .dd-action-btn{width:100%;padding:10px;border-radius:var(--radius-md);font-size:13px;font-weight:500;cursor:pointer;border:1px solid var(--gray-200);background:var(--gray-50);color:var(--gray-700);display:flex;align-items:center;justify-content:center;gap:7px;transition:all .15s}
-.dd-action-btn:hover{background:var(--gray-100)}
 .dd-action-btn.danger{background:#FADBD8;border-color:#F1948A;color:var(--red-dark)}
 .dd-action-btn.primary-action{background:var(--red);color:white;border-color:var(--red)}
-.dd-action-btn.primary-action:hover{background:var(--red-dark)}
 
-/* Util */
-.flex{display:flex}.items-center{align-items:center}.gap-8{gap:8px}.gap-12{gap:12px}
-.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)}
+.toast{position:fixed;bottom:24px;right:24px;background:var(--navy);color:white;padding:12px 18px;border-radius:var(--radius-md);font-size:13px;font-weight:500;z-index:3000;transform:translateY(100px);opacity:0;transition:all .3s;box-shadow:var(--shadow-lg)}
+.toast.show{transform:translateY(0);opacity:1}
+.toast.success{background:var(--green)}
+.toast.error{background:var(--red)}
+
+/* Leaflet Map Customizations */
+.leaflet-popup-content-wrapper { border-radius: 8px; }
+.leaflet-popup-content { font-family: 'DM Sans', sans-serif; margin: 12px; }
+.map-popup-title { font-weight: bold; font-size: 13px; color: var(--navy); margin-bottom: 4px; }
+.map-popup-sub { font-size: 11px; color: var(--gray-500); margin-bottom: 8px; }
+.map-popup-btn { background: var(--red); color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 11px; width: 100%; }
 </style>
 </head>
 <body>
@@ -284,7 +262,7 @@ body{font-family:var(--font-body);background:var(--gray-50);color:var(--gray-900
       </div>
     </div>
     <div class="login-headline">Coordinating Relief.<br><span>Saving Lives.</span></div>
-    <div class="login-desc">A unified command platform for all rescue and relief agencies. Register, coordinate, report and respond — all in one place during natural or man-made calamities.</div>
+    <div class="login-desc">A unified command platform for all rescue and relief agencies. Register, coordinate, report and respond — all in one place.</div>
     <div class="login-stats">
       <div class="ls"><div class="ls-num" id="lsStat1">100</div><div class="ls-lbl">Agencies</div></div>
       <div class="ls"><div class="ls-num" id="lsStat2">38</div><div class="ls-lbl">Active Now</div></div>
@@ -350,7 +328,7 @@ body{font-family:var(--font-body);background:var(--gray-50);color:var(--gray-900
       </div>
       <div class="form-group">
         <label class="form-label">District / Zone</label>
-        <input class="form-input" id="regAgDistrict" placeholder="e.g. Regional Office 1, India" />
+        <input class="form-input" id="regAgDistrict" placeholder="e.g. Mumbai, Maharashtra" />
       </div>
       <button class="btn-login" onclick="doRegister()">Register Agency</button>
     </div>
@@ -365,7 +343,7 @@ body{font-family:var(--font-body);background:var(--gray-50);color:var(--gray-900
       </div>
       <span class="topnav-brand">RescueNet</span>
     </div>
-    <div class="alert-pill"><div class="alert-dot"></div>ACTIVE ALERT: High Severity Incidents Active</div>
+    <div class="alert-pill"><div class="alert-dot"></div>ALL SYSTEMS OPERATIONAL</div>
     <div class="nav-links">
       <button class="nav-link active" onclick="showPage('dashboard',this)">
         <svg viewBox="0 0 24 24"><path d="M3 3h8v8H3zm10 0h8v8h-8zM3 13h8v8H3zm10 0h8v8h-8z"/></svg>Dashboard
@@ -414,63 +392,27 @@ body{font-family:var(--font-body);background:var(--gray-50);color:var(--gray-900
           <div class="stat-card">
             <div class="stat-val" style="color:var(--navy)" id="ds1">0</div>
             <div class="stat-lbl">Total Agencies</div>
-            <div class="stat-sub">Nationwide</div>
           </div>
           <div class="stat-card">
             <div class="stat-val" style="color:var(--green)" id="ds2">0</div>
-            <div class="stat-lbl">Active</div>
-            <div class="stat-sub">Ready to deploy</div>
+            <div class="stat-lbl">Active Now</div>
           </div>
           <div class="stat-card">
             <div class="stat-val" style="color:var(--red)" id="ds3">0</div>
             <div class="stat-lbl">Deployed</div>
-            <div class="stat-sub">In field</div>
           </div>
           <div class="stat-card">
             <div class="stat-val" style="color:var(--amber)" id="ds4">0</div>
             <div class="stat-lbl">Open Incidents</div>
-            <div class="stat-sub">Needs attention</div>
           </div>
           <div class="stat-card">
             <div class="stat-val" style="color:var(--blue)" id="ds5">0</div>
-            <div class="stat-lbl">Personnel</div>
-            <div class="stat-sub">Total on ground</div>
+            <div class="stat-lbl">Total Personnel</div>
           </div>
         </div>
         <div class="dashboard-body">
           <div class="map-wrap">
-            <svg class="map-svg-full" id="mainMapSvg" viewBox="0 0 640 460" xmlns="http://www.w3.org/2000/svg">
-              <defs>
-                <pattern id="g" width="30" height="30" patternUnits="userSpaceOnUse">
-                  <path d="M 30 0 L 0 0 0 30" fill="none" stroke="#c5d5c5" stroke-width="0.5"/>
-                </pattern>
-              </defs>
-              <rect width="640" height="460" fill="#d8e8d8"/>
-              <rect width="640" height="460" fill="url(#g)"/>
-              
-              <path d="M 220 30 L 270 50 L 300 100 L 400 130 L 450 200 L 370 230 L 320 320 L 250 430 L 200 320 L 140 240 L 90 180 L 140 120 Z" fill="#b8d4f0" opacity="0.6" stroke="#7aa3cc" stroke-width="2"/>
-              <text x="500" y="280" font-size="12" fill="#1A5276" font-family="sans-serif" text-anchor="middle" opacity=".8">Bay of Bengal</text>
-              <text x="90" y="320" font-size="12" fill="#1A5276" font-family="sans-serif" text-anchor="middle" opacity=".8">Arabian Sea</text>
-              
-              <text x="320" y="445" font-size="11" fill="#5F5E5A" font-family="sans-serif" text-anchor="middle">India — Live Agency Map</text>
-              <g id="mainMapPins"></g>
-            </svg>
-            <div class="map-ctrl">
-              <div class="map-btn" title="Zoom In" onclick="alert('In a real deployment, this connects to Leaflet.js maps')">
-                <svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
-              </div>
-              <div class="map-btn" title="Zoom Out">
-                <svg viewBox="0 0 24 24"><path d="M19 13H5v-2h14v2z"/></svg>
-              </div>
-              <div class="map-btn" title="Locate">
-                <svg viewBox="0 0 24 24"><path d="M12 8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm8.94 3A8.994 8.994 0 0013 3.06V1h-2v2.06A8.994 8.994 0 003.06 11H1v2h2.06A8.994 8.994 0 0011 20.94V23h2v-2.06A8.994 8.994 0 0020.94 13H23v-2h-2.06zM12 19c-3.87 0-7-3.13-7-7s3.13-7 7-7 7 3.13 7 7-3.13 7-7 7z"/></svg>
-              </div>
-            </div>
-            <div class="map-legend-box">
-              <div class="ml-item"><div class="ml-dot" style="background:#1E8449"></div>Active</div>
-              <div class="ml-item"><div class="ml-dot" style="background:#E67E22"></div>Standby</div>
-              <div class="ml-item"><div class="ml-dot" style="background:#C0392B"></div>Deployed</div>
-            </div>
+            <div id="leafletMap"></div>
           </div>
           <div class="right-panel">
             <div class="rp-tabs">
@@ -490,17 +432,15 @@ body{font-family:var(--font-body);background:var(--gray-50);color:var(--gray-900
           </div>
           <div style="display:flex;gap:8px">
             <button class="btn-secondary" onclick="exportData('agencies')">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
               Export CSV
             </button>
             <button class="btn-primary" onclick="openRegisterModal()">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="white"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
               Register Agency
             </button>
           </div>
         </div>
         <div class="search-bar">
-          <input class="search-input" id="agencySearch" placeholder="Search by name, district, type..." oninput="renderAgenciesGrid()"/>
+          <input class="search-input" id="agencySearch" placeholder="Search by name, type..." oninput="renderAgenciesGrid()"/>
           <select class="form-select" style="width:160px;padding:8px 10px" id="agencyStatusFilter" onchange="renderAgenciesGrid()">
             <option value="">All Status</option>
             <option value="active">Active</option>
@@ -519,8 +459,7 @@ body{font-family:var(--font-body);background:var(--gray-50);color:var(--gray-900
           </div>
           <div style="display:flex;gap:8px">
             <button class="btn-secondary" onclick="exportData('incidents')">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
-              Export
+              Export CSV
             </button>
           </div>
         </div>
@@ -551,24 +490,20 @@ body{font-family:var(--font-body);background:var(--gray-50);color:var(--gray-900
               </div>
               <div class="form-group">
                 <label class="form-label">Description</label>
-                <textarea class="form-textarea" id="incDesc" placeholder="Provide detailed description — location, number of affected, situation..."></textarea>
+                <textarea class="form-textarea" id="incDesc" placeholder="Provide detailed description..."></textarea>
               </div>
             </div>
             <div class="form-section">
               <div class="form-section-title">Location & Response</div>
               <div class="form-row">
                 <div class="form-group">
-                  <label class="form-label">District</label>
-                  <input class="form-input" id="incDistrict" placeholder="District"/>
+                  <label class="form-label">District/Zone</label>
+                  <input class="form-input" id="incDistrict" placeholder="Location"/>
                 </div>
                 <div class="form-group">
-                  <label class="form-label">Area / Village</label>
-                  <input class="form-input" id="incArea" placeholder="Specific area"/>
+                  <label class="form-label">Estimated Affected</label>
+                  <input class="form-input" id="incAffected" type="number" placeholder="Count"/>
                 </div>
-              </div>
-              <div class="form-group">
-                <label class="form-label">Estimated Affected</label>
-                <input class="form-input" id="incAffected" type="number" placeholder="Number of people"/>
               </div>
               <div class="form-group">
                 <label class="form-label">Assign Agency</label>
@@ -586,10 +521,7 @@ body{font-family:var(--font-body);background:var(--gray-50);color:var(--gray-900
             <div class="page-title">Resource Management</div>
             <div class="page-sub">Track equipment and personnel availability</div>
           </div>
-          <button class="btn-secondary" onclick="exportData('resources')">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
-            Export CSV
-          </button>
+          <button class="btn-secondary" onclick="exportData('resources')">Export CSV</button>
         </div>
         <div class="resources-layout">
           <table class="resource-table">
@@ -612,87 +544,45 @@ body{font-family:var(--font-body);background:var(--gray-50);color:var(--gray-900
         </div>
         <div class="reports-layout">
           <div class="report-card" onclick="exportData('agencies')">
-            <div class="rc-icon" style="background:#D6EAF8">
-              <svg viewBox="0 0 24 24" fill="#1A5276"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
-            </div>
             <div class="rc-title">Agency Registry Report</div>
-            <div class="rc-desc">Complete list of all registered agencies with contact details, district, type, status, personnel count and resources.</div>
+            <div class="rc-desc">Complete list of all registered agencies, contact details, district, type, status, and resources.</div>
             <div class="rc-footer">
-              <span class="rc-meta">Updated: Today</span>
-              <button class="btn-download">
-                <svg class="dl-icon" viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
-                Download CSV
-              </button>
+              <button class="btn-download">Download CSV</button>
             </div>
           </div>
           <div class="report-card" onclick="exportData('incidents')">
-            <div class="rc-icon" style="background:#FADBD8">
-              <svg viewBox="0 0 24 24" fill="#922B21"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
-            </div>
             <div class="rc-title">Incident Report Log</div>
-            <div class="rc-desc">All reported incidents with severity, location, assigned agency, affected count, status and timeline.</div>
+            <div class="rc-desc">All reported incidents with severity, location, assigned agency, affected count, status.</div>
             <div class="rc-footer">
-              <span class="rc-meta" id="incidentReportCount">Loading...</span>
-              <button class="btn-download">
-                <svg class="dl-icon" viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
-                Download CSV
-              </button>
+              <button class="btn-download">Download CSV</button>
             </div>
           </div>
           <div class="report-card" onclick="exportData('resources')">
-            <div class="rc-icon" style="background:#D5F5E3">
-              <svg viewBox="0 0 24 24" fill="#1E8449"><path d="M20 6h-2.18c.07-.44.18-.88.18-1.25C18 2.69 16.31 1 14.25 1c-1.14 0-2.19.49-2.94 1.28L10 3.5l-1.31-1.22C7.94 1.49 6.9 1 5.75 1 3.69 1 2 2.69 2 4.75c0 .37.11.81.18 1.25H0v2h24V6h-4zM2 8v12h20V8H2z"/></svg>
-            </div>
             <div class="rc-title">Resources & Equipment</div>
-            <div class="rc-desc">Vehicle inventory, equipment availability, personnel deployment and resource allocation across all agencies.</div>
+            <div class="rc-desc">Vehicle inventory, equipment availability, personnel deployment across all agencies.</div>
             <div class="rc-footer">
-              <span class="rc-meta">All agencies</span>
-              <button class="btn-download">
-                <svg class="dl-icon" viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
-                Download CSV
-              </button>
+              <button class="btn-download">Download CSV</button>
             </div>
           </div>
           <div class="report-card" onclick="exportData('summary')">
-            <div class="rc-icon" style="background:#FEF9E7">
-              <svg viewBox="0 0 24 24" fill="#F39C12"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zm4.24 16L12 15.45 7.77 18l1.12-4.81-3.73-3.23 4.92-.42L12 5l1.92 4.53 4.92.42-3.73 3.23L16.23 18z"/></svg>
-            </div>
             <div class="rc-title">Executive Summary Report</div>
-            <div class="rc-desc">High-level overview of all active incidents, deployed agencies, resources utilized and overall relief operation status.</div>
+            <div class="rc-desc">High-level overview of all active incidents, deployed agencies, resources utilized.</div>
             <div class="rc-footer">
-              <span class="rc-meta">Auto-generated</span>
-              <button class="btn-download">
-                <svg class="dl-icon" viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
-                Download CSV
-              </button>
+              <button class="btn-download">Download CSV</button>
             </div>
           </div>
           <div class="report-card" onclick="exportData('deployment')">
-            <div class="rc-icon" style="background:#EEDEDB">
-              <svg viewBox="0 0 24 24" fill="#784212"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
-            </div>
             <div class="rc-title">Deployment Tracker</div>
-            <div class="rc-desc">Real-time deployment status of each agency, mission assignments, time of deployment and estimated return.</div>
+            <div class="rc-desc">Real-time deployment status of each agency, mission assignments, time of deployment.</div>
             <div class="rc-footer">
-              <span class="rc-meta">Live data</span>
-              <button class="btn-download">
-                <svg class="dl-icon" viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
-                Download CSV
-              </button>
+              <button class="btn-download">Download CSV</button>
             </div>
           </div>
           <div class="report-card" onclick="generateFullReport()">
-            <div class="rc-icon" style="background:#EDE7F6">
-              <svg viewBox="0 0 24 24" fill="#4527A0"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
-            </div>
             <div class="rc-title">Full Operations Report</div>
-            <div class="rc-desc">Comprehensive report combining all agencies, incidents, resources and deployment data in a single downloadable file.</div>
+            <div class="rc-desc">Comprehensive report combining all agencies, incidents, resources and deployment data.</div>
             <div class="rc-footer">
-              <span class="rc-meta">All modules</span>
-              <button class="btn-download" style="background:#4527A0">
-                <svg class="dl-icon" viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
-                Download Full
-              </button>
+              <button class="btn-download" style="background:#4527A0">Download Full</button>
             </div>
           </div>
         </div>
@@ -753,7 +643,7 @@ body{font-family:var(--font-body);background:var(--gray-50);color:var(--gray-900
     </div>
     <div class="form-group">
       <label class="form-label">Special Equipment / Capabilities</label>
-      <textarea class="form-textarea" id="mRegEquip" placeholder="e.g. Boats, Helicopters, Heavy Rescue Equipment..." style="min-height:60px"></textarea>
+      <textarea class="form-textarea" id="mRegEquip" placeholder="e.g. Boats, Helicopters..." style="min-height:60px"></textarea>
     </div>
     <div class="modal-footer">
       <button class="btn-cancel" onclick="closeModal('registerModal')">Cancel</button>
@@ -793,12 +683,9 @@ body{font-family:var(--font-body);background:var(--gray-50);color:var(--gray-900
   const analytics = getAnalytics(app);
   const db = getDatabase(app);
   
-  // Expose hooks to the app logic below
+  // Expose hook to the app logic below
   window.syncAgenciesToFirebase = function(data) {
-    console.log("Syncing Data to Firebase RTDB...");
-    set(ref(db, 'agencies'), data)
-      .then(() => console.log("Database successfully populated!"))
-      .catch((error) => console.error("Firebase Sync Error:", error));
+    set(ref(db, 'agencies'), data).catch((error) => console.error("Firebase Sync Error:", error));
   }
 </script>
 
@@ -816,7 +703,7 @@ const TYPE_META = {
 const STATUS_COLOR = { active:'#1E8449', standby:'#E67E22', deployed:'#C0392B' };
 const STATUS_BG    = { active:'#D5F5E3', standby:'#FDEBD0', deployed:'#FADBD8' };
 
-// We will programmatically generate the 100 Agencies requested
+// Base pattern for the 100 Agencies requested
 const baseAgenciesPattern = [
   { cat: 'NDRF Battalion', type: 'Disaster Management' },
   { cat: 'SDRF', type: 'Disaster Management' },
@@ -834,9 +721,9 @@ function generate100Agencies() {
   const statusOptions = ['active', 'standby', 'deployed'];
   for(let i=1; i<=100; i++) {
     let base = baseAgenciesPattern[(i-1) % 8];
-    // Random placement within India SVG constraints (roughly)
-    let randomX = 140 + Math.random() * 200;
-    let randomY = 100 + Math.random() * 250;
+    // Randomly distribute coordinates across India (Lat ~10 to ~32, Lng ~70 to ~88)
+    let lat = 10.0 + Math.random() * 22.0; 
+    let lng = 70.0 + Math.random() * 18.0; 
     
     agencies.push({
       id: i,
@@ -850,24 +737,24 @@ function generate100Agencies() {
       status: statusOptions[Math.floor(Math.random() * 3)],
       equipment: 'Rescue boats, ambulances, rescue vehicles, communication equipment',
       registered: '2024-01-01',
-      x: randomX,
-      y: randomY
+      lat: lat,
+      lng: lng
     });
   }
 }
-// Run the Generator immediately to set the Data array
 generate100Agencies();
 
-
 let incidents = [
-  {id:1,title:'Major Flooding — Regional Office 4',type:'Flood',severity:'high',district:'Regional Office 4',area:'Zone 4',desc:'Severe flooding affecting residents. Immediate evacuation needed.',affected:3200,agency:'Civil Defence Agency 4',status:'active',time:'2 hrs ago',reporter:'Admin'},
-  {id:2,title:'Industrial Fire — Industrial Area',type:'Fire',severity:'high',district:'Regional Office 11',area:'Industrial Sector',desc:'Chemical fire at manufacturing unit. Toxic fumes spreading.',affected:800,agency:'Fire & Rescue Agency 11',status:'active',time:'4 hrs ago',reporter:'Agency User'},
-  {id:3,title:'Cyclone Damage — Coastal Belt',type:'Cyclone',severity:'medium',district:'Regional Office 8',area:'Coastal belt',desc:'Multiple fishing villages affected by cyclone.',affected:1000,agency:'Coast Guard Unit Agency 8',status:'monitoring',time:'Yesterday',reporter:'Admin'},
+  {id:1,title:'Major Flooding — Regional Office 4',type:'Flood',severity:'high',district:'Regional Office 4',desc:'Severe flooding affecting residents. Immediate evacuation needed.',affected:3200,agency:'Civil Defence Agency 4',status:'active',time:'2 hrs ago',reporter:'Admin'},
+  {id:2,title:'Industrial Fire — Industrial Area',type:'Fire',severity:'high',district:'Regional Office 11',desc:'Chemical fire at manufacturing unit. Toxic fumes spreading.',affected:800,agency:'Fire & Rescue Agency 11',status:'active',time:'4 hrs ago',reporter:'Agency User'},
+  {id:3,title:'Cyclone Damage — Coastal Belt',type:'Cyclone',severity:'medium',district:'Regional Office 8',desc:'Multiple fishing villages affected by cyclone.',affected:1000,agency:'Coast Guard Unit Agency 8',status:'monitoring',time:'Yesterday',reporter:'Admin'},
 ];
 
 let currentUser = null;
 let selectedSeverity = 'high';
 let sidebarFilter = 'all';
+let leafletMap = null;
+let mapMarkers = [];
 
 // ─── AUTH ────────────────────────────────────────────
 const CREDS = {
@@ -913,7 +800,8 @@ function doRegister() {
     email:document.getElementById('regAgEmail').value,
     personnel:30, vehicles:4, status:'standby', equipment:'Standard kit',
     registered:new Date().toISOString().slice(0,10),
-    x:140+Math.random()*200, y:100+Math.random()*250
+    lat: 10.0 + Math.random() * 22.0, 
+    lng: 70.0 + Math.random() * 18.0
   };
   agencies.push(newAg);
   showToast('Agency registered! Please wait for approval.','success');
@@ -934,15 +822,18 @@ function doLogout() {
 // ─── APP INIT ─────────────────────────────────────────
 function initApp() {
   renderSidebar();
-  renderDashboard();
   renderAgenciesGrid();
   renderIncidentsList();
   renderResourcesTable();
   updateStats();
   populateIncidentAgencySelect();
-  document.getElementById('incidentReportCount').textContent=incidents.length+' total incidents';
   
-  // Push the 100 generated agencies to your Firebase Realtime database once the app initiates
+  // Initialize Leaflet Map
+  setTimeout(() => {
+    initLeafletMap();
+    renderMapPins();
+  }, 100);
+
   if (window.syncAgenciesToFirebase) {
     window.syncAgenciesToFirebase(agencies);
   }
@@ -954,6 +845,10 @@ function showPage(name, btn) {
   document.getElementById('page'+name.charAt(0).toUpperCase()+name.slice(1)).classList.add('active');
   if(btn) btn.classList.add('active');
   closeDrawer();
+  
+  if (name === 'dashboard' && leafletMap) {
+      setTimeout(() => { leafletMap.invalidateSize(); }, 100);
+  }
 }
 
 // ─── UTILS ───────────────────────────────────────────
@@ -996,7 +891,7 @@ function renderSidebar() {
   }).join('');
 }
 
-// ─── DASHBOARD ───────────────────────────────────────
+// ─── DASHBOARD & MAP ─────────────────────────────────
 function updateStats() {
   document.getElementById('ds1').textContent=agencies.length;
   document.getElementById('ds2').textContent=agencies.filter(a=>a.status==='active').length;
@@ -1004,29 +899,46 @@ function updateStats() {
   document.getElementById('ds4').textContent=incidents.filter(i=>i.status==='active').length;
   document.getElementById('ds5').textContent=agencies.reduce((s,a)=>s+a.personnel,0);
 }
-function renderDashboard() {
-  renderMapPins();
-  renderRpIncidents();
+
+function initLeafletMap() {
+  if (leafletMap) return;
+  // Center map on India
+  leafletMap = L.map('leafletMap').setView([22.5937, 78.9629], 4);
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+    attribution: '&copy; OpenStreetMap contributors'
+  }).addTo(leafletMap);
 }
+
 function renderMapPins() {
-  const g=document.getElementById('mainMapPins');
-  if(!g) return;
-  g.innerHTML='';
-  agencies.forEach(ag=>{
-    const col=STATUS_COLOR[ag.status];
-    const grp=document.createElementNS('http://www.w3.org/2000/svg','g');
-    grp.style.cursor='pointer';
-    grp.onclick=()=>openAgencyDrawer(ag.id);
-    const pulse=document.createElementNS('http://www.w3.org/2000/svg','circle');
-    pulse.setAttribute('cx',ag.x);pulse.setAttribute('cy',ag.y);pulse.setAttribute('r','16');
-    pulse.setAttribute('fill',col);pulse.setAttribute('opacity','0.18');
-    const dot=document.createElementNS('http://www.w3.org/2000/svg','circle');
-    dot.setAttribute('cx',ag.x);dot.setAttribute('cy',ag.y);dot.setAttribute('r','5');
-    dot.setAttribute('fill',col);dot.setAttribute('stroke','white');dot.setAttribute('stroke-width','1.5');
-    grp.appendChild(pulse);grp.appendChild(dot);
-    g.appendChild(grp);
+  if (!leafletMap) return;
+  
+  // Clear old markers
+  mapMarkers.forEach(m => leafletMap.removeLayer(m));
+  mapMarkers = [];
+
+  agencies.forEach(ag => {
+    const col = STATUS_COLOR[ag.status];
+    
+    // Create Custom Icon using SVG to match the colored dots
+    const customIcon = L.divIcon({
+      className: 'custom-leaflet-icon',
+      html: `<div style="width: 14px; height: 14px; background-color: ${col}; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 4px rgba(0,0,0,0.4);"></div>`,
+      iconSize: [14, 14],
+      iconAnchor: [7, 7]
+    });
+
+    const marker = L.marker([ag.lat, ag.lng], { icon: customIcon }).addTo(leafletMap);
+    
+    marker.bindPopup(`
+      <div class="map-popup-title">${ag.name}</div>
+      <div class="map-popup-sub">${ag.type} • <span style="color:${col};font-weight:bold">${ag.status.toUpperCase()}</span></div>
+      <button class="map-popup-btn" onclick="openAgencyDrawer(${ag.id})">View Details</button>
+    `);
+    
+    mapMarkers.push(marker);
   });
 }
+
 function switchRpTab(tab,el) {
   document.querySelectorAll('.rp-tab').forEach(t=>t.classList.remove('active'));
   el.classList.add('active');
@@ -1041,8 +953,8 @@ function renderRpIncidents() {
         <div class="ii-title">${inc.title}</div>
         <span class="severity sev-${inc.severity==='high'?'high':inc.severity==='medium'?'med':'low'}">${inc.severity.toUpperCase()}</span>
       </div>
-      <div class="ii-loc">📍 ${inc.district}, ${inc.area}</div>
-      <div class="ii-time">🕐 ${inc.time} &nbsp;·&nbsp; ${inc.type}</div>
+      <div class="ii-loc">📍 ${inc.district}</div>
+      <div class="ii-loc" style="margin-top:4px">🕐 ${inc.time} &nbsp;·&nbsp; ${inc.type}</div>
     </div>`).join('');
 }
 function renderRpActivity() {
@@ -1107,7 +1019,7 @@ function openAgencyDrawer(id) {
       <div class="info-row"><span class="ir-label">Personnel</span><span class="ir-val">${ag.personnel}</span></div>
       <div class="info-row"><span class="ir-label">Vehicles</span><span class="ir-val">${ag.vehicles||0}</span></div>
       <div class="info-row"><span class="ir-label">Equipment</span><span class="ir-val" style="font-size:11px;text-align:right;max-width:160px">${ag.equipment||'Standard kit'}</span></div>
-      <div class="info-row"><span class="ir-label">Registered</span><span class="ir-val">${ag.registered}</span></div>
+      <div class="info-row"><span class="ir-label">Coordinates</span><span class="ir-val" style="font-size:11px;">Lat: ${ag.lat.toFixed(2)}, Lng: ${ag.lng.toFixed(2)}</span></div>
     </div>`;
   document.getElementById('ddActions').innerHTML=`
     <button class="dd-action-btn primary-action" onclick="callAgency('${ag.contact}')">📞 Contact Agency</button>
@@ -1159,7 +1071,8 @@ function registerAgencyFull() {
     status:document.getElementById('mRegStatus').value,
     equipment:document.getElementById('mRegEquip').value||'Standard kit',
     registered:new Date().toISOString().slice(0,10),
-    x:140+Math.random()*200, y:100+Math.random()*250
+    lat: 10.0 + Math.random() * 22.0, 
+    lng: 70.0 + Math.random() * 18.0
   };
   agencies.push(newAg);
   closeModal('registerModal');
@@ -1186,17 +1099,16 @@ function setSeverity(s,el) {
 function submitIncident() {
   const title=document.getElementById('incTitle').value.trim();
   const dist=document.getElementById('incDistrict').value.trim();
-  if(!title||!dist){showToast('Title and district are required','error');return;}
+  if(!title||!dist){showToast('Title and location are required','error');return;}
   const newInc={
     id:Date.now(), title, type:document.getElementById('incType').value,
-    severity:selectedSeverity, district:dist, area:document.getElementById('incArea').value,
+    severity:selectedSeverity, district:dist,
     desc:document.getElementById('incDesc').value, affected:parseInt(document.getElementById('incAffected').value)||0,
     agency:document.getElementById('incAgency').value, status:'active', time:'Just now', reporter:currentUser?.name||'User'
   };
   incidents.unshift(newInc);
   renderIncidentsList();updateStats();renderRpIncidents();
-  document.getElementById('incidentReportCount').textContent=incidents.length+' total incidents';
-  ['incTitle','incDistrict','incArea','incDesc','incAffected'].forEach(id=>{document.getElementById(id).value='';});
+  ['incTitle','incDistrict','incDesc','incAffected'].forEach(id=>{document.getElementById(id).value='';});
   showToast('Incident reported successfully!','success');
 }
 function renderIncidentsList() {
@@ -1260,12 +1172,12 @@ function exportData(type) {
   let csv='', filename='';
   const now=new Date().toISOString().slice(0,10);
   if(type==='agencies') {
-    csv='ID,Name,Type,District,Contact,Email,Personnel,Vehicles,Status,Equipment,Registered\n'+
-      agencies.map(a=>`${a.id},"${a.name}","${a.type}","${a.district}","${a.contact}","${a.email||''}",${a.personnel},${a.vehicles||0},${a.status},"${a.equipment||''}",${a.registered}`).join('\n');
+    csv='ID,Name,Type,District,Contact,Email,Personnel,Vehicles,Status,Equipment,Registered,Lat,Lng\n'+
+      agencies.map(a=>`${a.id},"${a.name}","${a.type}","${a.district}","${a.contact}","${a.email||''}",${a.personnel},${a.vehicles||0},${a.status},"${a.equipment||''}",${a.registered},${a.lat},${a.lng}`).join('\n');
     filename=`RescueNet_Agencies_${now}.csv`;
   } else if(type==='incidents') {
-    csv='ID,Title,Type,Severity,District,Area,Affected,Agency,Status,Reporter,Time\n'+
-      incidents.map(i=>`${i.id},"${i.title}","${i.type}",${i.severity},"${i.district}","${i.area||''}",${i.affected},"${i.agency}",${i.status},"${i.reporter}","${i.time}"`).join('\n');
+    csv='ID,Title,Type,Severity,District,Affected,Agency,Status,Reporter,Time\n'+
+      incidents.map(i=>`${i.id},"${i.title}","${i.type}",${i.severity},"${i.district}",${i.affected},"${i.agency}",${i.status},"${i.reporter}","${i.time}"`).join('\n');
     filename=`RescueNet_Incidents_${now}.csv`;
   } else if(type==='resources') {
     csv='Agency,Type,District,Personnel,Vehicles,Equipment,Status\n'+
@@ -1284,8 +1196,8 @@ function exportData(type) {
     filename=`RescueNet_Deployment_${now}.csv`;
   } else if(type==='full') {
     csv='=== RescueNet Full Operations Report ===\nGenerated: '+now+'\n\n--- AGENCIES ---\n'+
-      'Name,Type,District,Status,Personnel,Vehicles\n'+
-      agencies.map(a=>`"${a.name}","${a.type}","${a.district}",${a.status},${a.personnel},${a.vehicles||0}`).join('\n')+
+      'Name,Type,District,Status,Personnel,Vehicles,Lat,Lng\n'+
+      agencies.map(a=>`"${a.name}","${a.type}","${a.district}",${a.status},${a.personnel},${a.vehicles||0},${a.lat},${a.lng}`).join('\n')+
       '\n\n--- INCIDENTS ---\nTitle,Type,Severity,District,Affected,Status\n'+
       incidents.map(i=>`"${i.title}","${i.type}",${i.severity},"${i.district}",${i.affected},${i.status}`).join('\n');
     filename=`RescueNet_Full_Report_${now}.csv`;
