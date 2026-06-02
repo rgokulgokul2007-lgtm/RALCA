@@ -1186,10 +1186,23 @@ function initApp() {
     markersLayer = L.layerGroup().addTo(leafletMap);
   }
 
-  // Real-time listener for Agencies
+// Real-time listener for Agencies
   window.firebaseOnValue(window.firebaseRef(window.db, 'agencies'), (snapshot) => {
     const data = snapshot.val();
-    agencies = data ? Object.values(data) : [];
+    
+    // 1. Filter out nulls to prevent array crashes
+    agencies = data ? Object.values(data).filter(a => a !== null && typeof a === 'object') : [];
+    
+    // 2. Data Sanitization Shield: Fixes broken Firebase data on the fly so UI never crashes
+    agencies.forEach(ag => {
+      ag.name = ag.name || 'Unknown Unit';
+      ag.district = ag.district || 'Unknown Location';
+      ag.personnel = parseInt(ag.personnel) || 0;
+      ag.vehicles = parseInt(ag.vehicles) || 0;
+      ag.equipment = ag.equipment || 'Standard Kit';
+      ag.type = ag.type || 'Fire & Rescue';
+      ag.status = ag.status || 'standby';
+    });
     
     renderSidebar();
     renderAgenciesGrid();
