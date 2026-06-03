@@ -153,9 +153,9 @@ body{font-family:var(--font-body);background:var(--gray-50);color:var(--gray-900
 .page-header{padding:16px 20px;background:white;border-bottom:1px solid var(--gray-200);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
 .page-title{font-family:var(--font-display);font-size:18px;font-weight:700;color:var(--gray-900)}
 .page-sub{font-size:13px;color:var(--gray-500);margin-top:2px}
-.btn-primary{padding:9px 16px;background:var(--red);color:white;border:none;border-radius:var(--radius-md);font-size:13px;font-weight:600;font-family:var(--font-body);cursor:pointer;display:flex;align-items:center;gap:6px;transition:background .15s}
+.btn-primary{padding:9px 16px;background:var(--red);color:white;border:none;border-radius:var(--radius-md);font-size:13px;font-weight:600;font-family:var(--font-body);cursor:pointer;display:flex;align-items:center;gap:6px;transition:background .15s; white-space:nowrap;}
 .btn-primary:hover{background:var(--red-dark)}
-.btn-secondary{padding:9px 16px;background:white;color:var(--gray-700);border:1px solid var(--gray-300);border-radius:var(--radius-md);font-size:13px;font-weight:500;font-family:var(--font-body);cursor:pointer;display:flex;align-items:center;gap:6px;transition:all .15s}
+.btn-secondary{padding:9px 16px;background:white;color:var(--gray-700);border:1px solid var(--gray-300);border-radius:var(--radius-md);font-size:13px;font-weight:500;font-family:var(--font-body);cursor:pointer;display:flex;align-items:center;gap:6px;transition:all .15s; white-space:nowrap;}
 .btn-secondary:hover{background:var(--gray-50)}
 .agencies-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;padding:16px;overflow-y:auto;flex:1}
 .ag-card{background:white;border:1px solid var(--gray-200);border-radius:var(--radius-lg);padding:16px;cursor:pointer;transition:all .2s;position:relative}
@@ -284,12 +284,16 @@ body{font-family:var(--font-body);background:var(--gray-50);color:var(--gray-900
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.js"></script>
 <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script> <style>
+  /* Advanced Map Controls Overlay */
   .map-overlay-top { position:absolute; top:12px; left:12px; right:12px; z-index:400; display:flex; gap:10px; pointer-events:none; }
   .map-overlay-top > * { pointer-events:auto; }
   .filter-select { padding:8px 12px; border-radius:8px; border:1px solid var(--gray-200); box-shadow:var(--shadow-sm); font-size:12px; font-weight:600; outline:none; cursor:pointer; background:white; color:var(--navy);}
-  .heatmap-btn { background: #FF9800; color:white; border:none; padding:8px 16px; border-radius:8px; font-weight:700; font-size:12px; box-shadow:var(--shadow-md); cursor:pointer; }
+  .heatmap-btn { background: #FF9800; color:white; border:none; padding:8px 16px; border-radius:8px; font-weight:700; font-size:12px; box-shadow:var(--shadow-md); cursor:pointer; transition: all 0.2s; }
+  .heatmap-btn:hover { background: #E67E22; }
   .sos-btn { background:var(--red); color:white; border:none; padding:8px 16px; border-radius:8px; font-weight:700; font-size:12px; box-shadow:var(--shadow-md); cursor:pointer; animation: pulse 2s infinite; display:none; }
   @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(231, 76, 60, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(231, 76, 60, 0); } 100% { box-shadow: 0 0 0 0 rgba(231, 76, 60, 0); } }
+  
+  /* Map Pin Flashing Animation */
   .sos-pulse { animation: mapPulse 0.8s infinite alternate !important; transform-origin: center; }
   @keyframes mapPulse {
     0% { stroke-width: 4; fill-opacity: 1; stroke-opacity: 1; }
@@ -506,6 +510,8 @@ body{font-family:var(--font-body);background:var(--gray-50);color:var(--gray-900
                 <option value="heavy">Has Heavy Equipment</option>
               </select>
               <button class="heatmap-btn" id="heatmapToggleBtn" onclick="toggleHeatmap()">🔥 Thermal Heatmap</button>
+              <button class="btn-primary" id="adminAIBtn" style="background:var(--navy); border:none; box-shadow:var(--shadow-md); font-weight:700; display:none;" onclick="runAIPrediction()">🧠 AI Risk Prediction</button>
+              <button class="btn-primary" id="civilianVolunteerBtn" style="background:#27AE60; border:none; box-shadow:var(--shadow-md); font-weight:700; display:none;" onclick="openModal('volunteerModal')">🤝 Offer Relief / Assets</button>
               <button class="sos-btn" id="civilianSosBtn" onclick="triggerCivilianSOS()">🚨 TRANSMIT EMERGENCY SOS</button>
             </div>
             <div id="mainMapSvg" style="width: 100%; height: 100%; z-index: 1;"></div>
@@ -518,7 +524,7 @@ body{font-family:var(--font-body);background:var(--gray-50);color:var(--gray-900
           <div class="right-panel">
             <div class="rp-tabs">
               <div class="rp-tab active" onclick="switchRpTab('incidents',this)">Incidents</div>
-              <div class="rp-tab" onclick="switchRpTab('activity',this)">Activity</div>
+              <div class="rp-tab" onclick="switchRpTab('activity',this)">Activity Feed</div>
             </div>
             <div class="rp-body" id="rpBody"></div>
           </div>
@@ -630,16 +636,12 @@ body{font-family:var(--font-body);background:var(--gray-50);color:var(--gray-900
             <div class="page-sub">Live tracking of equipment and personnel across all active agencies</div>
           </div>
           <div style="display:flex; gap:8px;">
-            <button class="btn-secondary" id="appTransferResBtn" style="color:var(--navy); border-color:var(--navy);" onclick="openTransferModal()">
-              🔄 Transfer Resources
-            </button>
+            <button class="btn-primary" id="agencyBackupBtn" style="background:var(--red); display:none;" onclick="openModal('backupModal')">🚨 Request Backup</button>
+            <button class="btn-secondary" id="appTransferResBtn" style="color:var(--navy); border-color:var(--navy);" onclick="openTransferModal()">🔄 Transfer Resources</button>
             <button class="btn-secondary" onclick="exportData('resources')">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
-              Export CSV
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg> Export CSV
             </button>
-            <button class="btn-primary" id="appAddResourceBtn" style="background: var(--gold); color: var(--navy);" onclick="openAddResourceModal()">
-              + Add Resource
-            </button>
+            <button class="btn-primary" id="appAddResourceBtn" style="background: var(--gold); color: var(--navy);" onclick="openAddResourceModal()">+ Add Resource</button>
           </div>
         </div>
         <div class="resources-layout" style="display:block; padding: 24px; overflow-y: auto;">
@@ -657,87 +659,57 @@ body{font-family:var(--font-body);background:var(--gray-50);color:var(--gray-900
         </div>
         <div class="reports-layout">
           <div class="report-card" onclick="exportData('agencies')">
-            <div class="rc-icon" style="background:#D6EAF8">
-              <svg viewBox="0 0 24 24" fill="#1A5276"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
-            </div>
+            <div class="rc-icon" style="background:#D6EAF8"><svg viewBox="0 0 24 24" fill="#1A5276"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg></div>
             <div class="rc-title">Agency Registry Report</div>
             <div class="rc-desc">Complete list of all registered agencies with contact details, district, type, status, personnel count and resources.</div>
             <div class="rc-footer">
               <span class="rc-meta">Updated: Today</span>
-              <button class="btn-download">
-                <svg class="dl-icon" viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
-                Download CSV
-              </button>
+              <button class="btn-download"><svg class="dl-icon" viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg> Download CSV</button>
             </div>
           </div>
           <div class="report-card" onclick="exportData('incidents')">
-            <div class="rc-icon" style="background:#FADBD8">
-              <svg viewBox="0 0 24 24" fill="#922B21"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
-            </div>
+            <div class="rc-icon" style="background:#FADBD8"><svg viewBox="0 0 24 24" fill="#922B21"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg></div>
             <div class="rc-title">Incident Report Log</div>
             <div class="rc-desc">All reported incidents with severity, location, assigned agency, affected count, status and timeline.</div>
             <div class="rc-footer">
               <span class="rc-meta" id="incidentReportCount">Loading...</span>
-              <button class="btn-download">
-                <svg class="dl-icon" viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
-                Download CSV
-              </button>
+              <button class="btn-download"><svg class="dl-icon" viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg> Download CSV</button>
             </div>
           </div>
           <div class="report-card" onclick="exportData('resources')">
-            <div class="rc-icon" style="background:#D5F5E3">
-              <svg viewBox="0 0 24 24" fill="#1E8449"><path d="M20 6h-2.18c.07-.44.18-.88.18-1.25C18 2.69 16.31 1 14.25 1c-1.14 0-2.19.49-2.94 1.28L10 3.5l-1.31-1.22C7.94 1.49 6.9 1 5.75 1 3.69 1 2 2.69 2 4.75c0 .37.11.81.18 1.25H0v2h24V6h-4zM2 8v12h20V8H2z"/></svg>
-            </div>
+            <div class="rc-icon" style="background:#D5F5E3"><svg viewBox="0 0 24 24" fill="#1E8449"><path d="M20 6h-2.18c.07-.44.18-.88.18-1.25C18 2.69 16.31 1 14.25 1c-1.14 0-2.19.49-2.94 1.28L10 3.5l-1.31-1.22C7.94 1.49 6.9 1 5.75 1 3.69 1 2 2.69 2 4.75c0 .37.11.81.18 1.25H0v2h24V6h-4zM2 8v12h20V8H2z"/></svg></div>
             <div class="rc-title">Resources & Equipment</div>
             <div class="rc-desc">Vehicle inventory, equipment availability, personnel deployment and resource allocation across all agencies.</div>
             <div class="rc-footer">
               <span class="rc-meta">All agencies</span>
-              <button class="btn-download">
-                <svg class="dl-icon" viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
-                Download CSV
-              </button>
+              <button class="btn-download"><svg class="dl-icon" viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg> Download CSV</button>
             </div>
           </div>
           <div class="report-card" onclick="exportData('summary')">
-            <div class="rc-icon" style="background:#FEF9E7">
-              <svg viewBox="0 0 24 24" fill="#F39C12"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zm4.24 16L12 15.45 7.77 18l1.12-4.81-3.73-3.23 4.92-.42L12 5l1.92 4.53 4.92.42-3.73 3.23L16.23 18z"/></svg>
-            </div>
+            <div class="rc-icon" style="background:#FEF9E7"><svg viewBox="0 0 24 24" fill="#F39C12"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zm4.24 16L12 15.45 7.77 18l1.12-4.81-3.73-3.23 4.92-.42L12 5l1.92 4.53 4.92.42-3.73 3.23L16.23 18z"/></svg></div>
             <div class="rc-title">Executive Summary Report</div>
             <div class="rc-desc">High-level overview of all active incidents, deployed agencies, resources utilized and overall relief operation status.</div>
             <div class="rc-footer">
               <span class="rc-meta">Auto-generated</span>
-              <button class="btn-download">
-                <svg class="dl-icon" viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
-                Download CSV
-              </button>
+              <button class="btn-download"><svg class="dl-icon" viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg> Download CSV</button>
             </div>
           </div>
           <div class="report-card" onclick="exportData('deployment')">
-            <div class="rc-icon" style="background:#EEDEDB">
-              <svg viewBox="0 0 24 24" fill="#784212"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
-            </div>
+            <div class="rc-icon" style="background:#EEDEDB"><svg viewBox="0 0 24 24" fill="#784212"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg></div>
             <div class="rc-title">Deployment Tracker</div>
             <div class="rc-desc">Real-time deployment status of each agency, mission assignments, time of deployment and estimated return.</div>
             <div class="rc-footer">
               <span class="rc-meta">Live data</span>
-              <button class="btn-download">
-                <svg class="dl-icon" viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
-                Download CSV
-              </button>
+              <button class="btn-download"><svg class="dl-icon" viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg> Download CSV</button>
             </div>
           </div>
           <div class="report-card" onclick="generateFullReport()">
-            <div class="rc-icon" style="background:#EDE7F6">
-              <svg viewBox="0 0 24 24" fill="#4527A0"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
-            </div>
+            <div class="rc-icon" style="background:#EDE7F6"><svg viewBox="0 0 24 24" fill="#4527A0"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg></div>
             <div class="rc-title">Full Operations Report</div>
             <div class="rc-desc">Comprehensive report combining all agencies, incidents, resources and deployment data in a single downloadable file.</div>
             <div class="rc-footer">
               <span class="rc-meta">All modules</span>
-              <button class="btn-download" style="background:#4527A0">
-                <svg class="dl-icon" viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
-                Download Full
-              </button>
+              <button class="btn-download" style="background:#4527A0"><svg class="dl-icon" viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg> Download Full</button>
             </div>
           </div>
         </div>
@@ -792,9 +764,7 @@ body{font-family:var(--font-body);background:var(--gray-50);color:var(--gray-900
       <div class="form-group">
         <label class="form-label">Initial Status</label>
         <select class="form-select" id="mRegStatus">
-          <option value="active">Active</option>
-          <option value="standby">Standby</option>
-          <option value="deployed">Deployed</option>
+          <option value="active">Active</option><option value="standby">Standby</option><option value="deployed">Deployed</option>
         </select>
       </div>
     </div>
@@ -819,15 +789,9 @@ body{font-family:var(--font-body);background:var(--gray-50);color:var(--gray-900
       <div class="form-group">
         <label class="form-label">Resource Type</label>
         <select class="form-select" id="rResType">
-          <option value="fire_engines">🚒 Fire Engines</option>
-          <option value="ambulances">🚑 Ambulances</option>
-          <option value="helicopters">🚁 Helicopters</option>
-          <option value="rescue_boats">⛵ Rescue Boats</option>
-          <option value="relief_tents">⛺ Relief Tents</option>
-          <option value="medical_kits">💊 Medical Kits</option>
-          <option value="generators">🔋 Generators</option>
-          <option value="trucks">🚛 Trucks</option>
-          <option value="comm_sets">📡 Comm Sets</option>
+          <option value="fire_engines">🚒 Fire Engines</option><option value="ambulances">🚑 Ambulances</option><option value="helicopters">🚁 Helicopters</option>
+          <option value="rescue_boats">⛵ Rescue Boats</option><option value="relief_tents">⛺ Relief Tents</option><option value="medical_kits">💊 Medical Kits</option>
+          <option value="generators">🔋 Generators</option><option value="trucks">🚛 Trucks</option><option value="comm_sets">📡 Comm Sets</option>
         </select>
       </div>
       <div class="form-group">
@@ -843,8 +807,7 @@ body{font-family:var(--font-body);background:var(--gray-50);color:var(--gray-900
       <div class="form-group">
         <label class="form-label">Condition</label>
         <select class="form-select" id="rResCondition">
-          <option value="operational">Operational</option>
-          <option value="standby">Standby / Reserve</option>
+          <option value="operational">Operational</option><option value="standby">Standby / Reserve</option>
         </select>
       </div>
     </div>
@@ -888,15 +851,9 @@ body{font-family:var(--font-body);background:var(--gray-50);color:var(--gray-900
     <div class="form-group">
       <label class="form-label">Resource Type</label>
       <select class="form-select" id="tType">
-          <option value="fire_engines">Fire Engines</option>
-          <option value="ambulances">Ambulances</option>
-          <option value="helicopters">Helicopters</option>
-          <option value="rescue_boats">Rescue Boats</option>
-          <option value="relief_tents">Relief Tents</option>
-          <option value="medical_kits">Medical Kits</option>
-          <option value="generators">Generators</option>
-          <option value="trucks">Trucks</option>
-          <option value="comm_sets">Comm Sets</option>
+          <option value="fire_engines">Fire Engines</option><option value="ambulances">Ambulances</option><option value="helicopters">Helicopters</option>
+          <option value="rescue_boats">Rescue Boats</option><option value="relief_tents">Relief Tents</option><option value="medical_kits">Medical Kits</option>
+          <option value="generators">Generators</option><option value="trucks">Trucks</option><option value="comm_sets">Comm Sets</option>
       </select>
     </div>
     <div class="form-row">
@@ -916,6 +873,95 @@ body{font-family:var(--font-body);background:var(--gray-50);color:var(--gray-900
     <div class="modal-footer">
       <button class="btn-cancel" onclick="closeModal('transferModal')">Cancel</button>
       <button class="btn-primary" style="background:#243356" onclick="submitTransfer()">Execute Transfer</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="volunteerModal">
+  <div class="modal-box" style="width: 480px;">
+    <div class="modal-header">
+      <div class="modal-title">🤝 Volunteer / Provide Assets</div>
+      <button class="modal-close" onclick="closeModal('volunteerModal')">✕</button>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Asset / Skill Type</label>
+      <select class="form-select" id="vType">
+        <option value="Vehicle (4x4, Tractor)">Vehicle (4x4, Tractor)</option>
+        <option value="Shelter Space">Shelter Space</option>
+        <option value="Food / Rations">Food / Rations</option>
+        <option value="Medical / First Aid">Medical / First Aid Skill</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Details & Capacity</label>
+      <input class="form-input" id="vDetails" placeholder="e.g., Can shelter 10 people, Have 1 tractor..." />
+    </div>
+     <div class="form-group">
+      <label class="form-label">Your District</label>
+      <input class="form-input" id="vDistrict" placeholder="Enter your city/district" />
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModal('volunteerModal')">Cancel</button>
+      <button class="btn-primary" style="background:var(--green)" onclick="submitVolunteer()">Register Asset</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="backupModal">
+  <div class="modal-box" style="width: 480px;">
+    <div class="modal-header">
+      <div class="modal-title">🚨 Request Emergency Backup</div>
+      <button class="modal-close" onclick="closeModal('backupModal')">✕</button>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Resource Needed</label>
+      <select class="form-select" id="bkType">
+        <option value="Rescue Boats">Rescue Boats</option>
+        <option value="Medical Kits">Medical Kits</option>
+        <option value="Personnel">Personnel (Troops)</option>
+        <option value="Helicopters">Helicopters</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Quantity</label>
+      <input class="form-input" id="bkQty" type="number" placeholder="Amount needed" />
+    </div>
+    <div class="form-group">
+      <label class="form-label">Urgency</label>
+      <select class="form-select" id="bkUrgency">
+        <option value="Critical">Critical (Immediate)</option>
+        <option value="High">High (Within 6 hours)</option>
+      </select>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModal('backupModal')">Cancel</button>
+      <button class="btn-primary" onclick="submitBackup()">Send to Command</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="aiModal">
+  <div class="modal-box" style="width: 550px; text-align:center;">
+    <div class="modal-header" style="justify-content:center;">
+      <div class="modal-title" style="font-size:22px;">🧠 AI Risk & Deployment Analytics</div>
+    </div>
+    <div id="aiLoading" style="padding: 40px 20px;">
+        <div style="font-size:40px; animation: blink 1s infinite;">⚙️</div>
+        <div style="margin-top:16px; font-weight:bold; color:var(--navy);">Processing Meteorological Data...</div>
+        <div style="font-size:12px; color:var(--gray-500); margin-top:8px;">Cross-referencing historical flood plains and live weather patterns.</div>
+    </div>
+    <div id="aiResult" style="display:none; padding: 20px; text-align:left; background:#FEF9E7; border: 1px solid #F39C12; border-radius:12px; margin-top:20px;">
+        <h4 style="color:#B9770E; margin-bottom:10px;">⚠️ HIGH RISK PREDICTED: Coastal Regions (Next 48 Hrs)</h4>
+        <p style="font-size:13px; color:#784212; margin-bottom:12px;">Heavy cyclonic activity detected. 86% probability of severe flooding in Sector 4.</p>
+        <strong style="font-size:12px; color:var(--navy);">AI Recommendation:</strong>
+        <ul style="font-size:12px; margin-left:20px; margin-top:6px; color:var(--gray-700);">
+            <li>Pre-deploy 50 Rescue Boats to Coastal Belt immediately.</li>
+            <li>Place 3rd Battalion NDRF on LEVEL 1 STANDBY.</li>
+            <li>Route 200 Medical Kits from Inland reserves to Coastal camps.</li>
+        </ul>
+    </div>
+    <div class="modal-footer" style="justify-content:center; margin-top:24px;">
+      <button class="btn-primary" style="width:100%; background:var(--navy);" onclick="closeModal('aiModal')">Acknowledge & Close</button>
     </div>
   </div>
 </div>
@@ -986,7 +1032,6 @@ const STATUS_COLOR = { active:'#1E8449', standby:'#E67E22', deployed:'#C0392B' }
 const STATUS_BG    = { active:'#D5F5E3', standby:'#FDEBD0', deployed:'#FADBD8' };
 
 const authenticAgencies = [
-  // --- CORE NDRF & GOVT FORCES ---
   { name: "1st Battalion NDRF", type: "Disaster Management", district: "Guwahati, Assam", lat: 26.1158, lng: 91.6024, contact: "0361-2840284", email: "assam01-ndrf@nic.in", equip: "CSSR, Medical First Response, Flood Rescue" },
   { name: "2nd Battalion NDRF", type: "Disaster Management", district: "Nadia, West Bengal", lat: 22.9556, lng: 88.5333, contact: "033-25875032", email: "wb02-ndrf@nic.in", equip: "CSSR, Flood Rescue, Deep Diving" },
   { name: "3rd Battalion NDRF", type: "Disaster Management", district: "Cuttack, Odisha", lat: 20.4371, lng: 85.7360, contact: "0671-2879711", email: "ori03-ndrf@nic.in", equip: "Cyclone Response, CSSR, Animal Rescue" },
@@ -997,8 +1042,6 @@ const authenticAgencies = [
   { name: "TN Fire & Rescue HQ", type: "Fire & Rescue", district: "Chennai, TN", lat: 13.0674, lng: 80.2600, contact: "044-28512500", email: "tnfire@nic.in", equip: "Fire Tenders, Rescue Vehicles" },
   { name: "GVK EMRI 108 HQ", type: "Medical / EMS", district: "Hyderabad, TS", lat: 17.2917, lng: 78.4357, contact: "108", email: "info@emri.in", equip: "Advanced Life Support, Neonatal" },
   { name: "TNSDMA HQ", type: "Disaster Management", district: "Chennai, TN", lat: 13.0674, lng: 80.2800, contact: "1070", email: "tnsdma@tn.gov.in", equip: "Flood Relief, Evacuation Boats" },
-
-  // --- NEW: NGOs, SDRF, & SPECIALIZED AGENCIES (Real True Data) ---
   { name: "National Disaster Mgt. Authority (NDMA)", type: "Disaster Management", district: "New Delhi, DL", lat: 28.5861, lng: 77.2185, contact: "011-26701700", email: "controlroom@ndma.gov.in", equip: "National Command Center, Satellite Comm" },
   { name: "SDRF — Tamil Nadu", type: "Flood Response", district: "Chennai, TN", lat: 13.0674, lng: 80.2600, contact: "044-28593990", email: "sdrf.tn@gov.in", equip: "Flood Rescue, Heavy Pumps, Inflatable Boats" },
   { name: "Indian Red Cross Society", type: "Medical / EMS", district: "New Delhi, DL", lat: 28.6208, lng: 77.2061, contact: "011-23716441", email: "ircs@indianredcross.org", equip: "Blood Banks, First Aid Kits, ALS Ambulances" },
@@ -1037,18 +1080,6 @@ function loadAuthentic100Agencies() {
       status: statusList[i % 3], equipment: realAg.equip, registered: '2010-01-01', lat: realAg.lat, lng: realAg.lng
     });
   }
-  let currentId = authenticAgencies.length + 1;
-  for (let i = 0; i < (100 - authenticAgencies.length); i++) {
-    let parentHQ = authenticAgencies[i % authenticAgencies.length];
-    agencies.push({
-      id: currentId, name: `${parentHQ.district.split(',')[0]} Field Unit ${currentId}`, type: parentHQ.type,
-      district: `${parentHQ.district.split(',')[0]} Sub-Division`, contact: parentHQ.contact.slice(0, -2) + Math.floor(10 + Math.random() * 89).toString(),
-      email: `fieldunit${currentId}@${parentHQ.email.split('@')[1]}`, personnel: 30 + Math.floor(Math.random() * 40),
-      vehicles: 3 + Math.floor(Math.random() * 5), status: statusList[i % 3], equipment: parentHQ.equip,
-      registered: '2024-01-01', lat: parentHQ.lat + (Math.random() - 0.5) * 1.5, lng: parentHQ.lng + (Math.random() - 0.5) * 1.5
-    });
-    currentId++;
-  }
 }
 loadAuthentic100Agencies();
 
@@ -1061,8 +1092,8 @@ let incidents = [
 let currentUser = null;
 let selectedSeverity = 'high';
 let sidebarFilter = 'all';
+let activitiesFeed = []; // Global Activity Feed
 
-// ─── AUTH ────────────────────────────────────────────
 const CREDS = {
   agency:['demo@agency.com','rescue123'],
   admin:['admin@rescuenet.gov.in','admin123'],
@@ -1096,7 +1127,6 @@ async function doLogin(role) {
   const email = document.getElementById(emailId).value.trim();
   const pass  = document.getElementById(passId).value;
   
-  // 1. Keep Demo Accounts active
   const [ce,cp] = CREDS[role];
   if(email===ce && pass===cp) {
     const roleNames = {'admin':'Admin Control', 'agency':'Agency Officer', 'civilian':'Civilian Observer'};
@@ -1110,7 +1140,6 @@ async function doLogin(role) {
     return;
   }
 
-  // 2. Official Firebase Auth Login
   try {
     const userCredential = await window.firebaseSignIn(window.auth, email, pass);
     const uid = userCredential.user.uid;
@@ -1207,14 +1236,12 @@ function doLogout() {
   document.getElementById('loginScreen').classList.add('active');
 }
 
-// ─── APP INIT ─────────────────────────────────────────
 let leafletMap = null;
 let markersLayer = null;
 let heatLayer = null; 
 let isHeatmap = false;
 
 function initApp() {
-  // Setup Role Based UI
   const appRegBtn = document.getElementById('appRegAgencyBtn');
   if(appRegBtn) appRegBtn.style.display = (currentUser && currentUser.role === 'civilian') ? 'none' : 'flex';
   const appAddResBtn = document.getElementById('appAddResourceBtn');
@@ -1225,6 +1252,14 @@ function initApp() {
   if(appBroadcastBtn) appBroadcastBtn.style.display = (currentUser && currentUser.role === 'admin') ? 'block' : 'none';
   const sosBtn = document.getElementById('civilianSosBtn');
   if(sosBtn) sosBtn.style.display = (currentUser && currentUser.role === 'civilian') ? 'block' : 'none';
+
+  // Advanced Flex Features Buttons
+  const adminAIBtn = document.getElementById('adminAIBtn');
+  if(adminAIBtn) adminAIBtn.style.display = (currentUser && currentUser.role === 'admin') ? 'block' : 'none';
+  const civilianVolunteerBtn = document.getElementById('civilianVolunteerBtn');
+  if(civilianVolunteerBtn) civilianVolunteerBtn.style.display = (currentUser && currentUser.role === 'civilian') ? 'block' : 'none';
+  const agencyBackupBtn = document.getElementById('agencyBackupBtn');
+  if(agencyBackupBtn) agencyBackupBtn.style.display = (currentUser && currentUser.role === 'agency') ? 'block' : 'none';
   
   if (!leafletMap) {
     leafletMap = L.map('mainMapSvg').setView([22.5937, 78.9629], 5);
@@ -1234,7 +1269,6 @@ function initApp() {
     markersLayer = L.layerGroup().addTo(leafletMap);
   }
 
-  // Feature 1: Listen for Global Broadcasts
   window.firebaseOnValue(window.firebaseRef(window.db, 'globalAlert'), (snapshot) => {
     if(snapshot.exists()) {
       const data = snapshot.val();
@@ -1247,11 +1281,9 @@ function initApp() {
     }
   });
 
-  // Data Sanitization Shield
   window.firebaseOnValue(window.firebaseRef(window.db, 'agencies'), (snapshot) => {
     const data = snapshot.val();
     agencies = [];
-    
     if (data) {
       Object.keys(data).forEach(key => {
         let ag = data[key];
@@ -1272,26 +1304,24 @@ function initApp() {
         }
       });
     }
-    
-    renderSidebar();
-    renderAgenciesGrid();
-    if(!isHeatmap) renderMapPins();
-    updateStats();
-    renderResourcesTable();
-    populateIncidentAgencySelect();
+    renderSidebar(); renderAgenciesGrid(); if(!isHeatmap) renderMapPins();
+    updateStats(); renderResourcesTable(); populateIncidentAgencySelect();
   });
 
   window.firebaseOnValue(window.firebaseRef(window.db, 'incidents'), (snapshot) => {
     const data = snapshot.val();
     incidents = data ? Object.values(data).sort((a, b) => b.id - a.id) : [];
-    
-    renderIncidentsList();
-    updateStats();
-    renderRpIncidents();
+    renderIncidentsList(); updateStats(); renderRpIncidents();
     const countEl = document.getElementById('incidentReportCount');
     if (countEl) countEl.textContent = incidents.length + ' total incidents';
-    
     if(isHeatmap) toggleHeatmap(true); 
+  });
+
+  // Feature 4: Live Activity Feed Listener
+  window.firebaseOnValue(window.firebaseRef(window.db, 'activities'), (snapshot) => {
+    const data = snapshot.val();
+    activitiesFeed = data ? Object.values(data).sort((a, b) => b.id - a.id) : [];
+    renderRpActivity();
   });
 }
 
@@ -1318,11 +1348,44 @@ function sendBroadcast() {
   const msg = document.getElementById('bMsg').value.trim();
   const sev = document.getElementById('bSev').value;
   if(!msg) return showToast('Please enter a message', 'error');
-  
   window.firebaseSet(window.firebaseRef(window.db, 'globalAlert'), { msg: msg, sev: sev, time: Date.now() });
   closeModal('broadcastModal');
   showToast('Global Alert Broadcasted Successfully!', 'success');
   document.getElementById('bMsg').value = '';
+}
+
+// Advanced Features Submissions
+function submitVolunteer() {
+  const vType = document.getElementById('vType').value;
+  const vDet = document.getElementById('vDetails').value;
+  const vDist = document.getElementById('vDistrict').value;
+  if(!vDet || !vDist) return showToast('Please fill all details', 'error');
+  const entry = { id: Date.now(), type: 'Volunteer', text: `${currentUser.name} offered ${vType}: ${vDet} in ${vDist}` };
+  window.firebaseSet(window.firebaseRef(window.db, 'activities/' + entry.id), entry);
+  closeModal('volunteerModal');
+  showToast('Asset registered! Added to Command Dashboard.', 'success');
+  document.getElementById('vDetails').value = '';
+}
+
+function submitBackup() {
+  const bType = document.getElementById('bkType').value;
+  const bQty = document.getElementById('bkQty').value;
+  const bUrg = document.getElementById('bkUrgency').value;
+  if(!bQty) return showToast('Enter quantity', 'error');
+  const entry = { id: Date.now(), type: 'Backup', text: `🚨 ${currentUser.name} requests ${bQty} ${bType} (${bUrg} Urgency)` };
+  window.firebaseSet(window.firebaseRef(window.db, 'activities/' + entry.id), entry);
+  closeModal('backupModal');
+  showToast('Backup request sent to Central Command!', 'success');
+}
+
+function runAIPrediction() {
+  openModal('aiModal');
+  document.getElementById('aiLoading').style.display = 'block';
+  document.getElementById('aiResult').style.display = 'none';
+  setTimeout(() => {
+      document.getElementById('aiLoading').style.display = 'none';
+      document.getElementById('aiResult').style.display = 'block';
+  }, 2500);
 }
 
 function filterSidebar(f,el) {
@@ -1371,7 +1434,6 @@ function renderMapPins() {
   agencies.forEach(ag => {
     let show = true;
     const equip = (ag.equipment || '').toLowerCase();
-    
     if (filterVal === 'boat' && !equip.includes('boat') && !equip.includes('marine') && !equip.includes('diving')) show = false;
     if (filterVal === 'medical' && !equip.includes('medical') && !equip.includes('ambulance') && !equip.includes('cbrn')) show = false;
     if (filterVal === 'heavy' && !equip.includes('cssr') && !equip.includes('hydraulic') && !equip.includes('heavy')) show = false;
@@ -1379,13 +1441,11 @@ function renderMapPins() {
     if (show && ag.lat && ag.lng) {
       const isCivilianSOS = ag.type === 'Civilian SOS';
       const color = isCivilianSOS ? '#922B21' : STATUS_COLOR[ag.status];
-      
       const marker = L.circleMarker([ag.lat, ag.lng], {
         color: color, fillColor: color, fillOpacity: isCivilianSOS ? 1 : 0.9,
         radius: isCivilianSOS ? 10 : 6, weight: isCivilianSOS ? 4 : 2,
         className: isCivilianSOS ? 'sos-pulse' : ''
       }).addTo(markersLayer);
-      
       marker.bindTooltip(`<b>${ag.name}</b><br>${ag.type}`, { direction: 'top' });
       marker.on('click', () => openAgencyDrawer(ag.id));
     }
@@ -1403,17 +1463,9 @@ function toggleHeatmap(forceRefresh = false) {
   if(isHeatmap) {
       markersLayer.clearLayers();
       if(heatLayer) leafletMap.removeLayer(heatLayer);
-      
       const heatPoints = [];
-      incidents.forEach(i => {
-          if(i.status !== 'resolved' && i.lat && i.lng) {
-              heatPoints.push([i.lat, i.lng, 1.0]);
-          }
-      });
-      agencies.forEach(a => {
-          if(a.lat && a.lng) heatPoints.push([a.lat, a.lng, 0.3]); 
-      });
-
+      incidents.forEach(i => { if(i.status !== 'resolved' && i.lat && i.lng) heatPoints.push([i.lat, i.lng, 1.0]); });
+      agencies.forEach(a => { if(a.lat && a.lng) heatPoints.push([a.lat, a.lng, 0.3]); });
       heatLayer = L.heatLayer(heatPoints, {radius: 30, blur: 20, maxZoom: 10, gradient: {0.4: 'blue', 0.6: 'lime', 0.8: 'yellow', 1: 'red'}}).addTo(leafletMap);
   } else {
       if(heatLayer) leafletMap.removeLayer(heatLayer);
@@ -1427,6 +1479,7 @@ function switchRpTab(tab,el) {
   if(tab==='incidents') renderRpIncidents();
   else renderRpActivity();
 }
+
 function renderRpIncidents() {
   const body=document.getElementById('rpBody');
   body.innerHTML=incidents.slice(0,6).map(inc=>`
@@ -1439,19 +1492,21 @@ function renderRpIncidents() {
       <div class="ii-time">🕐 ${inc.time} &nbsp;·&nbsp; ${inc.type}</div>
     </div>`).join('');
 }
+
 function renderRpActivity() {
-  const acts=[
-    {icon:'✅',text:'1st Battalion NDRF marked active',time:'10 min ago'},
-    {icon:'📋',text:'New incident: Flooding in Region 4',time:'2 hrs ago'},
-    {icon:'🚀',text:'TN Fire & Rescue deployed',time:'3 hrs ago'},
-    {icon:'➕',text:'Coast Guard registered new resources',time:'5 hrs ago'},
-    {icon:'⚠️',text:'Alert issued: High Severity Active',time:'6 hrs ago'},
-  ];
-  document.getElementById('rpBody').innerHTML=acts.map(a=>`
-    <div style="display:flex;gap:10px;padding:9px 0;border-bottom:1px solid #F1F3F4">
-      <div style="font-size:16px;flex-shrink:0">${a.icon}</div>
-      <div><div style="font-size:12px;color:#3C4043;font-weight:500">${a.text}</div><div style="font-size:11px;color:#80868B;margin-top:2px">${a.time}</div></div>
-    </div>`).join('');
+  const body=document.getElementById('rpBody');
+  if(activitiesFeed.length === 0) {
+      body.innerHTML = '<div style="padding:10px; color:var(--gray-500); font-size:12px;">Waiting for real-time activity...</div>';
+      return;
+  }
+  body.innerHTML=activitiesFeed.slice(0,10).map(a=>{
+    let icon = a.type === 'Volunteer' ? '🤝' : a.type === 'Backup' ? '🚨' : '📋';
+    return `<div style="display:flex;gap:10px;padding:9px 0;border-bottom:1px solid #F1F3F4">
+      <div style="font-size:16px;flex-shrink:0">${icon}</div>
+      <div><div style="font-size:12px;color:#3C4043;font-weight:500">${a.text}</div>
+      <div style="font-size:11px;color:#80868B;margin-top:2px">${new Date(a.id).toLocaleTimeString()}</div></div>
+    </div>`;
+  }).join('');
 }
 
 function renderAgenciesGrid() {
