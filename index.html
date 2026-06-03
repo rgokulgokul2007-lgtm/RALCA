@@ -1159,20 +1159,28 @@ function initApp() {
     markersLayer = L.layerGroup().addTo(leafletMap);
   }
 
-  // Data Sanitization Shield added here
+// Data Sanitization Shield added here
   window.firebaseOnValue(window.firebaseRef(window.db, 'agencies'), (snapshot) => {
     const data = snapshot.val();
-    agencies = data ? Object.values(data).filter(a => a !== null && typeof a === 'object') : [];
+    agencies = [];
     
-    agencies.forEach(ag => {
-      ag.name = ag.name || 'Unknown Unit';
-      ag.district = ag.district || 'Unknown Location';
-      ag.personnel = parseInt(ag.personnel) || 0;
-      ag.vehicles = parseInt(ag.vehicles) || 0;
-      ag.equipment = ag.equipment || 'Standard Kit';
-      ag.type = ag.type || 'Fire & Rescue';
-      ag.status = ag.status || 'standby';
-    });
+    if (data) {
+      Object.keys(data).forEach(key => {
+        let ag = data[key];
+        if (ag !== null && typeof ag === 'object') {
+          ag.id = ag.id || key; // Safely generate ID if missing
+          ag.name = ag.name || 'Unknown Unit';
+          ag.district = ag.district || 'Unknown Location';
+          ag.personnel = parseInt(ag.personnel) || 0;
+          ag.vehicles = parseInt(ag.vehicles) || 0;
+          ag.equipment = ag.equipment || 'Standard Kit';
+          ag.type = ag.type || 'Fire & Rescue';
+          ag.status = ag.status || 'standby';
+          ag.registered = ag.registered || new Date().toISOString().slice(0,10); // Fix 'undefined' date
+          agencies.push(ag);
+        }
+      });
+    }
     
     renderSidebar();
     renderAgenciesGrid();
@@ -1224,9 +1232,9 @@ function renderSidebar() {
   const list=document.getElementById('sidebarList');
   let filtered=agencies;
   if(sidebarFilter!=='all') filtered=agencies.filter(a=>a.type.includes(sidebarFilter));
-  list.innerHTML=filtered.map(ag=>{
+list.innerHTML=filtered.map(ag=>{
     const tm=TYPE_META[ag.type]||TYPE_META['Fire & Rescue'];
-    return `<div class="agency-card-mini" onclick="openAgencyDrawer(${ag.id})">
+    return `<div class="agency-card-mini" onclick="openAgencyDrawer('${ag.id}')">
       <div class="acm-top">
         <div class="acm-icon" style="background:${tm.bg};color:${tm.color}">${tm.emoji}</div>
         <div style="overflow:hidden;"><div class="acm-name">${ag.name}</div><div class="acm-type">${ag.type}</div></div>
@@ -1323,9 +1331,9 @@ function renderAgenciesGrid() {
     return match&&sm;
   });
   document.getElementById('agenciesCount').textContent=`${filtered.length} of ${agencies.length} agencies`;
-  document.getElementById('agenciesGrid').innerHTML=filtered.map(ag=>{
+document.getElementById('agenciesGrid').innerHTML=filtered.map(ag=>{
     const tm=TYPE_META[ag.type]||TYPE_META['Fire & Rescue'];
-    return `<div class="ag-card" onclick="openAgencyDrawer(${ag.id})">
+    return `<div class="ag-card" onclick="openAgencyDrawer('${ag.id}')">
       <div class="ag-card-top">
         <div class="ag-icon" style="background:${tm.bg};color:${tm.color};font-size:22px">${tm.emoji}</div>
         <div class="ag-info">
@@ -1345,7 +1353,7 @@ function renderAgenciesGrid() {
 }
 
 function openAgencyDrawer(id) {
-  const ag=agencies.find(a=>a.id===id);
+  const ag = agencies.find(a => String(a.id) === String(id));
   if(!ag) return;
   const tm=TYPE_META[ag.type]||TYPE_META['Fire & Rescue'];
   document.getElementById('ddBody').innerHTML=`
