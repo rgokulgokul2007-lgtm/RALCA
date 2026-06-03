@@ -1378,14 +1378,82 @@ function submitBackup() {
   showToast('Backup request sent to Central Command!', 'success');
 }
 
+// --- REAL GPS DISTANCE CALCULATOR ---
+function getDistanceInKm(lat1, lon1, lat2, lon2) {
+  var R = 6371; // Radius of the earth in km
+  var dLat = (lat2 - lat1) * (Math.PI / 180);
+  var dLon = (lon2 - lon1) * (Math.PI / 180);
+  var a = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return (R * c).toFixed(1); // Distance in km
+}
+
+// --- REAL ALGORITHMIC PREDICTION ENGINE ---
 function runAIPrediction() {
   openModal('aiModal');
   document.getElementById('aiLoading').style.display = 'block';
   document.getElementById('aiResult').style.display = 'none';
+
   setTimeout(() => {
       document.getElementById('aiLoading').style.display = 'none';
-      document.getElementById('aiResult').style.display = 'block';
-  }, 2500);
+      const resultBox = document.getElementById('aiResult');
+      
+      // 1. Analyze live incidents to find the highest threat
+      let activeThreats = incidents.filter(i => i.status === 'active' || i.status === 'pending');
+      
+      if (activeThreats.length === 0) {
+          resultBox.innerHTML = `
+              <h4 style="color:#1E8449; margin-bottom:10px;">✅ SYSTEM NORMAL: No Active Threats</h4>
+              <p style="font-size:13px; color:var(--gray-700);">All sectors are currently reporting clear. No deployment recommendations at this time.</p>`;
+      } else {
+          // Find the worst incident based on severity and affected count
+          let epicenter = activeThreats.sort((a, b) => {
+              let sevScoreA = a.severity === 'high' ? 3 : a.severity === 'medium' ? 2 : 1;
+              let sevScoreB = b.severity === 'high' ? 3 : b.severity === 'medium' ? 2 : 1;
+              return (sevScoreB * b.affected) - (sevScoreA * a.affected);
+          })[0];
+
+          // 2. Scan live agencies to find the closest available backup
+          let standbyAgencies = agencies.filter(a => a.status === 'standby' && a.lat && a.lng);
+          let closestAgency = null;
+          let shortestDistance = 999999;
+
+          standbyAgencies.forEach(ag => {
+              let dist = getDistanceInKm(epicenter.lat, epicenter.lng, ag.lat, ag.lng);
+              if (dist < shortestDistance) {
+                  shortestDistance = dist;
+                  closestAgency = ag;
+              }
+          });
+
+          // 3. Generate Real Dynamic Recommendation
+          let recommendationHTML = `
+              <h4 style="color:#C0392B; margin-bottom:10px;">⚠️ CRITICAL THREAT DETECTED: ${epicenter.district}</h4>
+              <p style="font-size:13px; color:var(--gray-900); margin-bottom:12px;">
+                  <strong>Incident:</strong> ${epicenter.title}<br>
+                  <strong>Current Affected:</strong> ${epicenter.affected} people<br>
+                  Algorithmic analysis of live map data indicates an immediate requirement for rapid deployment.
+              </p>
+              <strong style="font-size:12px; color:var(--navy);">System Recommendation:</strong>
+              <ul style="font-size:12px; margin-left:20px; margin-top:6px; color:var(--gray-700); line-height:1.5;">`;
+
+          if (closestAgency) {
+              recommendationHTML += `
+                  <li><strong>Deploy ${closestAgency.name}</strong> immediately to ${epicenter.district}.</li>
+                  <li>Calculated Distance: <strong>${shortestDistance} km</strong> from the epicenter.</li>
+                  <li>Available Resources: ${closestAgency.personnel} personnel, ${closestAgency.vehicles || 0} vehicles.</li>`;
+          } else {
+              recommendationHTML += `<li><strong style="color:red;">WARNING:</strong> No standby agencies available! Re-route active deployed units immediately.</li>`;
+          }
+
+          recommendationHTML += `</ul>`;
+          resultBox.innerHTML = recommendationHTML;
+          resultBox.style.background = '#FADBD8';
+          resultBox.style.borderColor = '#C0392B';
+      }
+      
+      resultBox.style.display = 'block';
+  }, 2000); // 2 seconds of "calculating" time to let the UI breathe
 }
 
 function filterSidebar(f,el) {
