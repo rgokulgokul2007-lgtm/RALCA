@@ -1343,7 +1343,54 @@ function showToast(msg,type='') {
 }
 function openModal(id){document.getElementById(id).classList.add('open')}
 function closeModal(id){document.getElementById(id).classList.remove('open')}
+// --- AGENCY REGISTRATION FUNCTIONS ---
+function openRegisterModal() {
+  ['mRegName','mRegDistrict','mRegPhone','mRegEmail','mRegPersonnel','mRegVehicles','mRegEquip'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.value='';
+  });
+  openModal('registerModal');
+}
 
+async function registerAgencyFull() {
+  const n=document.getElementById('mRegName').value.trim();
+  const d=document.getElementById('mRegDistrict').value.trim();
+  const email=document.getElementById('mRegEmail').value.trim() || `agency${Date.now()}@ralca.gov.in`;
+  
+  if(!n||!d){showToast('Name and district are required','error');return;}
+  
+  showToast('Locating district on live map...', 'standby');
+  const coords = await getCoordinatesFromDistrict(d);
+  
+  const newAg={
+    id:Date.now(), name:n, type:document.getElementById('mRegType').value,
+    district:d, contact:document.getElementById('mRegPhone').value || 'Not Provided',
+    email:email,
+    personnel:parseInt(document.getElementById('mRegPersonnel').value)||20,
+    vehicles:parseInt(document.getElementById('mRegVehicles').value)||4,
+    status:document.getElementById('mRegStatus').value,
+    equipment:document.getElementById('mRegEquip').value||'Standard kit',
+    registered:new Date().toISOString().slice(0,10),
+    lat: coords.lat, 
+    lng: coords.lng
+  };
+
+  try {
+    await window.firebaseSet(window.firebaseRef(window.db, 'agencies/' + newAg.id), newAg);
+    if (window.firebaseCreateUser) {
+      try {
+        const userCredential = await window.firebaseCreateUser(window.auth, email, 'rescue123');
+        const userId = userCredential.user.uid;
+        const newUser = { name: n, email: email, role: 'agency', agencyId: newAg.id };
+        await window.firebaseSet(window.firebaseRef(window.db, 'users/' + userId), newUser);
+      } catch(authErr) { console.log('Auth skip', authErr); }
+    }
+    closeModal('registerModal');
+    showToast('Agency added to live map!','success');
+  } catch(err) {
+    showToast('Error: ' + err.message, 'error');
+    closeModal('registerModal');
+  }
+}
 function sendBroadcast() {
   const msg = document.getElementById('bMsg').value.trim();
   const sev = document.getElementById('bSev').value;
