@@ -3,6 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+<meta http-equiv="Pragma" content="no-cache" />
+<meta http-equiv="Expires" content="0" />
 <title>RescueNet — National Disaster Relief Registry</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Syne:wght@600;700;800&display=swap" rel="stylesheet">
@@ -734,7 +737,9 @@ body{font-family:var(--font-body);background:var(--gray-50);color:var(--gray-900
         </div>
       </div>
 
-    </div></div></div><div class="modal-overlay" id="registerModal">
+    </div></div></div>
+    
+<div class="modal-overlay" id="registerModal">
   <div class="modal-box">
     <div class="modal-header">
       <div class="modal-title">Register New Agency</div>
@@ -876,16 +881,21 @@ body{font-family:var(--font-body);background:var(--gray-50);color:var(--gray-900
   window.firebaseSet = set;
   window.firebaseOnValue = onValue;
   window.firebaseRemove = remove;
-window.firebaseGet = get;
+  window.firebaseGet = get;
   window.firebaseChild = child;
-  
-  const auth = getAuth(app);
-  window.auth = auth;
   window.firebaseCreateUser = createUserWithEmailAndPassword;
   window.firebaseSignIn = signInWithEmailAndPassword;
 </script>
 
 <script>
+// Global Error Handler so you know instantly if there is an issue
+window.onerror = function(message, source, lineno, colno, error) {
+    console.error("Crash detected:", message);
+    if(message.includes('firebaseSignIn')) {
+        alert("Hold on! Firebase is still loading... Please try clicking the button again in 2 seconds.");
+    }
+};
+
 // ─── DATA ───────────────────────────────────────────
 const TYPE_META = {
   'Fire & Rescue':      { emoji:'🔴', bg:'#FADBD8', color:'#922B21' },
@@ -1003,6 +1013,11 @@ function switchLoginTab(tab) {
 }
 
 async function doLogin(role) {
+  if(!window.firebaseSignIn) {
+      alert("Firebase is still loading! Please wait 2 seconds and click again.");
+      return;
+  }
+  
   const emailId = role==='agency'?'agLogin': role==='admin'?'adLogin':'civLogin';
   const passId = role==='agency'?'agPass': role==='admin'?'adPass':'civPass';
   const errId = role==='agency'?'agError': role==='admin'?'adError':'civError';
@@ -1030,7 +1045,6 @@ async function doLogin(role) {
     const userCredential = await window.firebaseSignIn(window.auth, email, pass);
     const uid = userCredential.user.uid;
     
-    // Look up their name and role in the database
     const dbRef = window.firebaseRef(window.db);
     const snapshot = await window.firebaseGet(window.firebaseChild(dbRef, 'users/' + uid));
     
@@ -1057,6 +1071,11 @@ async function doLogin(role) {
 }
 
 async function doRegister() {
+  if(!window.firebaseCreateUser) {
+      alert("Firebase is still loading! Please wait 2 seconds and click again.");
+      return;
+  }
+
   const role = document.getElementById('regRole').value;
   const n=document.getElementById('regAgName').value.trim();
   const d=document.getElementById('regAgDistrict').value.trim();
@@ -1074,7 +1093,6 @@ async function doRegister() {
     const userId = userCredential.user.uid;
 
     if (role === 'civilian') {
-      // Create Civilian Profile
       const newUser = { name: n, email: email, role: 'civilian' };
       await window.firebaseSet(window.firebaseRef(window.db, 'users/' + userId), newUser);
 
@@ -1098,7 +1116,6 @@ async function doRegister() {
       registered:new Date().toISOString().slice(0,10), lat: coords.lat, lng: coords.lng
     };
 
-    // Create Agency Profile & User Profile
     await window.firebaseSet(window.firebaseRef(window.db, 'agencies/' + newAg.id), newAg);
     const newUser = { name: n, email: email, role: 'agency', agencyId: newAg.id };
     await window.firebaseSet(window.firebaseRef(window.db, 'users/' + userId), newUser);
@@ -1142,7 +1159,7 @@ function initApp() {
     markersLayer = L.layerGroup().addTo(leafletMap);
   }
 
-  // Real-time listener for Agencies with Sanitization Shield
+  // Data Sanitization Shield added here
   window.firebaseOnValue(window.firebaseRef(window.db, 'agencies'), (snapshot) => {
     const data = snapshot.val();
     agencies = data ? Object.values(data).filter(a => a !== null && typeof a === 'object') : [];
@@ -1165,7 +1182,6 @@ function initApp() {
     populateIncidentAgencySelect();
   });
 
-  // Real-time listener for Incidents
   window.firebaseOnValue(window.firebaseRef(window.db, 'incidents'), (snapshot) => {
     const data = snapshot.val();
     incidents = data ? Object.values(data).sort((a, b) => b.id - a.id) : [];
