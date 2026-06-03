@@ -819,11 +819,15 @@ body{font-family:var(--font-body);background:var(--gray-50);color:var(--gray-900
       <div class="form-group">
         <label class="form-label">Resource Type</label>
         <select class="form-select" id="rResType">
-          <option value="vehicles">Vehicles (Trucks/Engines)</option>
-          <option value="personnel">Personnel (Troops/Medics)</option>
-          <option value="boats">Rescue Boats</option>
-          <option value="medical">Medical Kits</option>
-          <option value="heavy">Heavy Equipment / Generators</option>
+          <option value="fire_engines">🚒 Fire Engines</option>
+          <option value="ambulances">🚑 Ambulances</option>
+          <option value="helicopters">🚁 Helicopters</option>
+          <option value="rescue_boats">⛵ Rescue Boats</option>
+          <option value="relief_tents">⛺ Relief Tents</option>
+          <option value="medical_kits">💊 Medical Kits</option>
+          <option value="generators">🔋 Generators</option>
+          <option value="trucks">🚛 Trucks</option>
+          <option value="comm_sets">📡 Comm Sets</option>
         </select>
       </div>
       <div class="form-group">
@@ -884,8 +888,15 @@ body{font-family:var(--font-body);background:var(--gray-50);color:var(--gray-900
     <div class="form-group">
       <label class="form-label">Resource Type</label>
       <select class="form-select" id="tType">
-        <option value="personnel">Personnel</option>
-        <option value="vehicles">Vehicles</option>
+          <option value="fire_engines">Fire Engines</option>
+          <option value="ambulances">Ambulances</option>
+          <option value="helicopters">Helicopters</option>
+          <option value="rescue_boats">Rescue Boats</option>
+          <option value="relief_tents">Relief Tents</option>
+          <option value="medical_kits">Medical Kits</option>
+          <option value="generators">Generators</option>
+          <option value="trucks">Trucks</option>
+          <option value="comm_sets">Comm Sets</option>
       </select>
     </div>
     <div class="form-row">
@@ -1199,7 +1210,7 @@ function doLogout() {
 // ─── APP INIT ─────────────────────────────────────────
 let leafletMap = null;
 let markersLayer = null;
-let heatLayer = null; // Feature 4: Heatmap
+let heatLayer = null; 
 let isHeatmap = false;
 
 function initApp() {
@@ -1280,7 +1291,6 @@ function initApp() {
     const countEl = document.getElementById('incidentReportCount');
     if (countEl) countEl.textContent = incidents.length + ' total incidents';
     
-    // Refresh heatmap if active so new SOS pins glow
     if(isHeatmap) toggleHeatmap(true); 
   });
 }
@@ -1304,7 +1314,6 @@ function showToast(msg,type='') {
 function openModal(id){document.getElementById(id).classList.add('open')}
 function closeModal(id){document.getElementById(id).classList.remove('open')}
 
-// Feature 1: Send Global Broadcast
 function sendBroadcast() {
   const msg = document.getElementById('bMsg').value.trim();
   const sev = document.getElementById('bSev').value;
@@ -1383,7 +1392,6 @@ function renderMapPins() {
   });
 }
 
-// Feature 4: Live Heatmap Toggle
 function toggleHeatmap(forceRefresh = false) {
   if(!leafletMap) return;
   if(!forceRefresh) isHeatmap = !isHeatmap;
@@ -1397,15 +1405,13 @@ function toggleHeatmap(forceRefresh = false) {
       if(heatLayer) leafletMap.removeLayer(heatLayer);
       
       const heatPoints = [];
-      // Add Incidents to Heatmap (High Intensity)
       incidents.forEach(i => {
           if(i.status !== 'resolved' && i.lat && i.lng) {
-              heatPoints.push([i.lat, i.lng, 1.0]); // Intensity 1.0
+              heatPoints.push([i.lat, i.lng, 1.0]);
           }
       });
-      // Add Agencies to Heatmap (Low Intensity context)
       agencies.forEach(a => {
-          if(a.lat && a.lng) heatPoints.push([a.lat, a.lng, 0.3]); // Intensity 0.3
+          if(a.lat && a.lng) heatPoints.push([a.lat, a.lng, 0.3]); 
       });
 
       heatLayer = L.heatLayer(heatPoints, {radius: 30, blur: 20, maxZoom: 10, gradient: {0.4: 'blue', 0.6: 'lime', 0.8: 'yellow', 1: 'red'}}).addTo(leafletMap);
@@ -1539,48 +1545,6 @@ function exportSingleAgency(id) {
   showToast('Exported agency details','success');
 }
 
-async function registerAgencyFull() {
-  const n=document.getElementById('mRegName').value.trim();
-  const d=document.getElementById('mRegDistrict').value.trim();
-  const email=document.getElementById('mRegEmail').value.trim() || `agency${Date.now()}@rescuenet.gov.in`;
-  
-  if(!n||!d){showToast('Name and district are required','error');return;}
-  
-  showToast('Locating district on live map...', 'standby');
-  const coords = await getCoordinatesFromDistrict(d);
-  
-  const newAg={
-    id:Date.now(), name:n, type:document.getElementById('mRegType').value,
-    district:d, contact:document.getElementById('mRegPhone').value || 'Not Provided',
-    email:email,
-    personnel:parseInt(document.getElementById('mRegPersonnel').value)||20,
-    vehicles:parseInt(document.getElementById('mRegVehicles').value)||4,
-    status:document.getElementById('mRegStatus').value,
-    equipment:document.getElementById('mRegEquip').value||'Standard kit',
-    registered:new Date().toISOString().slice(0,10),
-    lat: coords.lat, 
-    lng: coords.lng
-  };
-
-  try {
-    await window.firebaseSet(window.firebaseRef(window.db, 'agencies/' + newAg.id), newAg);
-    if (window.firebaseCreateUser) {
-      const userCredential = await window.firebaseCreateUser(window.auth, email, 'rescue123');
-      const userId = userCredential.user.uid;
-      const newUser = { name: n, email: email, role: 'agency', agencyId: newAg.id };
-      await window.firebaseSet(window.firebaseRef(window.db, 'users/' + userId), newUser);
-    }
-    closeModal('registerModal');
-    showToast('Agency added & Login created (Pass: rescue123)','success');
-    ['mRegName','mRegDistrict','mRegPhone','mRegEmail','mRegPersonnel','mRegVehicles','mRegEquip'].forEach(id=>{
-      const el=document.getElementById(id); if(el) el.value='';
-    });
-  } catch(err) {
-    showToast('Added to map, but Auth error: ' + err.message, 'error');
-    closeModal('registerModal');
-  }
-}
-
 function populateIncidentAgencySelect() {
   const sel=document.getElementById('incAgency');
   if(!sel) return;
@@ -1592,7 +1556,6 @@ function setSeverity(s,el) {
   el.className='sev-pill active-'+( s==='high'?'high':s==='medium'?'med':'low' );
 }
 
-// Fixed Incident submission with real lat/lng for Heatmap
 async function submitIncident() {
   const title=document.getElementById('incTitle').value.trim();
   const dist=document.getElementById('incDistrict').value.trim();
@@ -1606,7 +1569,7 @@ async function submitIncident() {
     severity:selectedSeverity, district:dist, area:document.getElementById('incArea').value,
     desc:document.getElementById('incDesc').value, affected:parseInt(document.getElementById('incAffected').value)||0,
     agency:document.getElementById('incAgency').value, status:'active', time:'Just now', reporter:currentUser?.name||'User',
-    lat: coords.lat, lng: coords.lng // Saved for heatmap
+    lat: coords.lat, lng: coords.lng 
   };
   window.firebaseSet(window.firebaseRef(window.db, 'incidents/' + newInc.id), newInc).then(() => {
       ['incTitle','incDistrict','incArea','incDesc','incAffected'].forEach(id=>{document.getElementById(id).value='';});
@@ -1614,7 +1577,6 @@ async function submitIncident() {
     });
 }
 
-// Feature 2: Added Verify Button Logic for Pending SOS
 function renderIncidentsList() {
   const el=document.getElementById('incidentsList');
   el.innerHTML=incidents.map(inc=>`
@@ -1645,7 +1607,6 @@ ${(currentUser && currentUser.role === 'civilian')
     </div>`).join('');
 }
 
-// Feature 2 Logic
 function verifySOS(id) {
   const inc = incidents.find(i=>i.id===id);
   if(inc) {
@@ -1673,29 +1634,41 @@ function renderResourcesTable() {
   let totalPersonnel = 0; let activePersonnel = 0;
   let totalBoats = 0; let activeBoats = 0;
   let totalMedical = 0; let activeMedical = 0;
+  
+  let counts = {
+     fire_engines: {t:0, a:0}, ambulances: {t:0, a:0}, helicopters: {t:0, a:0},
+     rescue_boats: {t:0, a:0}, relief_tents: {t:0, a:0}, medical_kits: {t:0, a:0},
+     generators: {t:0, a:0}, trucks: {t:0, a:0}, comm_sets: {t:0, a:0}
+  };
 
   agencies.forEach(ag => {
     totalVehicles += (ag.vehicles || 0);
     totalPersonnel += (ag.personnel || 0);
-    if(ag.status === 'active' || ag.status === 'standby') {
+    let isActive = (ag.status === 'active' || ag.status === 'standby');
+    if(isActive) {
         activeVehicles += (ag.vehicles || 0);
         activePersonnel += (ag.personnel || 0);
     }
     if(ag.type === 'Medical / EMS') {
-        totalMedical += 40;
-        activeMedical += (ag.status === 'active' || ag.status === 'standby' ? 40 : 10);
+        totalMedical += 40; activeMedical += (isActive ? 40 : 10);
     }
     if(ag.type === 'Flood Response' || ag.type === 'Coast Guard') {
-        totalBoats += (ag.vehicles || 0);
-        activeBoats += (ag.status === 'active' || ag.status === 'standby' ? ag.vehicles : 0);
+        totalBoats += (ag.vehicles || 0); activeBoats += (isActive ? ag.vehicles : 0);
     }
+    
+    Object.keys(counts).forEach(k => {
+       if(ag[k]) {
+          counts[k].t += ag[k];
+          if(isActive) counts[k].a += ag[k];
+       }
+    });
   });
 
   summaryRow.innerHTML = `
     <div class="res-sum-card">
       <div class="res-sum-title">Total Vehicles</div>
-      <div class="res-sum-val">${totalVehicles}</div>
-      <div class="res-sum-sub" style="color:var(--green)">${activeVehicles} available</div>
+      <div class="res-sum-val">${totalVehicles + counts.fire_engines.t + counts.ambulances.t + counts.trucks.t}</div>
+      <div class="res-sum-sub" style="color:var(--green)">${activeVehicles + counts.fire_engines.a + counts.ambulances.a + counts.trucks.a} available</div>
     </div>
     <div class="res-sum-card">
       <div class="res-sum-title">Total Personnel</div>
@@ -1704,30 +1677,30 @@ function renderResourcesTable() {
     </div>
     <div class="res-sum-card">
       <div class="res-sum-title">Medical Kits</div>
-      <div class="res-sum-val">${totalMedical || 340}</div>
+      <div class="res-sum-val">${(totalMedical || 340) + counts.medical_kits.t}</div>
       <div class="res-sum-sub" style="color:var(--green)">100% stocked</div>
     </div>
     <div class="res-sum-card" style="border-bottom: 4px solid var(--red)">
       <div class="res-sum-title">Rescue Boats</div>
-      <div class="res-sum-val" style="color:var(--red)">${totalBoats || 24}</div>
-      <div class="res-sum-sub" style="color:var(--red)">${(totalBoats||24) - (activeBoats||18)} deployed now</div>
+      <div class="res-sum-val" style="color:var(--red)">${(totalBoats || 24) + counts.rescue_boats.t}</div>
+      <div class="res-sum-sub" style="color:var(--red)">${((totalBoats||24)+counts.rescue_boats.t) - ((activeBoats||18)+counts.rescue_boats.a)} deployed now</div>
     </div>
   `;
 
   const resItems = [
-    { title: 'Fire Engines', icon: '🚒', total: Math.floor(totalVehicles * 0.3), active: Math.floor(activeVehicles * 0.3), color: 'var(--red)' },
-    { title: 'Ambulances', icon: '🚑', total: Math.floor(totalVehicles * 0.4), active: Math.floor(activeVehicles * 0.4), color: 'var(--green)' },
-    { title: 'Helicopters', icon: '🚁', total: 12, active: 8, color: 'var(--gold)' },
-    { title: 'Rescue Boats', icon: '⛵', total: totalBoats || 24, active: activeBoats || 18, color: 'var(--blue)' },
-    { title: 'Relief Tents', icon: '⛺', total: 500, active: 320, color: 'var(--gold)' },
-    { title: 'Medical Kits', icon: '💊', total: totalMedical || 340, active: activeMedical || 340, color: 'var(--green)' },
-    { title: 'Generators', icon: '🔋', total: 60, active: 48, color: 'var(--amber)' },
-    { title: 'Trucks', icon: '🚛', total: Math.floor(totalVehicles * 0.2), active: Math.floor(activeVehicles * 0.2), color: 'var(--navy)' },
-    { title: 'Comm Sets', icon: '📡', total: 120, active: 95, color: 'var(--blue)' }
+    { title: 'Fire Engines', icon: '🚒', total: Math.floor(totalVehicles * 0.3) + counts.fire_engines.t, active: Math.floor(activeVehicles * 0.3) + counts.fire_engines.a, color: 'var(--red)' },
+    { title: 'Ambulances', icon: '🚑', total: Math.floor(totalVehicles * 0.4) + counts.ambulances.t, active: Math.floor(activeVehicles * 0.4) + counts.ambulances.a, color: 'var(--green)' },
+    { title: 'Helicopters', icon: '🚁', total: 12 + counts.helicopters.t, active: 8 + counts.helicopters.a, color: 'var(--gold)' },
+    { title: 'Rescue Boats', icon: '⛵', total: (totalBoats || 24) + counts.rescue_boats.t, active: (activeBoats || 18) + counts.rescue_boats.a, color: 'var(--blue)' },
+    { title: 'Relief Tents', icon: '⛺', total: 500 + counts.relief_tents.t, active: 320 + counts.relief_tents.a, color: 'var(--gold)' },
+    { title: 'Medical Kits', icon: '💊', total: (totalMedical || 340) + counts.medical_kits.t, active: (activeMedical || 340) + counts.medical_kits.a, color: 'var(--green)' },
+    { title: 'Generators', icon: '🔋', total: 60 + counts.generators.t, active: 48 + counts.generators.a, color: 'var(--amber)' },
+    { title: 'Trucks', icon: '🚛', total: Math.floor(totalVehicles * 0.2) + counts.trucks.t, active: Math.floor(activeVehicles * 0.2) + counts.trucks.a, color: 'var(--navy)' },
+    { title: 'Comm Sets', icon: '📡', total: 120 + counts.comm_sets.t, active: 95 + counts.comm_sets.a, color: 'var(--blue)' }
   ];
 
   grid.innerHTML = resItems.map(item => {
-    const pct = Math.round((item.active / item.total) * 100) || 0;
+    const pct = Math.round((item.active / (item.total || 1)) * 100) || 0;
     return `
       <div class="res-card">
         <div class="rc-top">
@@ -1790,86 +1763,6 @@ function exportData(type) {
   downloadCSV(csv,filename);
   showToast('Report downloaded: '+filename,'success');
 }
-function generateFullReport(){exportData('full')}
-
-// Feature 2: SOS drops in as Pending
-function triggerCivilianSOS() {
-  showToast('Acquiring satellite GPS lock...', 'standby');
-  if (navigator.geolocation) {
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        const lat = position.coords.latitude;
-        const lng = position.coords.longitude;
-        const sosPin = {
-          id: Date.now(), name: "CIVILIAN SOS ALERT", type: "Civilian SOS",
-          district: "Live GPS Location", contact: currentUser.email, email: currentUser.email,
-          personnel: 0, vehicles: 0, status: 'deployed', equipment: 'Needs immediate evacuation',
-          registered: new Date().toISOString(), lat: lat, lng: lng
-        };
-        window.firebaseSet(window.firebaseRef(window.db, 'agencies/' + sosPin.id), sosPin);
-        
-        // Push as 'pending' for anti-spam verification
-        const newInc = {
-          id: Date.now() + 1, title: 'CRITICAL: Civilian SOS Signal', type: 'Search & Rescue',
-          severity: 'high', district: `GPS: ${lat.toFixed(4)}, ${lng.toFixed(4)}`, area: 'Live Location',
-          desc: `Civilian initiated emergency distress signal from their mobile device.`, affected: 1,
-          agency: 'Unassigned', status: 'pending', time: 'Just now', reporter: currentUser.name,
-          lat: lat, lng: lng
-        };
-        window.firebaseSet(window.firebaseRef(window.db, 'incidents/' + newInc.id), newInc);
-        showToast('SOS Sent! Awaiting Admin Verification...', 'success');
-      },
-      (error) => { showToast('GPS Access Denied. Ensure location is enabled.', 'error'); },
-      { enableHighAccuracy: true }
-    );
-  } else { showToast('Geolocation not supported by this browser.', 'error'); }
-}
-
-let routingControl = null;
-async function drawRouteToIncident(districtStr) {
-  if(!leafletMap) return;
-  showToast('Calculating fastest route...', 'standby');
-  let targetCoords;
-  if(districtStr.includes('GPS:')) {
-    const parts = districtStr.replace('GPS:', '').split(',');
-    targetCoords = { lat: parseFloat(parts[0]), lng: parseFloat(parts[1]) };
-  } else {
-    targetCoords = await getCoordinatesFromDistrict(districtStr);
-  }
-  const activeAgencies = agencies.filter(a => a.status === 'active' || a.status === 'standby');
-  if(activeAgencies.length === 0) { showToast('No active agencies available to route.', 'error'); return; }
-  const startAgency = activeAgencies[0]; 
-
-  if (routingControl) leafletMap.removeControl(routingControl);
-  routingControl = L.Routing.control({
-    waypoints: [ L.latLng(startAgency.lat, startAgency.lng), L.latLng(targetCoords.lat, targetCoords.lng) ],
-    routeWhileDragging: false, lineOptions: { styles: [{ color: '#E74C3C', weight: 4 }] }, show: false
-  }).addTo(leafletMap);
-  
-  showToast(`Route plotted for ${startAgency.name}`, 'success');
-  showPage('dashboard', document.querySelector('.nav-link'));
-}
-
-let trackingInterval = null;
-function toggleLiveTracking(id) {
-  const ag = agencies.find(a => String(a.id) === String(id));
-  if(!ag) return;
-  if (trackingInterval) {
-    clearInterval(trackingInterval);
-    trackingInterval = null;
-    showToast(`Live tracking disabled for ${ag.name}`, 'success');
-    closeDrawer();
-    return;
-  }
-  showToast(`GPS Live Sync activated for ${ag.name}`, 'success');
-  ag.status = 'deployed';
-  trackingInterval = setInterval(() => {
-    ag.lat += (Math.random() - 0.5) * 0.05; 
-    ag.lng += (Math.random() - 0.5) * 0.05;
-    window.firebaseSet(window.firebaseRef(window.db, 'agencies/' + id), ag);
-  }, 3000);
-  closeDrawer();
-}
 
 function openAddResourceModal() {
   const sel = document.getElementById('rResAgency');
@@ -1886,24 +1779,18 @@ function submitAddResource() {
   const ag = agencies.find(a => String(a.id) === String(agId));
   if(!ag) return;
 
-  if(type === 'vehicles' || type === 'boats') {
-    ag.vehicles = (ag.vehicles || 0) + qty;
-    if(type === 'boats' && !ag.equipment.toLowerCase().includes('boat')) ag.equipment += ', Rescue Boats';
-  } else if(type === 'personnel') {
-    ag.personnel = (ag.personnel || 0) + qty;
-  } else if(type === 'medical') {
-    if(!ag.equipment.toLowerCase().includes('medical')) ag.equipment += ', Medical Kits';
-  } else if(type === 'heavy') {
-    if(!ag.equipment.toLowerCase().includes('heavy') && !ag.equipment.toLowerCase().includes('generator')) ag.equipment += ', Heavy Equipment';
+  ag[type] = (ag[type] || 0) + qty;
+  const readableName = type.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+  if(!(ag.equipment || '').toLowerCase().includes(readableName.toLowerCase())) {
+     ag.equipment = ag.equipment ? ag.equipment + ', ' + readableName : readableName;
   }
 
   window.firebaseSet(window.firebaseRef(window.db, 'agencies/' + agId), ag).then(() => {
-    showToast(`Successfully added ${qty} resources to ${ag.name}`, 'success');
+    showToast(`Successfully added ${qty} ${readableName} to ${ag.name}`, 'success');
     closeModal('addResourceModal');
   });
 }
 
-// Feature 3: Transfer Resources Modal
 function openTransferModal() {
   const opts = agencies.map(a => `<option value="${a.id}">${a.name} (${a.type})</option>`).join('');
   document.getElementById('tFrom').innerHTML = opts;
@@ -1912,7 +1799,6 @@ function openTransferModal() {
   openModal('transferModal');
 }
 
-// Feature 3: Transfer Logic
 function submitTransfer() {
   const fromId = document.getElementById('tFrom').value;
   const toId = document.getElementById('tTo').value;
@@ -1925,17 +1811,18 @@ function submitTransfer() {
   const fromAg = agencies.find(a => String(a.id) === String(fromId));
   const toAg = agencies.find(a => String(a.id) === String(toId));
 
-  if(fromAg[type] < qty) return showToast(`Not enough ${type} to transfer!`, 'error');
+  fromAg[type] = fromAg[type] || 0;
+  if(fromAg[type] < qty) return showToast(`Agency does not have enough of that resource to transfer!`, 'error');
 
-  // Math manipulation across database nodes
   fromAg[type] -= qty;
-  toAg[type] += qty;
+  toAg[type] = (toAg[type] || 0) + qty;
 
   window.firebaseSet(window.firebaseRef(window.db, 'agencies/' + fromId), fromAg);
   window.firebaseSet(window.firebaseRef(window.db, 'agencies/' + toId), toAg);
   
+  const readableName = type.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
   closeModal('transferModal');
-  showToast(`Successfully transferred ${qty} ${type} to ${toAg.name}`, 'success');
+  showToast(`Successfully transferred ${qty} ${readableName} to ${toAg.name}`, 'success');
 }
 </script>
 </body>
