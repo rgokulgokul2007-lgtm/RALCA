@@ -876,8 +876,11 @@ body{font-family:var(--font-body);background:var(--gray-50);color:var(--gray-900
   window.firebaseSet = set;
   window.firebaseOnValue = onValue;
   window.firebaseRemove = remove;
-  window.firebaseGet = get;
+window.firebaseGet = get;
   window.firebaseChild = child;
+  
+  const auth = getAuth(app);
+  window.auth = auth;
   window.firebaseCreateUser = createUserWithEmailAndPassword;
   window.firebaseSignIn = signInWithEmailAndPassword;
 </script>
