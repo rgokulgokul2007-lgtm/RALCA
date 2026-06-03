@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
 <meta http-equiv="Pragma" content="no-cache" />
 <meta http-equiv="Expires" content="0" />
-<title>RALCA - Rescue Agency Locator and Coordination Application</title>
+<title>RALCA - Rescue Agency Locator and Co-ordination Application</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Syne:wght@600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -310,9 +310,9 @@ body{font-family:var(--font-body);background:var(--gray-50);color:var(--gray-900
         <div class="login-logo-icon">
           <svg viewBox="0 0 24 24"><path d="M12 2L3 7v10l9 5 9-5V7L12 2zm0 2.18L19 8.09v7.82L12 19.82l-7-3.91V8.09L12 4.18z"/><path d="M12 7a3 3 0 100 6 3 3 0 000-6z"/></svg>
         </div>
-        <div>
-          <div class="brand-name">Rescue Agency Locator and Coordination Application</div>
-          <div class="brand-tagline">National Disaster Relief Registry</div>
+<div>
+          <div class="brand-name">RALCA <br><span style="font-size: 20px; font-weight: 600; opacity: 0.9;">Rescue Agency Locator and Coordination Application</span></div>
+          <div class="brand-tagline">RESCUE AGENCY LOCATOR AND CO-ORDINATION APPLICATION</div>
         </div>
       </div>
     </div>
@@ -351,15 +351,15 @@ body{font-family:var(--font-body);background:var(--gray-50);color:var(--gray-900
     <div id="tabAdmin" style="display:none">
       <div class="form-group">
         <label class="form-label">Admin Email</label>
-        <input class="form-input" id="adLogin" placeholder="admin@rescuenet.gov.in" />
+        <input class="form-input" id="adLogin" placeholder="admin@RALCA.gov.in" />
       </div>
       <div class="form-group">
         <label class="form-label">Password</label>
         <input class="form-input" type="password" id="adPass" placeholder="••••••••" />
       </div>
       <button class="btn-login" onclick="doLogin('admin')">Sign In as Admin</button>
-<div class="login-error" id="adError">Invalid credentials. Try admin@rescuenet.gov.in / admin123</div>
-      <div class="login-hint"><strong>Demo:</strong> admin@rescuenet.gov.in &nbsp;|&nbsp; admin123</div>
+<div class="login-error" id="adError">Invalid credentials. Try admin@RALCA.gov.in / admin123</div>
+      <div class="login-hint"><strong>Demo:</strong> admin@RALCA.gov.in &nbsp;|&nbsp; admin123</div>
     </div>
 
     <div id="tabCivilian" style="display:none">
@@ -1096,7 +1096,7 @@ let activitiesFeed = []; // Global Activity Feed
 
 const CREDS = {
   agency:['demo@agency.com','rescue123'],
-  admin:['admin@rescuenet.gov.in','admin123'],
+  admin:['admin@RALCA.gov.in','admin123'],
   civilian:['citizen@email.com','citizen123']
 };
 
@@ -1866,33 +1866,33 @@ function exportData(type) {
   if(type==='agencies') {
     csv='ID,Name,Type,District,Contact,Email,Personnel,Vehicles,Status,Equipment,Registered\n'+
       agencies.map(a=>`${a.id},"${a.name}","${a.type}","${a.district}","${a.contact}","${a.email||''}",${a.personnel},${a.vehicles||0},${a.status},"${a.equipment||''}",${a.registered}`).join('\n');
-    filename=`RescueNet_Agencies_${now}.csv`;
+    filename=`RALCA_Agencies_${now}.csv`;
   } else if(type==='incidents') {
     csv='ID,Title,Type,Severity,District,Area,Affected,Agency,Status,Reporter,Time\n'+
       incidents.map(i=>`${i.id},"${i.title}","${i.type}",${i.severity},"${i.district}","${i.area||''}",${i.affected},"${i.agency}",${i.status},"${i.reporter}","${i.time}"`).join('\n');
-    filename=`RescueNet_Incidents_${now}.csv`;
+    filename=`RALCA_Incidents_${now}.csv`;
   } else if(type==='resources') {
     csv='Agency,Type,District,Personnel,Vehicles,Equipment,Status\n'+
       agencies.map(a=>`"${a.name}","${a.type}","${a.district}",${a.personnel},${a.vehicles||0},"${a.equipment||''}",${a.status}`).join('\n');
-    filename=`RescueNet_Resources_${now}.csv`;
+    filename=`RALCA_Resources_${now}.csv`;
   } else if(type==='summary') {
     const active=agencies.filter(a=>a.status==='active').length;
     const deployed=agencies.filter(a=>a.status==='deployed').length;
     const openInc=incidents.filter(i=>i.status==='active').length;
     const totalPersonnel=agencies.reduce((s,a)=>s+a.personnel,0);
-    csv='RescueNet Executive Summary Report\nGenerated:,'+now+'\n\nMetric,Value\nTotal Agencies,'+agencies.length+'\nActive Agencies,'+active+'\nDeployed Agencies,'+deployed+'\nOpen Incidents,'+openInc+'\nTotal Personnel,'+totalPersonnel+'\n\nIncident Breakdown\nHigh Severity,'+incidents.filter(i=>i.severity==='high').length+'\nMedium Severity,'+incidents.filter(i=>i.severity==='medium').length+'\nLow Severity,'+incidents.filter(i=>i.severity==='low').length;
-    filename=`RescueNet_Summary_${now}.csv`;
+    csv='RALCA Executive Summary Report\nGenerated:,'+now+'\n\nMetric,Value\nTotal Agencies,'+agencies.length+'\nActive Agencies,'+active+'\nDeployed Agencies,'+deployed+'\nOpen Incidents,'+openInc+'\nTotal Personnel,'+totalPersonnel+'\n\nIncident Breakdown\nHigh Severity,'+incidents.filter(i=>i.severity==='high').length+'\nMedium Severity,'+incidents.filter(i=>i.severity==='medium').length+'\nLow Severity,'+incidents.filter(i=>i.severity==='low').length;
+    filename=`RALCA_Summary_${now}.csv`;
   } else if(type==='deployment') {
     csv='Agency,Type,District,Status,Personnel,Vehicles,Deployed Since\n'+
       agencies.filter(a=>a.status==='deployed').map(a=>`"${a.name}","${a.type}","${a.district}",Deployed,${a.personnel},${a.vehicles||0},"${a.registered}"`).join('\n');
-    filename=`RescueNet_Deployment_${now}.csv`;
+    filename=`RALCA_Deployment_${now}.csv`;
   } else if(type==='full') {
-    csv='=== RescueNet Full Operations Report ===\nGenerated: '+now+'\n\n--- AGENCIES ---\n'+
+    csv='=== RALCA Full Operations Report ===\nGenerated: '+now+'\n\n--- AGENCIES ---\n'+
       'Name,Type,District,Status,Personnel,Vehicles\n'+
       agencies.map(a=>`"${a.name}","${a.type}","${a.district}",${a.status},${a.personnel},${a.vehicles||0}`).join('\n')+
       '\n\n--- INCIDENTS ---\nTitle,Type,Severity,District,Affected,Status\n'+
       incidents.map(i=>`"${i.title}","${i.type}",${i.severity},"${i.district}",${i.affected},${i.status}`).join('\n');
-    filename=`RescueNet_Full_Report_${now}.csv`;
+    filename=`RALCA_Full_Report_${now}.csv`;
   }
   downloadCSV(csv,filename);
   showToast('Report downloaded: '+filename,'success');
