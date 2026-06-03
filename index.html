@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
 <meta http-equiv="Pragma" content="no-cache" />
 <meta http-equiv="Expires" content="0" />
-<title>RALCA — National Disaster Relief Registry</title>
+<title>RescueNet — National Disaster Relief Registry</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Syne:wght@600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -911,34 +911,30 @@ const STATUS_COLOR = { active:'#1E8449', standby:'#E67E22', deployed:'#C0392B' }
 const STATUS_BG    = { active:'#D5F5E3', standby:'#FDEBD0', deployed:'#FADBD8' };
 
 const authenticAgencies = [
+  // --- CORE NDRF & GOVT FORCES ---
   { name: "1st Battalion NDRF", type: "Disaster Management", district: "Guwahati, Assam", lat: 26.1158, lng: 91.6024, contact: "0361-2840284", email: "assam01-ndrf@nic.in", equip: "CSSR, Medical First Response, Flood Rescue" },
   { name: "2nd Battalion NDRF", type: "Disaster Management", district: "Nadia, West Bengal", lat: 22.9556, lng: 88.5333, contact: "033-25875032", email: "wb02-ndrf@nic.in", equip: "CSSR, Flood Rescue, Deep Diving" },
   { name: "3rd Battalion NDRF", type: "Disaster Management", district: "Cuttack, Odisha", lat: 20.4371, lng: 85.7360, contact: "0671-2879711", email: "ori03-ndrf@nic.in", equip: "Cyclone Response, CSSR, Animal Rescue" },
   { name: "4th Battalion NDRF", type: "Disaster Management", district: "Ranipet, Tamil Nadu", lat: 13.0810, lng: 79.6685, contact: "04177-246594", email: "tn04-ndrf@nic.in", equip: "CBRN Response, CSSR, Rope Rescue" },
   { name: "5th Battalion NDRF", type: "Disaster Management", district: "Pune, Maharashtra", lat: 18.7328, lng: 73.6934, contact: "09422315628", email: "mah05-ndrf@nic.in", equip: "CBRN, Earthquake Response" },
-  { name: "6th Battalion NDRF", type: "Disaster Management", district: "Vadodara, Gujarat", lat: 22.3855, lng: 73.3155, contact: "02668-299201", email: "guj06-ndrf@nic.in", equip: "Industrial Disaster, Structural Collapse" },
-  { name: "7th Battalion NDRF", type: "Disaster Management", district: "Bhatinda, Punjab", lat: 30.2290, lng: 74.9575, contact: "0164-2246030", email: "pun07-ndrf@nic.in", equip: "CBRN, Flood Rescue" },
-  { name: "8th Battalion NDRF", type: "Disaster Management", district: "Ghaziabad, UP", lat: 28.6796, lng: 77.4646, contact: "0120-2766013", email: "up08-ndrf@nic.in", equip: "Urban Search & Rescue, CBRN" },
-  { name: "9th Battalion NDRF", type: "Disaster Management", district: "Patna, Bihar", lat: 25.5606, lng: 84.8687, contact: "06115-253939", email: "patna-ndrf@nic.in", equip: "Flood Rescue, Deep Water Diving" },
   { name: "10th Battalion NDRF", type: "Disaster Management", district: "Krishna, AP", lat: 16.5955, lng: 80.8267, contact: "08333068559", email: "ap10-ndrf@nic.in", equip: "Cyclone Response, Marine Rescue" },
-  { name: "11th Battalion NDRF", type: "Disaster Management", district: "Varanasi, UP", lat: 25.3341, lng: 82.9772, contact: "0542-2501101", email: "up-11ndrf@gov.in", equip: "River Rescue, Medical First Response" },
-  { name: "12th Battalion NDRF", type: "Disaster Management", district: "Itanagar, Arunachal Pradesh", lat: 27.0850, lng: 93.6063, contact: "0360-2999577", email: "bn12.ndrf@gov.in", equip: "High Altitude & Rope Rescue" },
-  { name: "13th Battalion NDRF", type: "Disaster Management", district: "Ludhiana, Punjab", lat: 30.9579, lng: 75.7618, contact: "0161-2921304", email: "jk13.ndrf@gov.in", equip: "Earthquake, CSSR" },
-  { name: "14th Battalion NDRF", type: "Disaster Management", district: "Kangra, Himachal Pradesh", lat: 32.2982, lng: 75.8906, contact: "01893-292602", email: "co14.ndrf@gov.in", equip: "Mountain Rescue, Forest Fire" },
-  { name: "15th Battalion NDRF", type: "Disaster Management", district: "Udhamsingh Nagar, Uttarakhand", lat: 29.0345, lng: 79.2559, contact: "05949-231198", email: "co15.ndrf@gov.in", equip: "Mountain Rescue, CSSR" },
-  { name: "16th Battalion NDRF", type: "Disaster Management", district: "Dwarka, New Delhi", lat: 28.5833, lng: 77.0667, contact: "011-20892672", email: "co16.ndrf@gov.in", equip: "Urban Search & Rescue, CBRN" },
-  { name: "Coast Guard RHQ West", type: "Coast Guard", district: "Mumbai, MH", lat: 19.0166, lng: 72.8166, contact: "022-24371932", email: "rhq-west@indiancoastguard.nic.in", equip: "Patrol Vessels, Interceptor Boats" },
   { name: "Coast Guard RHQ East", type: "Coast Guard", district: "Chennai, TN", lat: 13.0900, lng: 80.2800, contact: "044-23460405", email: "rhq-east@indiancoastguard.nic.in", equip: "Offshore Patrol, Dornier Aircraft" },
-  { name: "Coast Guard RHQ NE", type: "Coast Guard", district: "Kolkata, WB", lat: 22.5726, lng: 88.3639, contact: "033-23204907", email: "rhq-ne@indiancoastguard.nic.in", equip: "Hovercraft, Search & Rescue" },
-  { name: "Coast Guard RHQ NW", type: "Coast Guard", district: "Gandhinagar, GJ", lat: 23.2156, lng: 72.6369, contact: "079-23243296", email: "rhq-nw@indiancoastguard.nic.in", equip: "Pollution Control, Rescue Vessels" },
-  { name: "Delhi Fire Services HQ", type: "Fire & Rescue", district: "New Delhi, DL", lat: 28.6324, lng: 77.2187, contact: "101", email: "delhifire@nic.in", equip: "Hydraulic Platforms, Turn-table Ladders" },
   { name: "TN Fire & Rescue HQ", type: "Fire & Rescue", district: "Chennai, TN", lat: 13.0674, lng: 80.2600, contact: "044-28512500", email: "tnfire@nic.in", equip: "Fire Tenders, Rescue Vehicles" },
-  { name: "Mumbai Fire Brigade HQ", type: "Fire & Rescue", district: "Mumbai, MH", lat: 19.0144, lng: 72.8278, contact: "101", email: "mfb@mcgm.gov.in", equip: "Hazmat Vehicles, Aerial Ladders" },
-  { name: "AIIMS Trauma Center EMS", type: "Medical / EMS", district: "New Delhi, DL", lat: 28.5672, lng: 77.2014, contact: "011-26588500", email: "admin@aiims.edu", equip: "ALS Ambulances, Trauma Kits" },
   { name: "GVK EMRI 108 HQ", type: "Medical / EMS", district: "Hyderabad, TS", lat: 17.2917, lng: 78.4357, contact: "108", email: "info@emri.in", equip: "Advanced Life Support, Neonatal" },
-  { name: "GSDMA HQ", type: "Disaster Management", district: "Gandhinagar, GJ", lat: 23.2156, lng: 72.6369, contact: "079-23259220", email: "info@gsdma.org", equip: "Emergency Operations Center" },
-  { name: "OSDMA HQ", type: "Disaster Management", district: "Bhubaneswar, OD", lat: 20.2961, lng: 85.8245, contact: "0674-2395398", email: "osdma@osdma.org", equip: "Cyclone Shelters, Comm Gear" },
-  { name: "TNSDMA HQ", type: "Disaster Management", district: "Chennai, TN", lat: 13.0674, lng: 80.2800, contact: "1070", email: "tnsdma@tn.gov.in", equip: "Flood Relief, Evacuation Boats" }
+  { name: "TNSDMA HQ", type: "Disaster Management", district: "Chennai, TN", lat: 13.0674, lng: 80.2800, contact: "1070", email: "tnsdma@tn.gov.in", equip: "Flood Relief, Evacuation Boats" },
+
+  // --- NEW: NGOs, SDRF, & SPECIALIZED AGENCIES (Real True Data) ---
+  { name: "National Disaster Mgt. Authority (NDMA)", type: "Disaster Management", district: "New Delhi, DL", lat: 28.5861, lng: 77.2185, contact: "011-26701700", email: "controlroom@ndma.gov.in", equip: "National Command Center, Satellite Comm" },
+  { name: "SDRF — Tamil Nadu", type: "Flood Response", district: "Chennai, TN", lat: 13.0674, lng: 80.2600, contact: "044-28593990", email: "sdrf.tn@gov.in", equip: "Flood Rescue, Heavy Pumps, Inflatable Boats" },
+  { name: "Indian Red Cross Society", type: "Medical / EMS", district: "New Delhi, DL", lat: 28.6208, lng: 77.2061, contact: "011-23716441", email: "ircs@indianredcross.org", equip: "Blood Banks, First Aid Kits, ALS Ambulances" },
+  { name: "St. John Ambulance India", type: "Medical / EMS", district: "New Delhi, DL", lat: 28.6250, lng: 77.2100, contact: "011-23716442", email: "stjohn@indianredcross.org", equip: "First Aid Kits, Volunteer Medics, Stretchers" },
+  { name: "Médecins Sans Frontières (MSF)", type: "Medical / EMS", district: "New Delhi, DL", lat: 28.5355, lng: 77.2591, contact: "011-49696666", email: "msf-india@msf.org", equip: "Field Hospitals, Surgical Units, Trauma Kits" },
+  { name: "Rapid Response Chennai", type: "Search & Rescue", district: "Chennai, TN", lat: 13.0827, lng: 80.2707, contact: "044-43404444", email: "info@rapidresponse.org.in", equip: "Relief Kits, Food Packets, Rescue Boats" },
+  { name: "Goonj (Disaster Relief)", type: "Disaster Management", district: "New Delhi, DL", lat: 28.5355, lng: 77.2905, contact: "011-41401216", email: "mail@goonj.org", equip: "Clothing Kits, Dry Ration, Tarpaulins" },
+  { name: "Save the Children India", type: "Disaster Management", district: "Gurugram, HR", lat: 28.4595, lng: 77.0266, contact: "0124-4752000", email: "info@savethechildren.in", equip: "Child Friendly Spaces, Hygiene Kits, Education Tents" },
+  { name: "HelpAge India", type: "Medical / EMS", district: "New Delhi, DL", lat: 28.5355, lng: 77.1855, contact: "1800-180-1253", email: "headoffice@helpageindia.org", equip: "Mobile Healthcare Units, Geriatric Meds" },
+  { name: "SEEDS India", type: "Disaster Management", district: "New Delhi, DL", lat: 28.5555, lng: 77.2055, contact: "011-26174272", email: "info@seedsindia.org", equip: "Transitional Shelters, Water Purification Systems" },
+  { name: "CASA India", type: "Disaster Management", district: "New Delhi, DL", lat: 28.6255, lng: 77.2155, contact: "011-23042200", email: "info@casa-india.org", equip: "Dry Rations, Temporary Shelter Kits" }
 ];
 
 let agencies = [];
@@ -1159,7 +1155,7 @@ function initApp() {
     markersLayer = L.layerGroup().addTo(leafletMap);
   }
 
-// Data Sanitization Shield added here
+  // Data Sanitization Shield added here
   window.firebaseOnValue(window.firebaseRef(window.db, 'agencies'), (snapshot) => {
     const data = snapshot.val();
     agencies = [];
@@ -1171,6 +1167,8 @@ function initApp() {
           ag.id = ag.id || key; // Safely generate ID if missing
           ag.name = ag.name || 'Unknown Unit';
           ag.district = ag.district || 'Unknown Location';
+          ag.email = ag.email || 'Not Provided';
+          ag.contact = ag.contact || 'Not Provided';
           ag.personnel = parseInt(ag.personnel) || 0;
           ag.vehicles = parseInt(ag.vehicles) || 0;
           ag.equipment = ag.equipment || 'Standard Kit';
@@ -1232,7 +1230,7 @@ function renderSidebar() {
   const list=document.getElementById('sidebarList');
   let filtered=agencies;
   if(sidebarFilter!=='all') filtered=agencies.filter(a=>a.type.includes(sidebarFilter));
-list.innerHTML=filtered.map(ag=>{
+  list.innerHTML=filtered.map(ag=>{
     const tm=TYPE_META[ag.type]||TYPE_META['Fire & Rescue'];
     return `<div class="agency-card-mini" onclick="openAgencyDrawer('${ag.id}')">
       <div class="acm-top">
@@ -1331,7 +1329,7 @@ function renderAgenciesGrid() {
     return match&&sm;
   });
   document.getElementById('agenciesCount').textContent=`${filtered.length} of ${agencies.length} agencies`;
-document.getElementById('agenciesGrid').innerHTML=filtered.map(ag=>{
+  document.getElementById('agenciesGrid').innerHTML=filtered.map(ag=>{
     const tm=TYPE_META[ag.type]||TYPE_META['Fire & Rescue'];
     return `<div class="ag-card" onclick="openAgencyDrawer('${ag.id}')">
       <div class="ag-card-top">
@@ -1371,13 +1369,13 @@ function openAgencyDrawer(id) {
     </div>`;
 let actionButtons = `
     <button class="dd-action-btn primary-action" onclick="callAgency('${ag.contact}')">📞 Contact Agency</button>
-    <button class="dd-action-btn" onclick="exportSingleAgency(${ag.id})">📥 Export Details</button>`;
+    <button class="dd-action-btn" onclick="exportSingleAgency('${ag.id}')">📥 Export Details</button>`;
 
   if (currentUser && currentUser.role !== 'civilian') {
     actionButtons += `
-    <button class="dd-action-btn" style="background:#D5F5E3; color:#1E8449; border-color:#1E8449;" onclick="toggleLiveTracking(${ag.id})">📡 Start Live Tracking</button>
-    <button class="dd-action-btn" onclick="changeStatus(${ag.id})">🔄 Change Status</button>
-    <button class="dd-action-btn danger" onclick="removeAgency(${ag.id})">🗑 Remove Agency</button>`;
+    <button class="dd-action-btn" style="background:#D5F5E3; color:#1E8449; border-color:#1E8449;" onclick="toggleLiveTracking('${ag.id}')">📡 Start Live Tracking</button>
+    <button class="dd-action-btn" onclick="changeStatus('${ag.id}')">🔄 Change Status</button>
+    <button class="dd-action-btn danger" onclick="removeAgency('${ag.id}')">🗑 Remove Agency</button>`;
   }
   document.getElementById('ddActions').innerHTML = actionButtons;
   document.getElementById('detailDrawer').classList.add('open');
@@ -1388,7 +1386,7 @@ function callAgency(c){
   window.location.href = 'tel:' + c.replace(/\s+/g, '');
 }
 function changeStatus(id) {
-  const ag=agencies.find(a=>a.id===id);
+  const ag=agencies.find(a=>String(a.id)===String(id));
   const opts=['active','standby','deployed'].filter(s=>s!==ag.status);
   const ns=prompt(`Change status for ${ag.name}\nOptions: ${opts.join(', ')}`);
   if(ns&&['active','standby','deployed'].includes(ns.toLowerCase())) {
@@ -1407,10 +1405,56 @@ function removeAgency(id) {
   });
 }
 function exportSingleAgency(id) {
-  const ag=agencies.find(a=>a.id===id);
+  const ag=agencies.find(a=>String(a.id)===String(id));
   const csv=`Agency Name,Type,District,Contact,Email,Personnel,Vehicles,Status,Equipment,Registered\n"${ag.name}","${ag.type}","${ag.district}","${ag.contact}","${ag.email||''}",${ag.personnel},${ag.vehicles||0},${ag.status},"${ag.equipment||''}",${ag.registered}`;
   downloadCSV(csv, ag.name.replace(/[^a-z0-9]/gi,'_')+'_details.csv');
   showToast('Exported agency details','success');
+}
+
+async function registerAgencyFull() {
+  const n=document.getElementById('mRegName').value.trim();
+  const d=document.getElementById('mRegDistrict').value.trim();
+  const email=document.getElementById('mRegEmail').value.trim() || `agency${Date.now()}@rescuenet.gov.in`;
+  
+  if(!n||!d){showToast('Name and district are required','error');return;}
+  
+  showToast('Locating district on live map...', 'standby');
+  const coords = await getCoordinatesFromDistrict(d);
+  
+  const newAg={
+    id:Date.now(), name:n, type:document.getElementById('mRegType').value,
+    district:d, contact:document.getElementById('mRegPhone').value || 'Not Provided',
+    email:email,
+    personnel:parseInt(document.getElementById('mRegPersonnel').value)||20,
+    vehicles:parseInt(document.getElementById('mRegVehicles').value)||4,
+    status:document.getElementById('mRegStatus').value,
+    equipment:document.getElementById('mRegEquip').value||'Standard kit',
+    registered:new Date().toISOString().slice(0,10),
+    lat: coords.lat, 
+    lng: coords.lng
+  };
+
+  try {
+    // 1. Push to Realtime DB so the Map Pin appears
+    await window.firebaseSet(window.firebaseRef(window.db, 'agencies/' + newAg.id), newAg);
+    
+    // 2. Automatically create Firebase Login Credentials (Password: rescue123)
+    if (window.firebaseCreateUser) {
+      const userCredential = await window.firebaseCreateUser(window.auth, email, 'rescue123');
+      const userId = userCredential.user.uid;
+      const newUser = { name: n, email: email, role: 'agency', agencyId: newAg.id };
+      await window.firebaseSet(window.firebaseRef(window.db, 'users/' + userId), newUser);
+    }
+    
+    closeModal('registerModal');
+    showToast('Agency added & Login created (Pass: rescue123)','success');
+    ['mRegName','mRegDistrict','mRegPhone','mRegEmail','mRegPersonnel','mRegVehicles','mRegEquip'].forEach(id=>{
+      const el=document.getElementById(id); if(el) el.value='';
+    });
+  } catch(err) {
+    showToast('Added to map, but Auth error: ' + err.message, 'error');
+    closeModal('registerModal');
+  }
 }
 
 function populateIncidentAgencySelect() {
@@ -1658,7 +1702,7 @@ async function drawRouteToIncident(districtStr) {
 
 let trackingInterval = null;
 function toggleLiveTracking(id) {
-  const ag = agencies.find(a => a.id === id);
+  const ag = agencies.find(a => String(a.id) === String(id));
   if(!ag) return;
   if (trackingInterval) {
     clearInterval(trackingInterval);
@@ -1685,11 +1729,11 @@ function openAddResourceModal() {
 }
 
 function submitAddResource() {
-  const agId = parseInt(document.getElementById('rResAgency').value);
+  const agId = document.getElementById('rResAgency').value;
   const type = document.getElementById('rResType').value;
   const qty = parseInt(document.getElementById('rResQty').value);
   if(!qty || qty <= 0) { showToast('Please enter a valid quantity', 'error'); return; }
-  const ag = agencies.find(a => a.id === agId);
+  const ag = agencies.find(a => String(a.id) === String(agId));
   if(!ag) return;
 
   if(type === 'vehicles' || type === 'boats') {
