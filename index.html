@@ -1507,17 +1507,27 @@ function runAIPrediction() {
           })[0];
 
           // 2. Scan live agencies to find the closest available backup
-          let standbyAgencies = agencies.filter(a => a.status === 'standby' && a.lat && a.lng);
-          let closestAgency = null;
-          let shortestDistance = 999999;
+let standbyAgencies = (Array.isArray(agencies) ? agencies : Object.values(agencies || {})).filter(a => {
+    let latVal = parseFloat(a.lat || a.latitude);
+    let lngVal = parseFloat(a.lng || a.longitude);
+    return (a.status === 'standby' || a.status === 'active') && !isNaN(latVal) && !isNaN(lngVal);
+});
 
-          standbyAgencies.forEach(ag => {
-              let dist = getDistanceInKm(epicenter.lat, epicenter.lng, ag.lat, ag.lng);
-              if (dist < shortestDistance) {
-                  shortestDistance = dist;
-                  closestAgency = ag;
-              }
-          });
+let closestAgency = null;
+let shortestDistance = 999999;
+
+standbyAgencies.forEach(ag => {
+    let epiLat = parseFloat(epicenter.lat);
+    let epiLng = parseFloat(epicenter.lng);
+    let agLat = parseFloat(ag.lat || ag.latitude);
+    let agLng = parseFloat(ag.lng || ag.longitude);
+
+    let dist = getDistanceInKm(epiLat, epiLng, agLat, agLng);
+    if (!isNaN(dist) && dist < shortestDistance) {
+        shortestDistance = dist;
+        closestAgency = ag;
+    }
+});
 
           // 3. Generate Real Dynamic Recommendation
           let recommendationHTML = `
@@ -1831,19 +1841,27 @@ async function submitIncident() {
       showToast('Live incident reported and pinned to map!','success');
 
       // --- NEW: AUTO-FIND CLOSEST AGENCY & CALL ---
-      let activeAgencies = agencies.filter(a => a.status === 'active' || a.status === 'standby');
-      let closestAgency = null;
-      let shortestDist = 999999;
+let activeAgencies = (Array.isArray(agencies) ? agencies : Object.values(agencies || {})).filter(a => {
+    let latVal = parseFloat(a.lat || a.latitude);
+    let lngVal = parseFloat(a.lng || a.longitude);
+    return (a.status === 'active' || a.status === 'standby') && !isNaN(latVal) && !isNaN(lngVal);
+});
 
-      activeAgencies.forEach(ag => {
-          if(ag.lat && ag.lng) {
-              let distCalc = getDistanceInKm(finalCoords.lat, finalCoords.lng, ag.lat, ag.lng);
-              if (distCalc < shortestDist) {
-                  shortestDist = distCalc;
-                  closestAgency = ag;
-              }
-          }
-      });
+let closestAgency = null;
+let shortestDist = 999999;
+
+activeAgencies.forEach(ag => {
+    let finalLat = parseFloat(finalCoords.lat);
+    let finalLng = parseFloat(finalCoords.lng);
+    let agLat = parseFloat(ag.lat || ag.latitude);
+    let agLng = parseFloat(ag.lng || ag.longitude);
+
+    let distCalc = getDistanceInKm(finalLat, finalLng, agLat, agLng);
+    if (!isNaN(distCalc) && distCalc < shortestDist) {
+        shortestDist = distCalc;
+        closestAgency = ag;
+    }
+});
 
       if(closestAgency && closestAgency.contact) {
           setTimeout(() => {
