@@ -516,11 +516,16 @@ body{font-family:var(--font-body);background:var(--gray-50);color:var(--gray-900
               <button class="sos-btn" id="civilianSosBtn" onclick="triggerCivilianSOS()">🚨 TRANSMIT EMERGENCY SOS</button>
             </div>
             <div id="mainMapSvg" style="width: 100%; height: 100%; z-index: 1;"></div>
-            <div class="map-legend-box" style="z-index: 2;">
-              <div class="ml-item"><div class="ml-dot" style="background:#1E8449"></div>Active</div>
-              <div class="ml-item"><div class="ml-dot" style="background:#E67E22"></div>Standby</div>
-              <div class="ml-item"><div class="ml-dot" style="background:#C0392B"></div>Deployed</div>
-            </div>
+<div class="map-legend-box" style="z-index: 2;">
+  <div style="font-size:10px;font-weight:700;color:var(--gray-500);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Agencies</div>
+  <div class="ml-item"><div class="ml-dot" style="background:#1E8449"></div>Active</div>
+  <div class="ml-item"><div class="ml-dot" style="background:#E67E22"></div>Standby</div>
+  <div class="ml-item"><div class="ml-dot" style="background:#C0392B"></div>Deployed</div>
+  <div style="font-size:10px;font-weight:700;color:var(--gray-500);text-transform:uppercase;letter-spacing:1px;margin-top:8px;margin-bottom:6px;">Incidents</div>
+  <div class="ml-item"><div style="width:12px;height:12px;background:#C0392B;border-radius:50% 50% 50% 0;transform:rotate(-45deg);flex-shrink:0"></div>High</div>
+  <div class="ml-item"><div style="width:12px;height:12px;background:#E67E22;border-radius:50% 50% 50% 0;transform:rotate(-45deg);flex-shrink:0"></div>Medium</div>
+  <div class="ml-item"><div style="width:12px;height:12px;background:#1E8449;border-radius:50% 50% 50% 0;transform:rotate(-45deg);flex-shrink:0"></div>Low</div>
+</div>
           </div>
           <div class="right-panel">
             <div class="rp-tabs">
@@ -1883,11 +1888,16 @@ async function doRegister() {
 }
 
 function doLogout() {
-  currentUser=null;
+  currentUser = null;
+  // Reset to default incidents so next login starts clean
+  incidents = [
+    {id:1,title:'Major Flooding — Guwahati',type:'Flood',severity:'high',district:'Guwahati, Assam',area:'Zone 4',desc:'Severe flooding affecting residents. Immediate evacuation needed.',affected:3200,agency:'1st Battalion NDRF',status:'active',time:'2 hrs ago',reporter:'Admin',lat:26.1445,lng:91.7362},
+    {id:2,title:'Industrial Fire — Pune Industrial Area',type:'Fire',severity:'high',district:'Pune, Maharashtra',area:'Industrial Sector',desc:'Chemical fire at manufacturing unit. Toxic fumes spreading.',affected:800,agency:'5th Battalion NDRF',status:'active',time:'4 hrs ago',reporter:'Agency User',lat:18.5204,lng:73.8567},
+    {id:3,title:'Cyclone Damage — Odisha Coastal Belt',type:'Cyclone',severity:'medium',district:'Paradip, Odisha',area:'Coastal belt',desc:'Multiple fishing villages affected by cyclone.',affected:1000,agency:'Coast Guard District HQ – Odisha',status:'active',time:'Yesterday',reporter:'Admin',lat:20.3167,lng:86.6000},
+  ];
   document.getElementById('appScreen').classList.remove('active');
   document.getElementById('loginScreen').classList.add('active');
 }
-
 let leafletMap = null;
 let markersLayer = null;
 let heatLayer = null; 
@@ -1977,9 +1987,12 @@ window.firebaseOnValue(window.firebaseRef(window.db, 'agencies'), (snapshot) => 
     renderResourcesTable();
     populateIncidentAgencySelect();
   });
-  window.firebaseOnValue(window.firebaseRef(window.db, 'incidents'), (snapshot) => {
+window.firebaseOnValue(window.firebaseRef(window.db, 'incidents'), (snapshot) => {
     const data = snapshot.val();
-    incidents = data ? Object.values(data).sort((a, b) => b.id - a.id) : [];
+    if (data) {
+      incidents = Object.values(data).sort((a, b) => b.id - a.id);
+    }
+    // if no Firebase data, keep the default incidents array as-is
     renderIncidentsList(); updateStats(); renderRpIncidents();
     const countEl = document.getElementById('incidentReportCount');
     if (countEl) countEl.textContent = incidents.length + ' total incidents';
