@@ -1397,14 +1397,23 @@ async function registerAgencyFull() {
   
   let finalCoords = { lat: 22.5, lng: 78.9 }; // Default fallback
   
-  // Use precision cached hardware location or route to OpenStreetMap query string
+
   if (registrationCoordsTemp && d.includes('GPS:')) {
+    // Use real hardware GPS — most accurate
     finalCoords = registrationCoordsTemp;
-  } else {
-    showToast('Resolving text string coordinates via geocoder...', 'standby');
-    finalCoords = await getCoordinatesFromDistrict(d);
+    showToast('Using real GPS coordinates for pin.', 'success');
+  } else if (d && !d.includes('GPS:')) {
+    // Geocode the typed district name
+    showToast('Locating district on map via geocoder...', 'standby');
+    const geocoded = await getCoordinatesFromDistrict(d);
+    if (geocoded && geocoded.lat !== 22.5) {
+      finalCoords = geocoded;
+      showToast('District located successfully!', 'success');
+    } else {
+      showToast('⚠️ Could not geocode district. Use the 🎯 GPS button for accuracy.', 'error');
+      finalCoords = geocoded; // use what we got (random fallback)
+    }
   }
-  
   const newAg = {
     id: Date.now(), 
     name: n, 
@@ -1621,6 +1630,37 @@ function renderMapPins() {
       marker.bindTooltip(`<b>${ag.name}</b><br>${ag.type}`, { direction: 'top' });
       marker.on('click', () => openAgencyDrawer(ag.id));
     }
+  });
+
+  // --- PLOT INCIDENTS AS INTERACTIVE MARKERS ---
+  incidents.forEach(inc => {
+    if (!inc.lat || !inc.lng || inc.status === 'resolved') return;
+    const sevColor = inc.severity === 'high' ? '#C0392B' : inc.severity === 'medium' ? '#E67E22' : '#1E8449';
+    const incIcon = L.divIcon({
+      className: '',
+      html: `<div style="
+        width:28px; height:28px; border-radius:50% 50% 50% 0;
+        background:${sevColor}; border:3px solid white;
+        box-shadow:0 2px 8px rgba(0,0,0,0.4);
+        transform:rotate(-45deg); cursor:pointer;
+        display:flex; align-items:center; justify-content:center;">
+        <span style="transform:rotate(45deg); font-size:11px; color:white; font-weight:bold;">⚠</span>
+      </div>`,
+      iconSize: [28, 28],
+      iconAnchor: [14, 28]
+    });
+    const iMarker = L.marker([inc.lat, inc.lng], { icon: incIcon }).addTo(markersLayer);
+    iMarker.bindPopup(`
+      <div style="min-width:200px; font-family:sans-serif;">
+        <div style="font-weight:700; font-size:13px; color:${sevColor}; margin-bottom:6px;">⚠ ${inc.title}</div>
+        <div style="font-size:11px; color:#555; margin-bottom:3px;"><b>Type:</b> ${inc.type}</div>
+        <div style="font-size:11px; color:#555; margin-bottom:3px;"><b>Severity:</b> ${inc.severity.toUpperCase()}</div>
+        <div style="font-size:11px; color:#555; margin-bottom:3px;"><b>Location:</b> ${inc.district}</div>
+        <div style="font-size:11px; color:#555; margin-bottom:3px;"><b>Affected:</b> ${inc.affected} people</div>
+        <div style="font-size:11px; color:#555; margin-bottom:3px;"><b>Assigned:</b> ${inc.agency}</div>
+        <div style="font-size:11px; margin-top:6px; padding:4px 8px; background:${sevColor}; color:white; border-radius:4px; text-align:center; font-weight:600;">${inc.status.toUpperCase()}</div>
+      </div>
+    `);
   });
 }
 
@@ -1841,43 +1881,43 @@ async function submitIncident() {
       incidentCoordsTemp = null; 
       showToast('Live incident reported and pinned to map!','success');
 
-      // --- NEW: AUTO-FIND CLOSEST AGENCY & CALL ---
-let activeAgencies = (Array.isArray(agencies) ? agencies : Object.values(agencies || {})).filter(a => {
-    let latVal = parseFloat(a.lat || a.latitude);
-    let lngVal = parseFloat(a.lng || a.longitude);
-    return (a.status === 'active' || a.status === 'standby') && !isNaN(latVal) && !isNaN(lngVal);
-});
+// --- ACCURATE NEAREST AGENCY FINDER ---
+      const incLat = parseFloat(finalCoords.lat);
+      const incLng = parseFloat(finalCoords.lng);
 
-let closestAgency = null;
-let shortestDist = 999999;
+      const activeAgencies = agencies.filter(a => {
+          const aLat = parseFloat(a.lat);
+          const aLng = parseFloat(a.lng);
+          return (a.status === 'active' || a.status === 'standby') 
+                 && !isNaN(aLat) && !isNaN(aLng)
+                 && aLat !== 0 && aLng !== 0;
+      });
 
-activeAgencies.forEach(ag => {
-    let finalLat = parseFloat(finalCoords.lat);
-    let finalLng = parseFloat(finalCoords.lng);
-    
-    // BACKUP HACK: Agency name GOKUL-nu irunthu lat/lng illati, automatic-a Coimbatore pins asign aagum
-    let agLat = parseFloat(ag.lat || ag.latitude);
-    let agLng = parseFloat(ag.lng || ag.longitude);
-    
-    if (ag.name === 'GOKUL' || ag.id === 'GOKUL' || (!agLat && ag.location === 'Coimbatore')) {
-        agLat = 11.0168;
-        agLng = 76.9558;
-    }
+      let closestAgency = null;
+      let shortestDist = Infinity;
 
-    let distCalc = getDistanceInKm(finalLat, finalLng, agLat, agLng);
-    if (!isNaN(distCalc) && distCalc < shortestDist) {
-        shortestDist = distCalc;
-        closestAgency = ag;
-    }
-});
+      activeAgencies.forEach(ag => {
+          const dist = parseFloat(getDistanceInKm(incLat, incLng, parseFloat(ag.lat), parseFloat(ag.lng)));
+          if (!isNaN(dist) && dist < shortestDist) {
+              shortestDist = dist;
+              closestAgency = ag;
+          }
+      });
 
-      if(closestAgency && closestAgency.contact) {
+      if (closestAgency && closestAgency.contact) {
           setTimeout(() => {
-              let callThem = confirm(`🚨 EMERGENCY AUTO-ROUTING 🚨\n\nThe closest rescue unit is ${closestAgency.name} (Distance: ${shortestDist} km).\n\nDo you want to immediately call their emergency line (${closestAgency.contact})?`);
-              if(callThem) {
-                  window.location.href = 'tel:' + closestAgency.contact.replace(/\s+/g, '');
-              }
-          }, 800); // 800ms delay to let the success message show first
+              const callThem = confirm(
+                  `🚨 NEAREST RESCUE UNIT FOUND 🚨\n\n` +
+                  `Agency: ${closestAgency.name}\n` +
+                  `Type: ${closestAgency.type}\n` +
+                  `Distance: ${shortestDist} km from incident\n` +
+                  `District: ${closestAgency.district}\n\n` +
+                  `Call their emergency line now?\n${closestAgency.contact}`
+              );
+              if (callThem) window.location.href = 'tel:' + closestAgency.contact.replace(/\s+/g, '');
+          }, 800);
+      } else {
+          showToast('No nearby active agency found. Check agency registry.', 'error');
       }
   });
 }
@@ -2153,19 +2193,17 @@ function drawRouteToIncident(districtName) {
     // 2. SAFE MAP ZOOM ENGINE
     setTimeout(() => {
         try {
-            if (typeof map !== 'undefined') {
-                if (map.flyTo) { // Leaflet JS
-                    map.flyTo([targetIncident.lat, targetIncident.lng], 16, { animate: true, duration: 1.5 });
+       if (typeof leafletMap !== 'undefined' && leafletMap) {
+    if (leafletMap.flyTo) {
+        leafletMap.flyTo([targetIncident.lat, targetIncident.lng], 16, { animate: true, duration: 1.5 });
                     showToast('Target located on live map!', 'success');
-                } else if (map.panTo) { // Google Maps
-                    map.panTo({ lat: targetIncident.lat, lng: targetIncident.lng });
-                    map.setZoom(16);
-                    showToast('Target located on live map!', 'success');
-                }
-            } else {
-                showToast('Warning: Map variable not found globally.', 'error');
-                console.error("RALCA Error: 'map' is undefined. Your map variable might have a different name.");
-            }
+showToast('Target located on live map!', 'success');
+    showPage('dashboard', document.querySelector('.nav-link'));
+    setTimeout(() => leafletMap.invalidateSize(), 150);
+    }
+} else {
+    showToast('Map not yet initialized. Go to Dashboard first.', 'error');
+}
         } catch(err) {
             console.error("Zoom Error: ", err);
         }
