@@ -1273,6 +1273,7 @@ function initApp() {
       attribution: '&copy; OpenStreetMap &copy; CARTO'
     }).addTo(leafletMap);
     markersLayer = L.layerGroup().addTo(leafletMap);
+    window.leafletMap = leafletMap;
   }
 
   window.firebaseOnValue(window.firebaseRef(window.db, 'globalAlert'), (snapshot) => {
