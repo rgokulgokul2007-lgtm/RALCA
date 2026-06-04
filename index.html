@@ -2101,36 +2101,48 @@ function submitTransfer() {
   closeModal('transferModal');
   showToast(`Successfully transferred ${qty} ${readableName} to ${toAg.name}`, 'success');
 }
-  function drawRouteToIncident(districtName) {
-  // 1. Find the exact incident data from your live array
+function drawRouteToIncident(districtName) {
   let targetIncident = incidents.find(i => i.district === districtName);
 
   if (targetIncident && targetIncident.lat && targetIncident.lng) {
     showToast('Locking onto target coordinates...', 'standby');
 
-    // 2. Switch to the Dashboard tab automatically
-    if (typeof showTab === 'function') {
-        showTab('dashboard'); 
+    // 1. BULLETPROOF TAB SWITCHER (Tries every possible method to go to Dashboard)
+    if (typeof switchTab === 'function') { switchTab('dashboard'); }
+    else if (typeof showTab === 'function') { showTab('dashboard'); }
+    else if (typeof openTab === 'function') { openTab('dashboard'); }
+    else {
+       // Absolute fallback: Find the Dashboard button in your menu and force click it
+       let navButtons = document.querySelectorAll('button, a, .nav-item, li');
+       navButtons.forEach(btn => {
+           if(btn.innerText && btn.innerText.toLowerCase().includes('dashboard')) {
+               btn.click();
+           }
+       });
     }
     
-    // 3. Scroll to the top where the map is located
     window.scrollTo({ top: 0, behavior: 'smooth' });
 
-    // 4. Execute the Map Camera Zoom
+    // 2. SAFE MAP ZOOM ENGINE
     setTimeout(() => {
-        if (typeof map !== 'undefined') {
-            // Leaflet JS Zoom
-            if (map.flyTo) {
-                map.flyTo([targetIncident.lat, targetIncident.lng], 16, { animate: true, duration: 1.5 });
-            } 
-            // Google Maps Zoom fallback
-            else if (map.panTo) {
-                map.panTo({ lat: targetIncident.lat, lng: targetIncident.lng });
-                map.setZoom(16);
+        try {
+            if (typeof map !== 'undefined') {
+                if (map.flyTo) { // Leaflet JS
+                    map.flyTo([targetIncident.lat, targetIncident.lng], 16, { animate: true, duration: 1.5 });
+                    showToast('Target located on live map!', 'success');
+                } else if (map.panTo) { // Google Maps
+                    map.panTo({ lat: targetIncident.lat, lng: targetIncident.lng });
+                    map.setZoom(16);
+                    showToast('Target located on live map!', 'success');
+                }
+            } else {
+                showToast('Warning: Map variable not found globally.', 'error');
+                console.error("RALCA Error: 'map' is undefined. Your map variable might have a different name.");
             }
-            showToast('Target located on live map!', 'success');
+        } catch(err) {
+            console.error("Zoom Error: ", err);
         }
-    }, 400); 
+    }, 600); // Slightly longer delay to ensure the Dashboard HTML fully loads first
     
   } else {
     showToast('No exact GPS telemetry available for this incident.', 'error');
