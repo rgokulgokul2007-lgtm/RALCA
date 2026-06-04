@@ -2550,6 +2550,7 @@ function changeStatus(id) {
   const ns=prompt(`Change status for ${ag.name}\nOptions: ${opts.join(', ')}`);
   if(ns&&['active','standby','deployed'].includes(ns.toLowerCase())) {
     ag.status=ns.toLowerCase();
+     ag.lastActive = Date.now();
     window.firebaseSet(window.firebaseRef(window.db, 'agencies/' + id), ag).then(() => {
       showToast('Status updated to: '+ag.status,'success');
       openAgencyDrawer(id);
