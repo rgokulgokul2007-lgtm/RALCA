@@ -1692,12 +1692,22 @@ function loadAuthentic100Agencies() {
   }
 }
 loadAuthentic100Agencies();
-
-// ── ONE-TIME FIREBASE SEEDER ──
-// This button appears only if Firebase has 0 agencies.
-// Click it ONCE to seed all 100 agencies. It disappears after.
 async function seedAgenciesToFirebase() {
   const btn = document.getElementById('seedBtn');
+
+  // Wait until Firebase is fully ready
+  let retries = 0;
+  while ((!window.firebaseSet || !window.firebaseRef || !window.db) && retries < 20) {
+    await new Promise(r => setTimeout(r, 500));
+    retries++;
+  }
+
+  if (!window.firebaseSet || !window.firebaseRef || !window.db) {
+    showToast('Firebase not ready. Please refresh and try again.', 'error');
+    if(btn) { btn.disabled = false; btn.textContent = '🌱 Seed 100 Agencies to Firebase'; }
+    return;
+  }
+
   if(btn) { btn.disabled = true; btn.textContent = 'Seeding... Please wait'; }
 
   let count = 0;
@@ -1708,16 +1718,22 @@ async function seedAgenciesToFirebase() {
       if(btn) btn.textContent = `Seeding... ${count}/${agencies.length}`;
     } catch(e) {
       console.error('Failed to seed agency:', ag.name, e);
+      showToast('Error: ' + e.message, 'error');
+      break;
     }
   }
 
   if(btn) {
     btn.textContent = '✅ Done! ' + count + ' agencies seeded.';
     btn.style.background = 'var(--green)';
-    setTimeout(() => btn.remove(), 3000);
+    setTimeout(() => {
+      const wrap = document.getElementById('seedBtnWrap');
+      if(wrap) wrap.style.display = 'none';
+    }, 3000);
   }
   showToast(count + ' agencies seeded to Firebase successfully!', 'success');
 }
+
 
 let incidents = [
   {id:1,title:'Major Flooding — Regional Office 4',type:'Flood',severity:'high',district:'Regional Office 4',area:'Zone 4',desc:'Severe flooding affecting residents. Immediate evacuation needed.',affected:3200,agency:'Civil Defence Agency 4',status:'active',time:'2 hrs ago',reporter:'Admin'},
@@ -1917,17 +1933,19 @@ function initApp() {
       pill.style.color = data.sev === 'high' ? '#C0392B' : '#B9770E';
     }
   });
-
-  window.firebaseOnValue(window.firebaseRef(window.db, 'agencies'), (snapshot) => {
+window.firebaseOnValue(window.firebaseRef(window.db, 'agencies'), (snapshot) => {
     const data = snapshot.val();
     agencies = [];
-    // Show seed button if Firebase has no agencies
     const seedWrap = document.getElementById('seedBtnWrap');
-    if (!data || Object.keys(data).length === 0) {
+    const count = data ? Object.keys(data).length : 0;
+
+    // Show seed button only for admin when Firebase has 0 agencies
+    if (count === 0 && currentUser && currentUser.role === 'admin') {
       if (seedWrap) seedWrap.style.display = 'block';
     } else {
       if (seedWrap) seedWrap.style.display = 'none';
     }
+
     if (data) {
       Object.keys(data).forEach(key => {
         let ag = data[key];
