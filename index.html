@@ -1889,12 +1889,11 @@ async function doRegister() {
 
 function doLogout() {
   currentUser = null;
-  // Reset to default incidents so next login starts clean
-  incidents = [
-    {id:1,title:'Major Flooding — Guwahati',type:'Flood',severity:'high',district:'Guwahati, Assam',area:'Zone 4',desc:'Severe flooding affecting residents. Immediate evacuation needed.',affected:3200,agency:'1st Battalion NDRF',status:'active',time:'2 hrs ago',reporter:'Admin',lat:26.1445,lng:91.7362},
-    {id:2,title:'Industrial Fire — Pune Industrial Area',type:'Fire',severity:'high',district:'Pune, Maharashtra',area:'Industrial Sector',desc:'Chemical fire at manufacturing unit. Toxic fumes spreading.',affected:800,agency:'5th Battalion NDRF',status:'active',time:'4 hrs ago',reporter:'Agency User',lat:18.5204,lng:73.8567},
-    {id:3,title:'Cyclone Damage — Odisha Coastal Belt',type:'Cyclone',severity:'medium',district:'Paradip, Odisha',area:'Coastal belt',desc:'Multiple fishing villages affected by cyclone.',affected:1000,agency:'Coast Guard District HQ – Odisha',status:'active',time:'Yesterday',reporter:'Admin',lat:20.3167,lng:86.6000},
-  ];
+// Detach Firebase listeners by nulling references so they don't fire after logout
+  incidents = [];
+  agencies = [];
+  activitiesFeed = [];
+
   document.getElementById('appScreen').classList.remove('active');
   document.getElementById('loginScreen').classList.add('active');
 }
@@ -1948,17 +1947,21 @@ window.firebaseOnValue(window.firebaseRef(window.db, 'agencies'), (snapshot) => 
     const seedWrap = document.getElementById('seedBtnWrap');
     const firebaseCount = data ? Object.keys(data).length : 0;
 
-    if (firebaseCount === 0) {
-      // Firebase is empty — use local authenticAgencies data so map/grid still works
-      // Also show seed button for admin to push data to Firebase
+if (firebaseCount === 0) {
       if (currentUser && currentUser.role === 'admin') {
         if (seedWrap) seedWrap.style.display = 'block';
       }
-      // agencies array already filled by loadAuthentic100Agencies() — don't overwrite
+      // Keep local data, but still render everything
+      renderSidebar();
+      renderAgenciesGrid();
+      if (!isHeatmap) renderMapPins();
+      updateStats();
+      renderResourcesTable();
+      populateIncidentAgencySelect();
+      return; // EXIT early — do not proceed to overwrite agencies
     } else {
-      // Firebase has real data — use it
       if (seedWrap) seedWrap.style.display = 'none';
-      agencies = []; // only reset when we have real data to replace with
+      const freshAgencies = []; // Build into temp array first
       Object.keys(data).forEach(key => {
         let ag = data[key];
         if (ag !== null && typeof ag === 'object') {
@@ -1975,17 +1978,22 @@ window.firebaseOnValue(window.firebaseRef(window.db, 'agencies'), (snapshot) => 
           ag.registered = ag.registered || new Date().toISOString().slice(0,10);
           ag.lat = parseFloat(ag.lat) || 22.5;
           ag.lng = parseFloat(ag.lng) || 78.9;
-          agencies.push(ag);
+          freshAgencies.push(ag);
         }
       });
+  agencies = freshAgencies;
     }
 
-    renderSidebar();
+renderSidebar();
     renderAgenciesGrid();
     if (!isHeatmap) renderMapPins();
     updateStats();
     renderResourcesTable();
     populateIncidentAgencySelect();
+    // Keep login screen stats in sync with live Firebase data
+    document.getElementById('lsStat1').textContent = agencies.length || 100;
+    document.getElementById('lsStat2').textContent = agencies.filter(a=>a.status==='active').length || 38;
+    document.getElementById('lsStat3').textContent = incidents.filter(i=>i.status==='active'||i.status==='pending').length || 12;
   });
 window.firebaseOnValue(window.firebaseRef(window.db, 'incidents'), (snapshot) => {
     const data = snapshot.val();
@@ -2017,7 +2025,16 @@ function showPage(name, btn) {
 }
 
 function getInitials(name) { return name.split(/[\s—\-]+/).filter(w=>w.length>2).slice(0,2).map(w=>w[0]).join('').toUpperCase()||name.slice(0,2).toUpperCase(); }
-function showToast(msg,type='') {
+function sanitize(str) {
+  if(!str) return '';
+  return String(str)
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;')
+    .replace(/'/g,'&#39;');
+}
+  function showToast(msg,type='') {
   const t=document.getElementById('toast');
   t.textContent=msg; t.className='toast '+(type||'');
   t.classList.add('show');
@@ -2258,7 +2275,7 @@ function renderSidebar() {
     return `<div class="agency-card-mini" onclick="openAgencyDrawer('${ag.id}')">
       <div class="acm-top">
         <div class="acm-icon" style="background:${tm.bg};color:${tm.color}">${tm.emoji}</div>
-        <div style="overflow:hidden;"><div class="acm-name">${ag.name}</div><div class="acm-type">${ag.type}</div></div>
+        <div style="overflow:hidden;"><div class="acm-name">${sanitize(ag.name)}</div><div class="acm-type">${sanitize(ag.type)}</div></div>
       </div>
       <div class="acm-meta">
         <span><span class="status-dot" style="background:${STATUS_COLOR[ag.status]}"></span>${ag.status}</span>
@@ -2421,8 +2438,8 @@ function renderAgenciesGrid() {
       <div class="ag-card-top">
         <div class="ag-icon" style="background:${tm.bg};color:${tm.color};font-size:22px">${tm.emoji}</div>
         <div class="ag-info">
-          <div class="ag-name">${ag.name}</div>
-          <div class="ag-type">${ag.type}</div>
+<div class="ag-name">${sanitize(ag.name)}</div>
+          <div class="ag-type">${sanitize(ag.type)}</div>
         </div>
       </div>
       <div class="ag-status-badge" style="background:${STATUS_BG[ag.status]};color:${STATUS_COLOR[ag.status]}">${ag.status.charAt(0).toUpperCase()+ag.status.slice(1)}</div>
@@ -2442,16 +2459,16 @@ function openAgencyDrawer(id) {
   const tm=TYPE_META[ag.type]||TYPE_META['Fire & Rescue'];
   document.getElementById('ddBody').innerHTML=`
     <div class="dd-avatar" style="background:${tm.bg};color:${tm.color};font-size:24px">${tm.emoji}</div>
-    <div class="dd-name">${ag.name}</div>
-    <div class="dd-sub">${ag.type} &nbsp;·&nbsp; <span style="color:${STATUS_COLOR[ag.status]};font-weight:600">${ag.status}</span></div>
+<div class="dd-name">${sanitize(ag.name)}</div>
+    <div class="dd-sub">${sanitize(ag.type)} &nbsp;·&nbsp; <span style="color:${STATUS_COLOR[ag.status]};font-weight:600">${sanitize(ag.status)}</span></div>
     <div class="info-grid">
-      <div class="info-row"><span class="ir-label">District</span><span class="ir-val">${ag.district}</span></div>
-      <div class="info-row"><span class="ir-label">Contact</span><span class="ir-val">${ag.contact}</span></div>
-      <div class="info-row"><span class="ir-label">Email</span><span class="ir-val" style="font-size:11px">${ag.email||'—'}</span></div>
-      <div class="info-row"><span class="ir-label">Personnel</span><span class="ir-val">${ag.personnel}</span></div>
-      <div class="info-row"><span class="ir-label">Vehicles</span><span class="ir-val">${ag.vehicles||0}</span></div>
-      <div class="info-row"><span class="ir-label">Equipment</span><span class="ir-val" style="font-size:11px;text-align:right;max-width:160px">${ag.equipment||'Standard kit'}</span></div>
-      <div class="info-row"><span class="ir-label">Registered</span><span class="ir-val">${ag.registered}</span></div>
+      <div class="info-row"><span class="ir-label">District</span><span class="ir-val">${sanitize(ag.district)}</span></div>
+      <div class="info-row"><span class="ir-label">Contact</span><span class="ir-val">${sanitize(ag.contact)}</span></div>
+      <div class="info-row"><span class="ir-label">Email</span><span class="ir-val" style="font-size:11px">${sanitize(ag.email||'—')}</span></div>
+      <div class="info-row"><span class="ir-label">Personnel</span><span class="ir-val">${sanitize(String(ag.personnel))}</span></div>
+      <div class="info-row"><span class="ir-label">Vehicles</span><span class="ir-val">${sanitize(String(ag.vehicles||0))}</span></div>
+      <div class="info-row"><span class="ir-label">Equipment</span><span class="ir-val" style="font-size:11px;text-align:right;max-width:160px">${sanitize(ag.equipment||'Standard kit')}</span></div>
+      <div class="info-row"><span class="ir-label">Registered</span><span class="ir-val">${sanitize(ag.registered)}</span></div>
     </div>`;
 let actionButtons = `
     <button class="dd-action-btn primary-action" onclick="callAgency('${ag.contact}')">📞 Contact Agency</button>
@@ -2600,14 +2617,14 @@ function renderIncidentsList() {
   el.innerHTML=incidents.map(inc=>`
     <div class="incident-card ${inc.status==='pending' ? 'pending' : inc.severity}">
       <div class="ic-top">
-        <div class="ic-title">${inc.title}</div>
+<div class="ic-title">${sanitize(inc.title)}</div>
         <span class="severity sev-${inc.severity==='high'?'high':inc.severity==='medium'?'med':'low'}">${inc.severity.toUpperCase()}</span>
       </div>
       <div class="ic-badges">
         <span class="ic-badge" style="background:#EDE7F6;color:#4527A0">${inc.type}</span>
         <span class="ic-badge" style="background:${inc.status==='active'?'#FADBD8':inc.status==='resolved'?'#D5F5E3':inc.status==='pending'?'#FDEBD0':'#FEF9E7'};color:${inc.status==='active'?'#922B21':inc.status==='resolved'?'#1E8449':inc.status==='pending'?'#E67E22':'#784212'}">${inc.status.toUpperCase()}</span>
       </div>
-      <div class="ic-desc">${inc.desc}</div>
+     <div class="ic-desc">${sanitize(inc.desc)}</div>
 <div class="ic-footer">
         <div class="ic-meta">
           <span>📍 ${inc.district.split(',')[0]}</span>
@@ -2635,12 +2652,15 @@ function verifySOS(id) {
   }
 }
 
-function resolveIncident(id,btn) {
-  const inc=incidents.find(i=>i.id===id);
-  if(inc) { 
-    inc.status='resolved'; 
-    window.firebaseSet(window.firebaseRef(window.db, 'incidents/' + id), inc).then(() => showToast('Incident marked resolved','success'));
-  }
+function resolveIncident(id, btn) {
+  const inc = incidents.find(i => i.id === id);
+  if (!inc) return;
+  inc.status = 'resolved';
+  window.firebaseSet(window.firebaseRef(window.db, 'incidents/' + id), inc).then(() => {
+    // Clean up any SOS agency pin that was created for this incident
+    window.firebaseRemove(window.firebaseRef(window.db, 'agencies/sos_' + id));
+    showToast('Incident marked resolved', 'success');
+  });
 }
 
 function renderResourcesTable() {
@@ -2766,6 +2786,13 @@ function exportData(type) {
     const totalPersonnel=agencies.reduce((s,a)=>s+a.personnel,0);
     csv='RALCA Executive Summary Report\nGenerated:,'+now+'\n\nMetric,Value\nTotal Agencies,'+agencies.length+'\nActive Agencies,'+active+'\nDeployed Agencies,'+deployed+'\nOpen Incidents,'+openInc+'\nTotal Personnel,'+totalPersonnel+'\n\nIncident Breakdown\nHigh Severity,'+incidents.filter(i=>i.severity==='high').length+'\nMedium Severity,'+incidents.filter(i=>i.severity==='medium').length+'\nLow Severity,'+incidents.filter(i=>i.severity==='low').length;
     filename=`RALCA_Summary_${now}.csv`;
+  } else if(type==='fullreport') {
+    csv='=== RALCA Full Operations Report ===\nGenerated: '+now+'\n\n--- AGENCIES ---\n'+
+      'Name,Type,District,Status,Personnel,Vehicles\n'+
+      agencies.map(a=>`"${a.name}","${a.type}","${a.district}",${a.status},${a.personnel},${a.vehicles||0}`).join('\n')+
+      '\n\n--- INCIDENTS ---\nTitle,Type,Severity,District,Affected,Status\n'+
+      incidents.map(i=>`"${i.title}","${i.type}",${i.severity},"${i.district}",${i.affected},${i.status}`).join('\n');
+    filename=`RALCA_Full_Report_${now}.csv`;
   } else if(type==='deployment') {
     csv='Agency,Type,District,Status,Personnel,Vehicles,Deployed Since\n'+
       agencies.filter(a=>a.status==='deployed').map(a=>`"${a.name}","${a.type}","${a.district}",Deployed,${a.personnel},${a.vehicles||0},"${a.registered}"`).join('\n');
@@ -2843,48 +2870,24 @@ function submitTransfer() {
   showToast(`Successfully transferred ${qty} ${readableName} to ${toAg.name}`, 'success');
 }
 function drawRouteToIncident(districtName) {
-  let targetIncident = incidents.find(i => i.district === districtName);
-
-  if (targetIncident && targetIncident.lat && targetIncident.lng) {
-    showToast('Locking onto target coordinates...', 'standby');
-
-    // 1. BULLETPROOF TAB SWITCHER (Tries every possible method to go to Dashboard)
-    if (typeof switchTab === 'function') { switchTab('dashboard'); }
-    else if (typeof showTab === 'function') { showTab('dashboard'); }
-    else if (typeof openTab === 'function') { openTab('dashboard'); }
-    else {
-       // Absolute fallback: Find the Dashboard button in your menu and force click it
-       let navButtons = document.querySelectorAll('button, a, .nav-item, li');
-       navButtons.forEach(btn => {
-           if(btn.innerText && btn.innerText.toLowerCase().includes('dashboard')) {
-               btn.click();
-           }
-       });
-    }
-    
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-
-    // 2. SAFE MAP ZOOM ENGINE
-    setTimeout(() => {
-        try {
-       if (typeof leafletMap !== 'undefined' && leafletMap) {
-    if (leafletMap.flyTo) {
-leafletMap.flyTo([targetIncident.lat, targetIncident.lng], 16, { animate: true, duration: 1.5 });
-        showPage('dashboard', document.querySelector('.nav-link'));
-        showToast('Target located on live map!', 'success');
-    setTimeout(() => leafletMap.invalidateSize(), 150);
-    }
-} else {
-    showToast('Map not yet initialized. Go to Dashboard first.', 'error');
-}
-        } catch(err) {
-            console.error("Zoom Error: ", err);
-        }
-    }, 600); // Slightly longer delay to ensure the Dashboard HTML fully loads first
-    
-  } else {
+  const targetIncident = incidents.find(i => i.district === districtName);
+  if (!targetIncident || !targetIncident.lat || !targetIncident.lng) {
     showToast('No exact GPS telemetry available for this incident.', 'error');
+    return;
   }
+  showToast('Locking onto target coordinates...', 'standby');
+  // Use your existing showPage directly — no guessing
+  const dashBtn = document.querySelector('.nav-link[onclick*="dashboard"]');
+  showPage('dashboard', dashBtn);
+  setTimeout(() => {
+    if (leafletMap) {
+      leafletMap.invalidateSize();
+      leafletMap.flyTo([targetIncident.lat, targetIncident.lng], 16, { animate: true, duration: 1.5 });
+      showToast('Target located on live map!', 'success');
+    } else {
+      showToast('Map not yet initialized.', 'error');
+    }
+  }, 350);
 }
 function toggleLiveTracking(id) {
   const ag = agencies.find(a => String(a.id) === String(id));
@@ -2901,8 +2904,8 @@ function toggleLiveTracking(id) {
     showToast('No GPS coordinates for this agency.', 'error');
   }
 }  
-  function generateFullReport() {
-  exportData('full');
+function generateFullReport() {
+  exportData('fullreport');
 }
   function triggerCivilianSOS() {
   if (!navigator.geolocation) {
