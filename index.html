@@ -2101,6 +2101,41 @@ function submitTransfer() {
   closeModal('transferModal');
   showToast(`Successfully transferred ${qty} ${readableName} to ${toAg.name}`, 'success');
 }
+  function drawRouteToIncident(districtName) {
+  // 1. Find the exact incident data from your live array
+  let targetIncident = incidents.find(i => i.district === districtName);
+
+  if (targetIncident && targetIncident.lat && targetIncident.lng) {
+    showToast('Locking onto target coordinates...', 'standby');
+
+    // 2. Switch to the Dashboard tab automatically
+    if (typeof showTab === 'function') {
+        showTab('dashboard'); 
+    }
+    
+    // 3. Scroll to the top where the map is located
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+
+    // 4. Execute the Map Camera Zoom
+    setTimeout(() => {
+        if (typeof map !== 'undefined') {
+            // Leaflet JS Zoom
+            if (map.flyTo) {
+                map.flyTo([targetIncident.lat, targetIncident.lng], 16, { animate: true, duration: 1.5 });
+            } 
+            // Google Maps Zoom fallback
+            else if (map.panTo) {
+                map.panTo({ lat: targetIncident.lat, lng: targetIncident.lng });
+                map.setZoom(16);
+            }
+            showToast('Target located on live map!', 'success');
+        }
+    }, 400); 
+    
+  } else {
+    showToast('No exact GPS telemetry available for this incident.', 'error');
+  }
+}
 </script>
 </body>
 </html>
