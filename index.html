@@ -447,7 +447,8 @@ body{font-family:var(--font-body);background:var(--gray-50);color:var(--gray-900
       </button>
     </div>
     <div style="display:flex;align-items:center;gap:8px">
-      <button class="broadcast-btn" id="appBroadcastBtn" onclick="openModal('broadcastModal')">📢 Broadcast</button>
+    <button class="broadcast-btn" id="appBroadcastBtn" onclick="openModal('broadcastModal')">📢 Broadcast</button>
+<button class="broadcast-btn" id="inboxBtn" style="background:var(--gold);color:var(--navy);display:none" onclick="openInbox()">📬 Inbox <span id="inboxBadge" style="background:var(--red);color:white;border-radius:50%;padding:1px 5px;font-size:10px;display:none">0</span></button>
       <div class="user-pill">
         <div class="user-avatar" id="userAvatar">AG</div>
         <span class="user-name" id="userName">Agency User</span>
@@ -651,7 +652,8 @@ body{font-family:var(--font-body);background:var(--gray-50);color:var(--gray-900
           </div>
           <div style="display:flex; gap:8px;">
             <button class="btn-primary" id="agencyBackupBtn" style="background:var(--red); display:none;" onclick="openModal('backupModal')">🚨 Request Backup</button>
-            <button class="btn-secondary" id="appTransferResBtn" style="color:var(--navy); border-color:var(--navy);" onclick="openTransferModal()">🔄 Transfer Resources</button>
+          <button class="btn-secondary" id="appTransferResBtn" style="color:var(--navy); border-color:var(--navy);" onclick="openTransferModal()">🔄 Transfer Resources</button>
+<button class="btn-secondary" style="color:var(--amber);border-color:var(--amber)" onclick="openResourceRequestModal()">📦 Request from Agency</button>
             <button class="btn-secondary" onclick="exportData('resources')">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg> Export CSV
             </button>
@@ -993,6 +995,57 @@ body{font-family:var(--font-body);background:var(--gray-50);color:var(--gray-900
 </div>
 
 <div class="toast" id="toast"></div>
+
+<div class="modal-overlay" id="resourceRequestModal">
+  <div class="modal-box" style="width:480px">
+    <div class="modal-header">
+      <div class="modal-title">📦 Request Resource from Agency</div>
+      <button class="modal-close" onclick="closeModal('resourceRequestModal')">✕</button>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Request From Agency</label>
+      <select class="form-select" id="rrFromAgency"></select>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Resource Type</label>
+        <select class="form-select" id="rrType">
+          <option value="rescue_boats">Rescue Boats</option>
+          <option value="medical_kits">Medical Kits</option>
+          <option value="ambulances">Ambulances</option>
+          <option value="helicopters">Helicopters</option>
+          <option value="generators">Generators</option>
+          <option value="trucks">Trucks</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Quantity Needed</label>
+        <input class="form-input" id="rrQty" type="number" placeholder="e.g. 5"/>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Reason</label>
+      <textarea class="form-textarea" id="rrReason" placeholder="Why is this needed?" style="min-height:60px"></textarea>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModal('resourceRequestModal')">Cancel</button>
+      <button class="btn-primary" style="background:var(--amber)" onclick="submitResourceRequest()">Send Request</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="inboxModal">
+  <div class="modal-box" style="width:540px">
+    <div class="modal-header">
+      <div class="modal-title">📬 Inbox</div>
+      <button class="modal-close" onclick="closeModal('inboxModal')">✕</button>
+    </div>
+    <div id="inboxList" style="max-height:400px;overflow-y:auto"></div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModal('inboxModal')">Close</button>
+    </div>
+  </div>
+</div>
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
@@ -1922,6 +1975,7 @@ function initApp() {
   const agencyBackupBtn = document.getElementById('agencyBackupBtn');
   if(agencyBackupBtn) agencyBackupBtn.style.display = (currentUser && currentUser.role === 'agency') ? 'block' : 'none';
   
+listenForIncomingRequests();
   if (!leafletMap) {
     leafletMap = L.map('mainMapSvg').setView([22.5937, 78.9629], 5);
     L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
@@ -2116,8 +2170,9 @@ async function registerAgencyFull() {
     vehicles: parseInt(document.getElementById('mRegVehicles').value) || 4,
     status: document.getElementById('mRegStatus').value,
     equipment: document.getElementById('mRegEquip').value || 'Standard kit',
-    registered: new Date().toISOString().slice(0,10),
-    lat: finalCoords.lat, 
+registered: new Date().toISOString().slice(0,10),
+    lastActive: Date.now(),
+    lat: finalCoords.lat,
     lng: finalCoords.lng
   };
 
@@ -2468,7 +2523,8 @@ function openAgencyDrawer(id) {
       <div class="info-row"><span class="ir-label">Personnel</span><span class="ir-val">${sanitize(String(ag.personnel))}</span></div>
       <div class="info-row"><span class="ir-label">Vehicles</span><span class="ir-val">${sanitize(String(ag.vehicles||0))}</span></div>
       <div class="info-row"><span class="ir-label">Equipment</span><span class="ir-val" style="font-size:11px;text-align:right;max-width:160px">${sanitize(ag.equipment||'Standard kit')}</span></div>
-      <div class="info-row"><span class="ir-label">Registered</span><span class="ir-val">${sanitize(ag.registered)}</span></div>
+<div class="info-row"><span class="ir-label">Registered</span><span class="ir-val">${sanitize(ag.registered)}</span></div>
+      <div class="info-row"><span class="ir-label">Last Active</span><span class="ir-val">${ag.lastActive ? timeAgo(ag.lastActive) : 'Not recorded'}</span></div>
     </div>`;
 let actionButtons = `
     <button class="dd-action-btn primary-action" onclick="callAgency('${ag.contact}')">📞 Contact Agency</button>
@@ -2906,6 +2962,89 @@ function toggleLiveTracking(id) {
 }  
 function generateFullReport() {
   exportData('fullreport');
+}
+  function openResourceRequestModal() {
+  document.getElementById('rrFromAgency').innerHTML = agencies.map(a=>`<option value="${a.id}">${sanitize(a.name)}</option>`).join('');
+  document.getElementById('rrQty').value = '';
+  document.getElementById('rrReason').value = '';
+  openModal('resourceRequestModal');
+}
+function submitResourceRequest() {
+  const toId = document.getElementById('rrFromAgency').value;
+  const qty = parseInt(document.getElementById('rrQty').value);
+  const reason = document.getElementById('rrReason').value.trim();
+  const type = document.getElementById('rrType').value;
+  if(!qty||qty<=0) return showToast('Enter valid quantity','error');
+  if(!reason) return showToast('Please state the reason','error');
+  const toAg = agencies.find(a=>String(a.id)===String(toId));
+  const req = { id:Date.now(), type:'resource_request', fromName:currentUser.name, fromEmail:currentUser.email, toAgencyId:toId, toAgencyName:toAg?.name||'Unknown', resource:type, qty:qty, reason:reason, status:'pending', time:Date.now() };
+  window.firebaseSet(window.firebaseRef(window.db,'requests/'+req.id), req).then(()=>{
+    closeModal('resourceRequestModal');
+    showToast('Request sent to '+toAg?.name,'success');
+  });
+}
+function openInbox() {
+  openModal('inboxModal');
+  const inboxList = document.getElementById('inboxList');
+  inboxList.innerHTML = '<div style="padding:20px;text-align:center;color:var(--gray-500)">Loading...</div>';
+  window.firebaseOnValue(window.firebaseRef(window.db,'requests'),(snapshot)=>{
+    const data = snapshot.val();
+    if(!data){ inboxList.innerHTML='<div style="padding:20px;text-align:center">No requests yet.</div>'; return; }
+    const all = Object.values(data).sort((a,b)=>b.time-a.time);
+    const relevant = all.filter(r=> r.fromEmail===currentUser?.email || r.toAgencyId===String(currentUser?.agencyId) || currentUser?.role==='admin');
+    if(!relevant.length){ inboxList.innerHTML='<div style="padding:20px;text-align:center">No requests.</div>'; return; }
+    inboxList.innerHTML = relevant.map(r=>{
+      const isIncoming = r.toAgencyId===String(currentUser?.agencyId);
+      const sc = r.status==='accepted'?'var(--green)':r.status==='declined'?'var(--red)':'var(--amber)';
+      return `<div style="border:1px solid var(--gray-200);border-radius:10px;padding:14px;margin-bottom:10px">
+        <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+          <b style="font-size:13px">${isIncoming?'📥 Incoming':'📤 Outgoing'}: ${r.qty} ${r.resource.replace(/_/g,' ')}</b>
+          <span style="font-size:11px;padding:3px 8px;border-radius:20px;background:${sc};color:white">${r.status.toUpperCase()}</span>
+        </div>
+        <div style="font-size:12px;color:var(--gray-700);margin-bottom:4px">${isIncoming?'From: '+sanitize(r.fromName):'To: '+sanitize(r.toAgencyName)}</div>
+        <div style="font-size:12px;color:var(--gray-500);margin-bottom:6px">Reason: ${sanitize(r.reason)}</div>
+        <div style="font-size:11px;color:var(--gray-500);margin-bottom:8px">${timeAgo(r.time)}</div>
+        ${isIncoming&&r.status==='pending'?`<div style="display:flex;gap:8px">
+          <button onclick="respondToRequest('${r.id}','accepted')" style="flex:1;padding:8px;background:var(--green);color:white;border:none;border-radius:8px;font-weight:600;cursor:pointer">✅ Accept</button>
+          <button onclick="respondToRequest('${r.id}','declined')" style="flex:1;padding:8px;background:var(--red);color:white;border:none;border-radius:8px;font-weight:600;cursor:pointer">❌ Decline</button>
+        </div>`:''}
+      </div>`;
+    }).join('');
+  });
+}
+function respondToRequest(reqId, decision) {
+  window.firebaseGet(window.firebaseChild(window.firebaseRef(window.db),'requests/'+reqId)).then(snap=>{
+    if(!snap.exists()) return;
+    const req = snap.val();
+    req.status = decision;
+    window.firebaseSet(window.firebaseRef(window.db,'requests/'+reqId), req).then(()=>{
+      showToast('Request '+decision, decision==='accepted'?'success':'error');
+      if(decision==='accepted'){
+        const fromAg = agencies.find(a=>String(a.id)===String(req.toAgencyId));
+        const toAg = agencies.find(a=>a.email===req.fromEmail);
+        if(fromAg&&toAg&&(fromAg[req.resource]||0)>=req.qty){
+          fromAg[req.resource]-=req.qty;
+          toAg[req.resource]=(toAg[req.resource]||0)+req.qty;
+          window.firebaseSet(window.firebaseRef(window.db,'agencies/'+fromAg.id),fromAg);
+          window.firebaseSet(window.firebaseRef(window.db,'agencies/'+toAg.id),toAg);
+        }
+      }
+      openInbox();
+    });
+  });
+}
+function listenForIncomingRequests() {
+  if(!currentUser) return;
+  window.firebaseOnValue(window.firebaseRef(window.db,'requests'),(snapshot)=>{
+    const data = snapshot.val();
+    const inboxBtn = document.getElementById('inboxBtn');
+    const badge = document.getElementById('inboxBadge');
+    if(inboxBtn) inboxBtn.style.display='block';
+    if(!data||!badge) return;
+    const pending = Object.values(data).filter(r=>r.toAgencyId===String(currentUser?.agencyId)&&r.status==='pending');
+    badge.style.display = pending.length>0?'inline':'none';
+    badge.textContent = pending.length;
+  });
 }
   function triggerCivilianSOS() {
   if (!navigator.geolocation) {
