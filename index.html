@@ -533,11 +533,16 @@ body{font-family:var(--font-body);background:var(--gray-50);color:var(--gray-900
       </div>
 
       <div class="page" id="pageAgencies">
-        <div class="page-header">
-          <div>
-            <div class="page-title">Registered Agencies</div>
-            <div class="page-sub" id="agenciesCount">Loading...</div>
-          </div>
+<div class="page-header">
+  <div>
+    <div class="page-title">Registered Agencies</div>
+    <div class="page-sub" id="agenciesCount">Loading...</div>
+  </div>
+  <div id="seedBtnWrap" style="display:none; margin-right:auto; margin-left:12px;">
+    <button id="seedBtn" class="btn-primary" style="background:var(--green); color:white;" onclick="seedAgenciesToFirebase()">
+      🌱 Seed 100 Agencies to Firebase
+    </button>
+  </div>
          <div style="display:flex;gap:8px">
             <button class="btn-secondary" onclick="exportData('agencies')">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
@@ -1688,6 +1693,32 @@ function loadAuthentic100Agencies() {
 }
 loadAuthentic100Agencies();
 
+// ── ONE-TIME FIREBASE SEEDER ──
+// This button appears only if Firebase has 0 agencies.
+// Click it ONCE to seed all 100 agencies. It disappears after.
+async function seedAgenciesToFirebase() {
+  const btn = document.getElementById('seedBtn');
+  if(btn) { btn.disabled = true; btn.textContent = 'Seeding... Please wait'; }
+
+  let count = 0;
+  for (const ag of agencies) {
+    try {
+      await window.firebaseSet(window.firebaseRef(window.db, 'agencies/' + ag.id), ag);
+      count++;
+      if(btn) btn.textContent = `Seeding... ${count}/${agencies.length}`;
+    } catch(e) {
+      console.error('Failed to seed agency:', ag.name, e);
+    }
+  }
+
+  if(btn) {
+    btn.textContent = '✅ Done! ' + count + ' agencies seeded.';
+    btn.style.background = 'var(--green)';
+    setTimeout(() => btn.remove(), 3000);
+  }
+  showToast(count + ' agencies seeded to Firebase successfully!', 'success');
+}
+
 let incidents = [
   {id:1,title:'Major Flooding — Regional Office 4',type:'Flood',severity:'high',district:'Regional Office 4',area:'Zone 4',desc:'Severe flooding affecting residents. Immediate evacuation needed.',affected:3200,agency:'Civil Defence Agency 4',status:'active',time:'2 hrs ago',reporter:'Admin'},
   {id:2,title:'Industrial Fire — Industrial Area',type:'Fire',severity:'high',district:'Regional Office 11',area:'Industrial Sector',desc:'Chemical fire at manufacturing unit. Toxic fumes spreading.',affected:800,agency:'Fire & Rescue Agency 11',status:'active',time:'4 hrs ago',reporter:'Agency User'},
@@ -1890,6 +1921,13 @@ function initApp() {
   window.firebaseOnValue(window.firebaseRef(window.db, 'agencies'), (snapshot) => {
     const data = snapshot.val();
     agencies = [];
+    // Show seed button if Firebase has no agencies
+    const seedWrap = document.getElementById('seedBtnWrap');
+    if (!data || Object.keys(data).length === 0) {
+      if (seedWrap) seedWrap.style.display = 'block';
+    } else {
+      if (seedWrap) seedWrap.style.display = 'none';
+    }
     if (data) {
       Object.keys(data).forEach(key => {
         let ag = data[key];
