@@ -1736,9 +1736,9 @@ async function seedAgenciesToFirebase() {
 
 
 let incidents = [
-  {id:1,title:'Major Flooding — Regional Office 4',type:'Flood',severity:'high',district:'Regional Office 4',area:'Zone 4',desc:'Severe flooding affecting residents. Immediate evacuation needed.',affected:3200,agency:'Civil Defence Agency 4',status:'active',time:'2 hrs ago',reporter:'Admin'},
-  {id:2,title:'Industrial Fire — Industrial Area',type:'Fire',severity:'high',district:'Regional Office 11',area:'Industrial Sector',desc:'Chemical fire at manufacturing unit. Toxic fumes spreading.',affected:800,agency:'Fire & Rescue Agency 11',status:'active',time:'4 hrs ago',reporter:'Agency User'},
-  {id:3,title:'Cyclone Damage — Coastal Belt',type:'Cyclone',severity:'medium',district:'Regional Office 8',area:'Coastal belt',desc:'Multiple fishing villages affected by cyclone.',affected:1000,agency:'Coast Guard Unit Agency 8',status:'monitoring',time:'Yesterday',reporter:'Admin'},
+  {id:1,title:'Major Flooding — Guwahati',type:'Flood',severity:'high',district:'Guwahati, Assam',area:'Zone 4',desc:'Severe flooding affecting residents. Immediate evacuation needed.',affected:3200,agency:'1st Battalion NDRF',status:'active',time:'2 hrs ago',reporter:'Admin', lat:26.1445, lng:91.7362},
+  {id:2,title:'Industrial Fire — Pune Industrial Area',type:'Fire',severity:'high',district:'Pune, Maharashtra',area:'Industrial Sector',desc:'Chemical fire at manufacturing unit. Toxic fumes spreading.',affected:800,agency:'5th Battalion NDRF',status:'active',time:'4 hrs ago',reporter:'Agency User', lat:18.5204, lng:73.8567},
+  {id:3,title:'Cyclone Damage — Odisha Coastal Belt',type:'Cyclone',severity:'medium',district:'Paradip, Odisha',area:'Coastal belt',desc:'Multiple fishing villages affected by cyclone.',affected:1000,agency:'Coast Guard District HQ – Odisha',status:'active',time:'Yesterday',reporter:'Admin', lat:20.3167, lng:86.6000},
 ];
 
 let currentUser = null;
@@ -2856,10 +2856,9 @@ function drawRouteToIncident(districtName) {
         try {
        if (typeof leafletMap !== 'undefined' && leafletMap) {
     if (leafletMap.flyTo) {
-        leafletMap.flyTo([targetIncident.lat, targetIncident.lng], 16, { animate: true, duration: 1.5 });
-                    showToast('Target located on live map!', 'success');
-showToast('Target located on live map!', 'success');
-    showPage('dashboard', document.querySelector('.nav-link'));
+leafletMap.flyTo([targetIncident.lat, targetIncident.lng], 16, { animate: true, duration: 1.5 });
+        showPage('dashboard', document.querySelector('.nav-link'));
+        showToast('Target located on live map!', 'success');
     setTimeout(() => leafletMap.invalidateSize(), 150);
     }
 } else {
@@ -2873,6 +2872,80 @@ showToast('Target located on live map!', 'success');
   } else {
     showToast('No exact GPS telemetry available for this incident.', 'error');
   }
+}
+function toggleLiveTracking(id) {
+  const ag = agencies.find(a => String(a.id) === String(id));
+  if(!ag) return;
+  if(leafletMap && ag.lat && ag.lng) {
+    showPage('dashboard', document.querySelector('.nav-link'));
+    setTimeout(() => {
+      leafletMap.flyTo([ag.lat, ag.lng], 14, { animate: true, duration: 1.5 });
+      leafletMap.invalidateSize();
+      showToast('Live tracking: ' + ag.name, 'success');
+    }, 300);
+    closeDrawer();
+  } else {
+    showToast('No GPS coordinates for this agency.', 'error');
+  }
+}  
+  function generateFullReport() {
+  exportData('full');
+}
+  function triggerCivilianSOS() {
+  if (!navigator.geolocation) {
+    showToast('GPS not supported on this device.', 'error');
+    return;
+  }
+  showToast('Acquiring your GPS location for SOS...', 'standby');
+  navigator.geolocation.getCurrentPosition(
+    async (position) => {
+      const lat = position.coords.latitude;
+      const lng = position.coords.longitude;
+      const sosInc = {
+        id: Date.now(),
+        title: '🚨 CIVILIAN SOS – Emergency Help Needed',
+        type: 'Search & Rescue',
+        severity: 'high',
+        district: `GPS: ${lat.toFixed(5)}, ${lng.toFixed(5)}`,
+        area: 'Civilian Location',
+        desc: `Emergency SOS transmitted by civilian at coordinates ${lat.toFixed(5)}, ${lng.toFixed(5)}. Immediate assistance required.`,
+        affected: 1,
+        agency: agencies[0]?.name || 'Nearest Agency',
+        status: 'pending',
+        time: 'Just now',
+        reporter: currentUser?.name || 'Civilian',
+        lat: lat, lng: lng
+      };
+      // Also add a flashing SOS pin on the map
+      const sosMarker = {
+        id: 'sos_' + Date.now(),
+        name: '🚨 CIVILIAN SOS',
+        type: 'Civilian SOS',
+        district: `GPS: ${lat.toFixed(5)}, ${lng.toFixed(5)}`,
+        status: 'deployed',
+        lat: lat, lng: lng,
+        personnel: 1, vehicles: 0,
+        equipment: 'SOS Signal',
+        contact: currentUser?.email || 'Unknown',
+        email: currentUser?.email || 'Unknown',
+        registered: new Date().toISOString().slice(0,10)
+      };
+      try {
+        await window.firebaseSet(window.firebaseRef(window.db, 'incidents/' + sosInc.id), sosInc);
+        await window.firebaseSet(window.firebaseRef(window.db, 'agencies/sos_' + sosInc.id), sosMarker);
+        showToast('🚨 SOS Transmitted! Help is being notified.', 'success');
+        showPage('dashboard', document.querySelector('.nav-link'));
+        setTimeout(() => {
+          leafletMap.flyTo([lat, lng], 14, { animate: true });
+          leafletMap.invalidateSize();
+        }, 400);
+      } catch(e) {
+        showToast('SOS transmission failed: ' + e.message, 'error');
+      }
+    },
+    () => showToast('GPS denied. Cannot transmit SOS without location.', 'error'),
+    { enableHighAccuracy: true, timeout: 8000 }
+  );
 }
 </script>
 </body>
