@@ -605,10 +605,13 @@ body{font-family:var(--font-body);background:var(--gray-50);color:var(--gray-900
             </div>
             <div class="form-section">
               <div class="form-section-title">Location & Response</div>
-              <div class="form-row">
+<div class="form-row">
                 <div class="form-group">
-                  <label class="form-label">District</label>
-                  <input class="form-input" id="incDistrict" placeholder="District"/>
+                  <label class="form-label">District / Exact Location</label>
+                  <div style="display: flex; gap: 6px;">
+                    <input class="form-input" id="incDistrict" placeholder="District or Auto-Detected GPS"/>
+                    <button class="btn-secondary" style="padding: 0 10px; background: var(--gray-100);" type="button" onclick="detectIncidentGPS()" title="Detect Current GPS">🎯</button>
+                  </div>
                 </div>
                 <div class="form-group">
                   <label class="form-label">Area / Village</label>
@@ -1779,24 +1782,52 @@ function setSeverity(s,el) {
   el.className='sev-pill active-'+( s==='high'?'high':s==='medium'?'med':'low' );
 }
 
+let incidentCoordsTemp = null; // Holds temporary hardware coordinates for incidents
+
+// 100% Real Hardware GPS Locator for Incidents
+function detectIncidentGPS() {
+  showToast('Acquiring physical satellite coordinate lock...', 'standby');
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const lat = position.coords.latitude;
+        const lng = position.coords.longitude;
+        incidentCoordsTemp = { lat: lat, lng: lng };
+        document.getElementById('incDistrict').value = `GPS: ${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+        showToast('Real GPS coordinates mapped successfully!', 'success');
+      },
+      (error) => { showToast('GPS access denied. Falling back to text.', 'error'); },
+      { enableHighAccuracy: true, timeout: 5000 }
+    );
+  } else { showToast('Device telemetry does not support native geolocation.', 'error'); }
+}
+
 async function submitIncident() {
   const title=document.getElementById('incTitle').value.trim();
   const dist=document.getElementById('incDistrict').value.trim();
-  if(!title||!dist){showToast('Title and district are required','error');return;}
+  if(!title||!dist){showToast('Title and location are required','error');return;}
   
-  showToast('Pinpointing incident location...', 'standby');
-  const coords = await getCoordinatesFromDistrict(dist);
+  let finalCoords = { lat: 22.5, lng: 78.9 }; // Default fallback
+  
+  if (incidentCoordsTemp && dist.includes('GPS:')) {
+    finalCoords = incidentCoordsTemp;
+  } else {
+    showToast('Pinpointing text string location...', 'standby');
+    finalCoords = await getCoordinatesFromDistrict(dist);
+  }
 
   const newInc={
     id:Date.now(), title, type:document.getElementById('incType').value,
     severity:selectedSeverity, district:dist, area:document.getElementById('incArea').value,
     desc:document.getElementById('incDesc').value, affected:parseInt(document.getElementById('incAffected').value)||0,
     agency:document.getElementById('incAgency').value, status:'active', time:'Just now', reporter:currentUser?.name||'User',
-    lat: coords.lat, lng: coords.lng 
+    lat: finalCoords.lat, lng: finalCoords.lng 
   };
+  
   window.firebaseSet(window.firebaseRef(window.db, 'incidents/' + newInc.id), newInc).then(() => {
       ['incTitle','incDistrict','incArea','incDesc','incAffected'].forEach(id=>{document.getElementById(id).value='';});
-      showToast('Incident reported successfully!','success');
+      incidentCoordsTemp = null; // Clear cached coords
+      showToast('Live incident reported and pinned to map!','success');
     });
 }
 
