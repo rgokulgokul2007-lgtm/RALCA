@@ -1807,7 +1807,7 @@ async function submitIncident() {
   const dist=document.getElementById('incDistrict').value.trim();
   if(!title||!dist){showToast('Title and location are required','error');return;}
   
-  let finalCoords = { lat: 22.5, lng: 78.9 }; // Default fallback
+  let finalCoords = { lat: 22.5, lng: 78.9 }; 
   
   if (incidentCoordsTemp && dist.includes('GPS:')) {
     finalCoords = incidentCoordsTemp;
@@ -1826,11 +1826,34 @@ async function submitIncident() {
   
   window.firebaseSet(window.firebaseRef(window.db, 'incidents/' + newInc.id), newInc).then(() => {
       ['incTitle','incDistrict','incArea','incDesc','incAffected'].forEach(id=>{document.getElementById(id).value='';});
-      incidentCoordsTemp = null; // Clear cached coords
+      incidentCoordsTemp = null; 
       showToast('Live incident reported and pinned to map!','success');
-    });
-}
 
+      // --- NEW: AUTO-FIND CLOSEST AGENCY & CALL ---
+      let activeAgencies = agencies.filter(a => a.status === 'active' || a.status === 'standby');
+      let closestAgency = null;
+      let shortestDist = 999999;
+
+      activeAgencies.forEach(ag => {
+          if(ag.lat && ag.lng) {
+              let distCalc = getDistanceInKm(finalCoords.lat, finalCoords.lng, ag.lat, ag.lng);
+              if (distCalc < shortestDist) {
+                  shortestDist = distCalc;
+                  closestAgency = ag;
+              }
+          }
+      });
+
+      if(closestAgency && closestAgency.contact) {
+          setTimeout(() => {
+              let callThem = confirm(`🚨 EMERGENCY AUTO-ROUTING 🚨\n\nThe closest rescue unit is ${closestAgency.name} (Distance: ${shortestDist} km).\n\nDo you want to immediately call their emergency line (${closestAgency.contact})?`);
+              if(callThem) {
+                  window.location.href = 'tel:' + closestAgency.contact.replace(/\s+/g, '');
+              }
+          }, 800); // 800ms delay to let the success message show first
+      }
+  });
+}
 function renderIncidentsList() {
   const el=document.getElementById('incidentsList');
   el.innerHTML=incidents.map(inc=>`
