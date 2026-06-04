@@ -1853,8 +1853,15 @@ let shortestDist = 999999;
 activeAgencies.forEach(ag => {
     let finalLat = parseFloat(finalCoords.lat);
     let finalLng = parseFloat(finalCoords.lng);
+    
+    // BACKUP HACK: Agency name GOKUL-nu irunthu lat/lng illati, automatic-a Coimbatore pins asign aagum
     let agLat = parseFloat(ag.lat || ag.latitude);
     let agLng = parseFloat(ag.lng || ag.longitude);
+    
+    if (ag.name === 'GOKUL' || ag.id === 'GOKUL' || (!agLat && ag.location === 'Coimbatore')) {
+        agLat = 11.0168;
+        agLng = 76.9558;
+    }
 
     let distCalc = getDistanceInKm(finalLat, finalLng, agLat, agLng);
     if (!isNaN(distCalc) && distCalc < shortestDist) {
