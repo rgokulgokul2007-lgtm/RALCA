@@ -1935,41 +1935,48 @@ function initApp() {
   });
 window.firebaseOnValue(window.firebaseRef(window.db, 'agencies'), (snapshot) => {
     const data = snapshot.val();
-    agencies = [];
     const seedWrap = document.getElementById('seedBtnWrap');
-    const count = data ? Object.keys(data).length : 0;
+    const firebaseCount = data ? Object.keys(data).length : 0;
 
-    // Show seed button only for admin when Firebase has 0 agencies
-    if (count === 0 && currentUser && currentUser.role === 'admin') {
-      if (seedWrap) seedWrap.style.display = 'block';
+    if (firebaseCount === 0) {
+      // Firebase is empty — use local authenticAgencies data so map/grid still works
+      // Also show seed button for admin to push data to Firebase
+      if (currentUser && currentUser.role === 'admin') {
+        if (seedWrap) seedWrap.style.display = 'block';
+      }
+      // agencies array already filled by loadAuthentic100Agencies() — don't overwrite
     } else {
+      // Firebase has real data — use it
       if (seedWrap) seedWrap.style.display = 'none';
-    }
-
-    if (data) {
+      agencies = []; // only reset when we have real data to replace with
       Object.keys(data).forEach(key => {
         let ag = data[key];
         if (ag !== null && typeof ag === 'object') {
-          ag.id = ag.id || key;
-          ag.name = ag.name || 'Unknown Unit';
+          ag.id       = ag.id       || key;
+          ag.name     = ag.name     || 'Unknown Unit';
           ag.district = ag.district || 'Unknown Location';
-          ag.email = ag.email || 'Not Provided';
-          ag.contact = ag.contact || 'Not Provided';
-          ag.personnel = parseInt(ag.personnel) || 0;
-          ag.vehicles = parseInt(ag.vehicles) || 0;
-          ag.equipment = ag.equipment || 'Standard Kit';
-          ag.type = ag.type || 'Fire & Rescue';
-          ag.status = ag.status || 'standby';
+          ag.email    = ag.email    || 'Not Provided';
+          ag.contact  = ag.contact  || 'Not Provided';
+          ag.personnel  = parseInt(ag.personnel)  || 0;
+          ag.vehicles   = parseInt(ag.vehicles)   || 0;
+          ag.equipment  = ag.equipment  || 'Standard Kit';
+          ag.type       = ag.type       || 'Fire & Rescue';
+          ag.status     = ag.status     || 'standby';
           ag.registered = ag.registered || new Date().toISOString().slice(0,10);
-          ag.lat = ag.lat || 22.5; ag.lng = ag.lng || 78.9;
+          ag.lat = parseFloat(ag.lat) || 22.5;
+          ag.lng = parseFloat(ag.lng) || 78.9;
           agencies.push(ag);
         }
       });
     }
-    renderSidebar(); renderAgenciesGrid(); if(!isHeatmap) renderMapPins();
-    updateStats(); renderResourcesTable(); populateIncidentAgencySelect();
-  });
 
+    renderSidebar();
+    renderAgenciesGrid();
+    if (!isHeatmap) renderMapPins();
+    updateStats();
+    renderResourcesTable();
+    populateIncidentAgencySelect();
+  });
   window.firebaseOnValue(window.firebaseRef(window.db, 'incidents'), (snapshot) => {
     const data = snapshot.val();
     incidents = data ? Object.values(data).sort((a, b) => b.id - a.id) : [];
