@@ -1976,6 +1976,7 @@ function initApp() {
   if(agencyBackupBtn) agencyBackupBtn.style.display = (currentUser && currentUser.role === 'agency') ? 'block' : 'none';
   
 listenForIncomingRequests();
+  listenForAssignmentNotifications();
   if (!leafletMap) {
     leafletMap = L.map('mainMapSvg').setView([22.5937, 78.9629], 5);
     L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
@@ -2627,7 +2628,19 @@ async function submitIncident() {
   window.firebaseSet(window.firebaseRef(window.db, 'incidents/' + newInc.id), newInc).then(() => {
       ['incTitle','incDistrict','incArea','incDesc','incAffected'].forEach(id=>{document.getElementById(id).value='';});
       incidentCoordsTemp = null; 
-      showToast('Live incident reported and pinned to map!','success');
+showToast('Live incident reported and pinned to map!','success');
+      const assignedAgency = document.getElementById('incAgency').value;
+      const notif = {
+        id: Date.now()+2,
+        toAgencyName: assignedAgency,
+        incidentTitle: title,
+        incidentId: newInc.id,
+        district: dist,
+        severity: selectedSeverity,
+        status: 'unread',
+        time: Date.now()
+      };
+      window.firebaseSet(window.firebaseRef(window.db, 'notifications/'+notif.id), notif);
 
 // --- ACCURATE NEAREST AGENCY FINDER ---
       const incLat = parseFloat(finalCoords.lat);
@@ -3045,6 +3058,34 @@ function listenForIncomingRequests() {
     const pending = Object.values(data).filter(r=>r.toAgencyId===String(currentUser?.agencyId)&&r.status==='pending');
     badge.style.display = pending.length>0?'inline':'none';
     badge.textContent = pending.length;
+  });
+}
+  function listenForAssignmentNotifications() {
+  if(!currentUser || currentUser.role !== 'agency') return;
+  window.firebaseOnValue(window.firebaseRef(window.db,'notifications'),(snapshot)=>{
+    const data = snapshot.val();
+    if(!data) return;
+    const mine = Object.values(data).filter(n=>
+      n.toAgencyName === currentUser.name && n.status==='unread'
+    );
+    mine.forEach(n=>{
+      const accept = confirm(
+        `📋 NEW INCIDENT ASSIGNED TO YOUR AGENCY\n\n`+
+        `Incident: ${n.incidentTitle}\n`+
+        `Location: ${n.district}\n`+
+        `Severity: ${n.severity.toUpperCase()}\n\n`+
+        `Do you ACCEPT this assignment?`
+      );
+      n.status = accept ? 'accepted' : 'declined';
+      window.firebaseSet(window.firebaseRef(window.db,'notifications/'+n.id), n);
+      const entry = {
+        id: Date.now(),
+        type: 'Assignment',
+        text: `${accept?'✅':'❌'} ${currentUser.name} ${accept?'accepted':'declined'} assignment: ${n.incidentTitle}`
+      };
+      window.firebaseSet(window.firebaseRef(window.db,'activities/'+entry.id), entry);
+      showToast(`Assignment ${accept?'accepted':'declined'}!`, accept?'success':'error');
+    });
   });
 }
   function triggerCivilianSOS() {
