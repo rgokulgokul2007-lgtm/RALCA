@@ -234,6 +234,7 @@ body{font-family:var(--font-body);background:var(--gray-50);color:var(--gray-900
 .toast.show{transform:translateY(0);opacity:1}
 .toast.success{background:var(--green)}
 .toast.error{background:var(--red)}
+.offline-banner{position:fixed;top:56px;left:0;right:0;background:#E67E22;color:white;text-align:center;padding:8px;font-size:13px;font-weight:600;z-index:9999;display:none}
 
 /* ── DETAIL DRAWER ── */
 .detail-drawer{position:fixed;right:0;top:56px;bottom:0;width:340px;background:white;border-left:1px solid var(--gray-200);z-index:200;transform:translateX(100%);transition:transform .3s;overflow-y:auto;box-shadow:var(--shadow-lg)}
@@ -995,6 +996,7 @@ body{font-family:var(--font-body);background:var(--gray-50);color:var(--gray-900
 </div>
 
 <div class="toast" id="toast"></div>
+<div class="offline-banner" id="offlineBanner">⚠️ You are OFFLINE — Showing last cached data. Changes will sync when reconnected.</div>
 
 <div class="modal-overlay" id="resourceRequestModal">
   <div class="modal-box" style="width:480px">
@@ -1737,7 +1739,33 @@ async function getCoordinatesFromDistrict(districtName) {
   } catch(e) { console.error("Geocoding failed", e); }
   return getRandomCityCoords();
 }
+// ── OFFLINE & CACHE SYSTEM ──
+function cacheToLocal(key, data) {
+  try { localStorage.setItem('ralca_'+key, JSON.stringify(data)); } catch(e) {}
+}
+function loadFromLocal(key) {
+  try { const d=localStorage.getItem('ralca_'+key); return d?JSON.parse(d):null; } catch(e) { return null; }
+}
 
+// Load from cache immediately so map shows even before Firebase responds
+const cachedAgencies = loadFromLocal('agencies');
+if(cachedAgencies && cachedAgencies.length > 0) {
+  agencies = cachedAgencies;
+}
+const cachedIncidents = loadFromLocal('incidents');
+if(cachedIncidents && cachedIncidents.length > 0) {
+  incidents = cachedIncidents;
+}
+
+// Online/Offline detection
+window.addEventListener('online', () => {
+  document.getElementById('offlineBanner').style.display = 'none';
+  showToast('Back online! Syncing live data...', 'success');
+});
+window.addEventListener('offline', () => {
+  document.getElementById('offlineBanner').style.display = 'block';
+  showToast('You are offline. Showing cached data.', 'error');
+});
 function loadAuthentic100Agencies() {
   const statusList = ['active', 'standby', 'deployed'];
   for (let i = 0; i < authenticAgencies.length; i++) {
@@ -1976,6 +2004,7 @@ function initApp() {
   if(agencyBackupBtn) agencyBackupBtn.style.display = (currentUser && currentUser.role === 'agency') ? 'block' : 'none';
   
 listenForIncomingRequests();
+  listenForAssignmentNotifications();
   if (!leafletMap) {
     leafletMap = L.map('mainMapSvg').setView([22.5937, 78.9629], 5);
     L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
@@ -2036,6 +2065,7 @@ if (firebaseCount === 0) {
         }
       });
   agencies = freshAgencies;
+   cacheToLocal('agencies', agencies);
     }
 
 renderSidebar();
@@ -2053,6 +2083,7 @@ window.firebaseOnValue(window.firebaseRef(window.db, 'incidents'), (snapshot) =>
     const data = snapshot.val();
     if (data) {
       incidents = Object.values(data).sort((a, b) => b.id - a.id);
+      cacheToLocal('incidents', incidents);
     }
     // if no Firebase data, keep the default incidents array as-is
     renderIncidentsList(); updateStats(); renderRpIncidents();
@@ -2550,6 +2581,7 @@ function changeStatus(id) {
   const ns=prompt(`Change status for ${ag.name}\nOptions: ${opts.join(', ')}`);
   if(ns&&['active','standby','deployed'].includes(ns.toLowerCase())) {
     ag.status=ns.toLowerCase();
+    ag.lastActive = Date.now();
     window.firebaseSet(window.firebaseRef(window.db, 'agencies/' + id), ag).then(() => {
       showToast('Status updated to: '+ag.status,'success');
       openAgencyDrawer(id);
@@ -2626,7 +2658,19 @@ async function submitIncident() {
   window.firebaseSet(window.firebaseRef(window.db, 'incidents/' + newInc.id), newInc).then(() => {
       ['incTitle','incDistrict','incArea','incDesc','incAffected'].forEach(id=>{document.getElementById(id).value='';});
       incidentCoordsTemp = null; 
-      showToast('Live incident reported and pinned to map!','success');
+showToast('Live incident reported and pinned to map!','success');
+      const assignedAgency = document.getElementById('incAgency').value;
+      const notif = {
+        id: Date.now()+2,
+        toAgencyName: assignedAgency,
+        incidentTitle: title,
+        incidentId: newInc.id,
+        district: dist,
+        severity: selectedSeverity,
+        status: 'unread',
+        time: Date.now()
+      };
+      window.firebaseSet(window.firebaseRef(window.db, 'notifications/'+notif.id), notif);
 
 // --- ACCURATE NEAREST AGENCY FINDER ---
       const incLat = parseFloat(finalCoords.lat);
@@ -3044,6 +3088,34 @@ function listenForIncomingRequests() {
     const pending = Object.values(data).filter(r=>r.toAgencyId===String(currentUser?.agencyId)&&r.status==='pending');
     badge.style.display = pending.length>0?'inline':'none';
     badge.textContent = pending.length;
+  });
+}
+  function listenForAssignmentNotifications() {
+  if(!currentUser || currentUser.role !== 'agency') return;
+  window.firebaseOnValue(window.firebaseRef(window.db,'notifications'),(snapshot)=>{
+    const data = snapshot.val();
+    if(!data) return;
+    const mine = Object.values(data).filter(n=>
+      n.toAgencyName === currentUser.name && n.status==='unread'
+    );
+    mine.forEach(n=>{
+      const accept = confirm(
+        `📋 NEW INCIDENT ASSIGNED TO YOUR AGENCY\n\n`+
+        `Incident: ${n.incidentTitle}\n`+
+        `Location: ${n.district}\n`+
+        `Severity: ${n.severity.toUpperCase()}\n\n`+
+        `Do you ACCEPT this assignment?`
+      );
+      n.status = accept ? 'accepted' : 'declined';
+      window.firebaseSet(window.firebaseRef(window.db,'notifications/'+n.id), n);
+      const entry = {
+        id: Date.now(),
+        type: 'Assignment',
+        text: `${accept?'✅':'❌'} ${currentUser.name} ${accept?'accepted':'declined'} assignment: ${n.incidentTitle}`
+      };
+      window.firebaseSet(window.firebaseRef(window.db,'activities/'+entry.id), entry);
+      showToast(`Assignment ${accept?'accepted':'declined'}!`, accept?'success':'error');
+    });
   });
 }
   function triggerCivilianSOS() {
