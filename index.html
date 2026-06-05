@@ -285,47 +285,7 @@ body{font-family:var(--font-body);background:var(--gray-50);color:var(--gray-900
 <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.css" />
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.js"></script>
-<script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
-<!-- Feature 1: Chart.js for analytics -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-<style>
-/* ── FEATURE 1: Charts Row ── */
-.charts-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;padding:12px 16px;background:white;border-bottom:1px solid var(--gray-200);flex-shrink:0}
-.chart-card{background:var(--gray-50);border:1px solid var(--gray-200);border-radius:var(--radius-md);padding:10px 14px;position:relative}
-.chart-card-title{font-size:10px;font-weight:700;color:var(--gray-500);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px}
-.chart-canvas-wrap{height:90px;position:relative}
-/* ── FEATURE 2: Incident Filter Bar ── */
-.inc-filter-bar{display:flex;gap:8px;padding:10px 14px;background:white;border-bottom:1px solid var(--gray-200);flex-shrink:0;flex-wrap:wrap}
-.inc-filter-bar .search-input{flex:1;min-width:160px}
-.inc-filter-bar .form-select{width:auto;padding:8px 10px;flex-shrink:0}
-/* ── FEATURE 4: Weather Strip ── */
-.weather-strip{display:flex;align-items:center;gap:10px;padding:7px 16px;background:linear-gradient(90deg,#1a2744,#2e3f6a);color:white;font-size:12px;flex-shrink:0;overflow:hidden;border-bottom:2px solid var(--red)}
-.weather-strip-icon{font-size:18px;flex-shrink:0}
-.weather-item{display:flex;align-items:center;gap:6px;padding:0 12px;border-right:1px solid rgba(255,255,255,0.15)}
-.weather-item:last-child{border-right:none}
-.weather-item strong{font-size:13px;font-weight:700}
-.weather-label{opacity:0.65;font-size:10px;text-transform:uppercase;letter-spacing:.5px}
-/* ── FEATURE 6: Notification Panel ── */
-.notif-panel{position:fixed;top:56px;right:0;width:340px;background:white;border-left:1px solid var(--gray-200);z-index:300;transform:translateX(100%);transition:transform .3s;box-shadow:var(--shadow-lg);display:flex;flex-direction:column;max-height:calc(100vh - 56px)}
-.notif-panel.open{transform:translateX(0)}
-.notif-panel-header{padding:14px 16px;border-bottom:1px solid var(--gray-200);display:flex;align-items:center;justify-content:space-between;background:var(--navy);color:white;flex-shrink:0}
-.notif-panel-title{font-size:14px;font-weight:700}
-.notif-panel-body{flex:1;overflow-y:auto;padding:10px}
-.notif-item{display:flex;gap:10px;padding:10px 12px;border-radius:var(--radius-md);border:1px solid var(--gray-200);margin-bottom:8px;cursor:pointer;transition:background .15s}
-.notif-item:hover{background:var(--gray-50)}
-.notif-item.unread{border-left:3px solid var(--red);background:#FFFCFC}
-.notif-icon{font-size:18px;flex-shrink:0;margin-top:2px}
-.notif-text{font-size:12px;color:var(--gray-900);font-weight:500;line-height:1.4}
-.notif-time{font-size:10px;color:var(--gray-500);margin-top:3px}
-.notif-bell{position:relative;cursor:pointer;padding:5px 10px;background:rgba(255,255,255,0.1);border:none;border-radius:var(--radius-sm);color:white;font-size:14px}
-.notif-badge{position:absolute;top:-4px;right:-4px;background:var(--red);color:white;border-radius:50%;width:16px;height:16px;font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center}
-/* ── FEATURE 5: Edit Modal / Feature 7: Detail Modal / Feature 8: Compare Modal ── */
-.compare-col{flex:1;min-width:0;padding:12px;background:var(--gray-50);border-radius:var(--radius-md);border:1px solid var(--gray-200)}
-.compare-col-name{font-size:13px;font-weight:700;color:var(--navy);margin-bottom:10px;text-align:center}
-.compare-row{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--gray-200);font-size:12px}
-.compare-row:last-child{border-bottom:none}
-.compare-val{font-weight:700;color:var(--gray-900)}
-.inc-detail-badge{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:600;margin-right:6px;margin-bottom:6px}
+<script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script> <style>
   /* Advanced Map Controls Overlay */
   .map-overlay-top { position:absolute; top:12px; left:12px; right:12px; z-index:400; display:flex; gap:10px; pointer-events:none; }
   .map-overlay-top > * { pointer-events:auto; }
@@ -492,11 +452,6 @@ body{font-family:var(--font-body);background:var(--gray-50);color:var(--gray-900
 <button class="broadcast-btn" id="pendingApprovalPill" onclick="openModal('pendingModal')" style="background:var(--amber);color:var(--navy);display:none;">⏳ Pending</button>
 <button class="broadcast-btn" id="msgBtn" onclick="openMessageModal()" style="background:#8E44AD;color:white;display:none;">💬 Messages <span id="msgBadge" style="background:var(--red);color:white;border-radius:50%;padding:1px 5px;font-size:10px;display:none;">0</span></button>
 <button class="broadcast-btn" id="inboxBtn" style="background:var(--gold);color:var(--navy);display:none" onclick="openInbox()">📬 Inbox <span id="inboxBadge" style="background:var(--red);color:white;border-radius:50%;padding:1px 5px;font-size:10px;display:none">0</span></button>
-      <!-- Feature 6: Notification Bell -->
-      <button class="notif-bell" id="notifBell" onclick="toggleNotifPanel()" title="Notifications">
-        🔔
-        <span class="notif-badge" id="notifBadge" style="display:none">0</span>
-      </button>
       <div class="user-pill">
         <div class="user-avatar" id="userAvatar">AG</div>
         <span class="user-name" id="userName">Agency User</span>
@@ -531,17 +486,6 @@ body{font-family:var(--font-body);background:var(--gray-50);color:var(--gray-900
     <div class="main-content">
 
       <div class="page active" id="pageDashboard">
-        <!-- Feature 4: Live Weather Strip -->
-        <div class="weather-strip" id="weatherStrip">
-          <span class="weather-strip-icon">🌤️</span>
-          <span style="font-weight:700;letter-spacing:.5px;">Live Weather</span>
-          <div class="weather-item"><span class="weather-label">District</span>&nbsp;<strong id="wx-district">Loading...</strong></div>
-          <div class="weather-item"><span class="weather-label">Temp</span>&nbsp;<strong id="wx-temp">—</strong></div>
-          <div class="weather-item"><span class="weather-label">Condition</span>&nbsp;<strong id="wx-cond">—</strong></div>
-          <div class="weather-item"><span class="weather-label">Wind</span>&nbsp;<strong id="wx-wind">—</strong></div>
-          <div class="weather-item"><span class="weather-label">Rain</span>&nbsp;<strong id="wx-rain">—</strong></div>
-          <div style="margin-left:auto;font-size:10px;opacity:0.5">via Open-Meteo</div>
-        </div>
         <div class="stats-row">
           <div class="stat-card">
             <div class="stat-val" style="color:var(--navy)" id="ds1">0</div>
@@ -567,21 +511,6 @@ body{font-family:var(--font-body);background:var(--gray-50);color:var(--gray-900
             <div class="stat-val" style="color:var(--blue)" id="ds5">0</div>
             <div class="stat-lbl">Personnel</div>
             <div class="stat-sub">Total on ground</div>
-          </div>
-        </div>
-        <!-- Feature 1: Analytics Charts Row -->
-        <div class="charts-row" id="chartsRow">
-          <div class="chart-card">
-            <div class="chart-card-title">Incident Severity</div>
-            <div class="chart-canvas-wrap"><canvas id="chartSeverity"></canvas></div>
-          </div>
-          <div class="chart-card">
-            <div class="chart-card-title">Agency Status</div>
-            <div class="chart-canvas-wrap"><canvas id="chartStatus"></canvas></div>
-          </div>
-          <div class="chart-card">
-            <div class="chart-card-title">Incident Types</div>
-            <div class="chart-canvas-wrap"><canvas id="chartTypes"></canvas></div>
           </div>
         </div>
         <div class="dashboard-body">
@@ -682,33 +611,6 @@ body{font-family:var(--font-body);background:var(--gray-50);color:var(--gray-900
               Export
             </button>
           </div>
-        </div>
-        <!-- Feature 2: Incident Search & Filter Bar -->
-        <div class="inc-filter-bar">
-          <input class="search-input" id="incSearch" placeholder="🔍 Search incidents by title, location, agency..." oninput="renderIncidentsList()"/>
-          <select class="form-select" id="incFilterStatus" onchange="renderIncidentsList()" style="width:130px;padding:8px 10px">
-            <option value="">All Status</option>
-            <option value="active">Active</option>
-            <option value="pending">Pending</option>
-            <option value="resolved">Resolved</option>
-          </select>
-          <select class="form-select" id="incFilterSeverity" onchange="renderIncidentsList()" style="width:130px;padding:8px 10px">
-            <option value="">All Severity</option>
-            <option value="high">High</option>
-            <option value="medium">Medium</option>
-            <option value="low">Low</option>
-          </select>
-          <select class="form-select" id="incFilterType" onchange="renderIncidentsList()" style="width:140px;padding:8px 10px">
-            <option value="">All Types</option>
-            <option value="Flood">🌊 Flood</option>
-            <option value="Fire">🔥 Fire</option>
-            <option value="Earthquake">🏚 Earthquake</option>
-            <option value="Cyclone">🌀 Cyclone</option>
-            <option value="Medical Emergency">🏥 Medical</option>
-            <option value="Search &amp; Rescue">🔍 SAR</option>
-            <option value="Industrial Accident">⚗️ Industrial</option>
-            <option value="Road Accident">🚗 Road</option>
-          </select>
         </div>
         <div class="incidents-layout">
           <div class="incidents-list" id="incidentsList"></div>
@@ -863,85 +765,7 @@ body{font-family:var(--font-body);background:var(--gray-50);color:var(--gray-900
       </div>
 
     </div></div></div>
-
-<!-- Feature 5: EDIT INCIDENT MODAL -->
-<div class="modal-overlay" id="editIncidentModal">
-  <div class="modal-box" style="width:520px">
-    <div class="modal-header">
-      <div class="modal-title">✏️ Edit Incident</div>
-      <button class="modal-close" onclick="closeModal('editIncidentModal')">✕</button>
-    </div>
-    <input type="hidden" id="editIncId"/>
-    <div class="form-group"><label class="form-label">Title</label><input class="form-input" id="editIncTitle"/></div>
-    <div class="form-row">
-      <div class="form-group"><label class="form-label">Type</label>
-        <select class="form-select" id="editIncType">
-          <option>Flood</option><option>Fire</option><option>Earthquake</option><option>Cyclone</option>
-          <option>Industrial Accident</option><option>Road Accident</option><option>Medical Emergency</option><option>Search &amp; Rescue</option>
-        </select>
-      </div>
-      <div class="form-group"><label class="form-label">Severity</label>
-        <select class="form-select" id="editIncSeverity"><option value="high">High</option><option value="medium">Medium</option><option value="low">Low</option></select>
-      </div>
-    </div>
-    <div class="form-group"><label class="form-label">Description</label><textarea class="form-textarea" id="editIncDesc" style="min-height:80px"></textarea></div>
-    <div class="form-row">
-      <div class="form-group"><label class="form-label">District / Location</label><input class="form-input" id="editIncDistrict"/></div>
-      <div class="form-group"><label class="form-label">Affected People</label><input class="form-input" type="number" id="editIncAffected"/></div>
-    </div>
-    <div class="form-group"><label class="form-label">Assign Agency</label><select class="form-select" id="editIncAgency"></select></div>
-    <div class="form-group"><label class="form-label">Status</label>
-      <select class="form-select" id="editIncStatus"><option value="active">Active</option><option value="pending">Pending</option><option value="resolved">Resolved</option></select>
-    </div>
-    <div class="modal-footer">
-      <button class="btn-cancel" onclick="closeModal('editIncidentModal')">Cancel</button>
-      <button class="btn-primary" onclick="saveEditedIncident()">💾 Save Changes</button>
-    </div>
-  </div>
-</div>
-
-<!-- Feature 7: INCIDENT DETAIL MODAL -->
-<div class="modal-overlay" id="incDetailModal">
-  <div class="modal-box" style="width:560px">
-    <div class="modal-header">
-      <div class="modal-title" id="incDetailTitle">Incident Details</div>
-      <button class="modal-close" onclick="closeModal('incDetailModal')">✕</button>
-    </div>
-    <div id="incDetailBody"></div>
-    <div class="modal-footer">
-      <button class="btn-cancel" onclick="closeModal('incDetailModal')">Close</button>
-      <button class="btn-secondary" id="incDetailLocateBtn" onclick="">📍 Locate on Map</button>
-      <button class="btn-primary" id="incDetailEditBtn" onclick="">✏️ Edit</button>
-    </div>
-  </div>
-</div>
-
-<!-- Feature 8: AGENCY COMPARE MODAL -->
-<div class="modal-overlay" id="compareModal">
-  <div class="modal-box" style="width:600px">
-    <div class="modal-header">
-      <div class="modal-title">🧮 Agency Comparison</div>
-      <button class="modal-close" onclick="closeModal('compareModal')">✕</button>
-    </div>
-    <div id="compareBody" style="display:flex;gap:12px"></div>
-    <div class="modal-footer">
-      <button class="btn-cancel" onclick="closeModal('compareModal')">Close</button>
-      <button class="btn-primary" onclick="clearCompare()">🔄 Clear & Compare Again</button>
-    </div>
-  </div>
-</div>
-
-<!-- Feature 6: NOTIFICATION PANEL -->
-<div class="notif-panel" id="notifPanel">
-  <div class="notif-panel-header">
-    <span class="notif-panel-title">🔔 Notifications</span>
-    <div style="display:flex;gap:8px;align-items:center">
-      <button onclick="markAllNotifsRead()" style="background:rgba(255,255,255,0.15);border:none;border-radius:6px;color:white;font-size:11px;padding:4px 8px;cursor:pointer">Mark all read</button>
-      <button onclick="toggleNotifPanel()" style="background:transparent;border:none;color:white;font-size:16px;cursor:pointer">✕</button>
-    </div>
-  </div>
-  <div class="notif-panel-body" id="notifPanelBody"><div style="padding:20px;text-align:center;color:var(--gray-500);font-size:13px">No notifications yet.</div></div>
-</div>
+    
 
 <!-- PENDING APPROVAL MODAL -->
 <div class="modal-overlay" id="pendingModal">
@@ -1307,11 +1131,11 @@ body{font-family:var(--font-body);background:var(--gray-50);color:var(--gray-900
   </div>
 </div>
 
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-  import { getDatabase, ref, set, onValue, remove, get, child } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
-  import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
-
+<!-- Firebase Compat SDK — loads synchronously, fixes all button/click issues -->
+<script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-auth-compat.js"></script>
+<script>
   const firebaseConfig = {
     apiKey: "AIzaSyBTHohDW-10f7EolWpW8CUlfLCIJNDZmF8",
     authDomain: "ralca-59e0a.firebaseapp.com",
@@ -1322,20 +1146,26 @@ body{font-family:var(--font-body);background:var(--gray-50);color:var(--gray-900
     appId: "1:48983338103:web:56e63507811b1c0cca6a72"
   };
 
-  const app = initializeApp(firebaseConfig);
-  const db = getDatabase(app);
-  const auth = getAuth(app);
-  
-  window.db = db;
-  window.auth = auth;
-  window.firebaseRef = ref;
-  window.firebaseSet = set;
-  window.firebaseOnValue = onValue;
-  window.firebaseRemove = remove;
-  window.firebaseGet = get;
-  window.firebaseChild = child;
-  window.firebaseCreateUser = createUserWithEmailAndPassword;
-  window.firebaseSignIn = signInWithEmailAndPassword;
+  if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+  const _db   = firebase.database();
+  const _auth = firebase.auth();
+
+  window.db   = _db;
+  window.auth = _auth;
+
+  // Wrap compat API to match modular API signatures used throughout the app
+  window.firebaseRef = function(dbOrPath, path) {
+    if (typeof dbOrPath === 'string') return _db.ref(dbOrPath);
+    if (path !== undefined) return _db.ref(path);
+    return _db.ref();
+  };
+  window.firebaseSet        = (ref, val)        => ref.set(val);
+  window.firebaseOnValue    = (ref, cb)          => { ref.on('value', cb); };
+  window.firebaseRemove     = (ref)              => ref.remove();
+  window.firebaseGet        = (ref)              => ref.once('value');
+  window.firebaseChild      = (ref, path)        => ref.child(path);
+  window.firebaseCreateUser = (auth, email, pass)=> auth.createUserWithEmailAndPassword(email, pass);
+  window.firebaseSignIn     = (auth, email, pass)=> auth.signInWithEmailAndPassword(email, pass);
 </script>
 
 <script>
@@ -1344,10 +1174,7 @@ let offlineQueue = [];
 let locationPingInterval = null;
 
 window.onerror = function(message, source, lineno, colno, error) {
-    console.error("Crash detected:", message);
-    if(message.includes('firebaseSignIn')) {
-        alert("Hold on! Firebase is still loading... Please try clicking the button again in 2 seconds.");
-    }
+    console.error("RALCA Error:", message, "Line:", lineno);
 };
 
 // ─── DATA ───────────────────────────────────────────
@@ -1987,14 +1814,6 @@ const authenticAgencies = [
 ];
 
 let agencies = [];
-// ── BUG FIX 1: incidents MUST be declared here (before cache load) so the
-//   cachedIncidents assignment below doesn't throw a ReferenceError.
-let incidents = [
-  {id:1,title:'Major Flooding — Guwahati',type:'Flood',severity:'high',district:'Guwahati, Assam',area:'Zone 4',desc:'Severe flooding affecting residents. Immediate evacuation needed.',affected:3200,agency:'1st Battalion NDRF',status:'active',time:'2 hrs ago',reporter:'Admin', lat:26.1445, lng:91.7362},
-  {id:2,title:'Industrial Fire — Pune Industrial Area',type:'Fire',severity:'high',district:'Pune, Maharashtra',area:'Industrial Sector',desc:'Chemical fire at manufacturing unit. Toxic fumes spreading.',affected:800,agency:'5th Battalion NDRF',status:'active',time:'4 hrs ago',reporter:'Agency User', lat:18.5204, lng:73.8567},
-  {id:3,title:'Cyclone Damage — Odisha Coastal Belt',type:'Cyclone',severity:'medium',district:'Paradip, Odisha',area:'Coastal belt',desc:'Multiple fishing villages affected by cyclone.',affected:1000,agency:'Coast Guard District HQ – Odisha',status:'active',time:'Yesterday',reporter:'Admin', lat:20.3167, lng:86.6000},
-];
-
 function getRandomCityCoords() {
   const base = authenticAgencies[Math.floor(Math.random() * authenticAgencies.length)];
   return { lat: base.lat + (Math.random() - 0.5) * 0.5, lng: base.lng + (Math.random() - 0.5) * 0.5 };
@@ -2100,7 +1919,11 @@ async function seedAgenciesToFirebase() {
 }
 
 
-// incidents array is declared earlier (before cache load) — see BUG FIX 1 above.
+let incidents = [
+  {id:1,title:'Major Flooding — Guwahati',type:'Flood',severity:'high',district:'Guwahati, Assam',area:'Zone 4',desc:'Severe flooding affecting residents. Immediate evacuation needed.',affected:3200,agency:'1st Battalion NDRF',status:'active',time:'2 hrs ago',reporter:'Admin', lat:26.1445, lng:91.7362},
+  {id:2,title:'Industrial Fire — Pune Industrial Area',type:'Fire',severity:'high',district:'Pune, Maharashtra',area:'Industrial Sector',desc:'Chemical fire at manufacturing unit. Toxic fumes spreading.',affected:800,agency:'5th Battalion NDRF',status:'active',time:'4 hrs ago',reporter:'Agency User', lat:18.5204, lng:73.8567},
+  {id:3,title:'Cyclone Damage — Odisha Coastal Belt',type:'Cyclone',severity:'medium',district:'Paradip, Odisha',area:'Coastal belt',desc:'Multiple fishing villages affected by cyclone.',affected:1000,agency:'Coast Guard District HQ – Odisha',status:'active',time:'Yesterday',reporter:'Admin', lat:20.3167, lng:86.6000},
+];
 
 let currentUser = null;
 let selectedSeverity = 'high';
@@ -2127,16 +1950,16 @@ function switchLoginTab(tab) {
 }
 
 async function doLogin(role) {
-  const emailId = role==='agency'?'agLogin': role==='admin'?'adLogin':'civLogin';
-  const passId  = role==='agency'?'agPass':  role==='admin'?'adPass':'civPass';
-  const errId   = role==='agency'?'agError': role==='admin'?'adError':'civError';
-  const errEl   = document.getElementById(errId);
-  if(errEl) errEl.style.display='none';
 
+  
+  const emailId = role==='agency'?'agLogin': role==='admin'?'adLogin':'civLogin';
+  const passId = role==='agency'?'agPass': role==='admin'?'adPass':'civPass';
+  const errId = role==='agency'?'agError': role==='admin'?'adError':'civError';
+  const errEl = document.getElementById(errId);
+  
   const email = document.getElementById(emailId).value.trim();
   const pass  = document.getElementById(passId).value;
-
-  // ── BUG FIX 2: Demo credentials work IMMEDIATELY — no Firebase dependency ──
+  
   const [ce,cp] = CREDS[role];
   if(email===ce && pass===cp) {
     const roleNames = {'admin':'Admin Control', 'agency':'Agency Officer', 'civilian':'Civilian Observer'};
@@ -2145,65 +1968,42 @@ async function doLogin(role) {
     document.getElementById('userAvatar').textContent = getInitials(currentUser.name);
     document.getElementById('loginScreen').classList.remove('active');
     document.getElementById('appScreen').classList.add('active');
+    if(errEl) errEl.style.display='none';
     initApp();
-    return;
-  }
-
-  // ── For real Firebase accounts — wait for Firebase to be ready ──
-  if(!window.firebaseSignIn || !window.auth) {
-    if(errEl) {
-      errEl.textContent = 'System is still connecting. Please wait a moment and try again.';
-      errEl.style.display='block';
-    }
     return;
   }
 
   try {
     const userCredential = await window.firebaseSignIn(window.auth, email, pass);
     const uid = userCredential.user.uid;
-
+    
     const dbRef = window.firebaseRef(window.db);
     const snapshot = await window.firebaseGet(window.firebaseChild(dbRef, 'users/' + uid));
-
+    
     if (snapshot.exists()) {
       const userData = snapshot.val();
-      // ── BUG FIX 3: Replace alert() with inline error message ──
       if(userData.role !== role) {
-        if(errEl) {
-          errEl.textContent = `Wrong portal tab! This account belongs to the "${userData.role.toUpperCase()}" tab.`;
-          errEl.style.display='block';
-        }
-        return;
+         alert(`Error: Please log in using the ${userData.role.toUpperCase()} tab!`);
+         return;
       }
       currentUser = { role: userData.role, email: email, name: userData.name };
       document.getElementById('userName').textContent = currentUser.name;
       document.getElementById('userAvatar').textContent = getInitials(currentUser.name);
       document.getElementById('loginScreen').classList.remove('active');
       document.getElementById('appScreen').classList.add('active');
+      if(errEl) errEl.style.display='none';
       initApp();
     } else {
-      // ── BUG FIX 4: User authenticated but no profile in DB — show helpful message ──
-      if(errEl) {
-        errEl.textContent = 'Account exists but profile is missing. Please contact admin or re-register.';
-        errEl.style.display='block';
-      }
+      if(errEl) errEl.style.display='block';
     }
   } catch (error) {
-    // ── Show Firebase error inline, not as a blocking alert ──
-    if(errEl) {
-      errEl.textContent = 'Login failed: ' + (error.code === 'auth/invalid-credential' || error.code === 'auth/wrong-password'
-        ? 'Incorrect email or password.'
-        : error.message);
-      errEl.style.display='block';
-    }
+    alert('Login failed: ' + error.message);
+    if(errEl) errEl.style.display='block';
   }
 }
 
 async function doRegister() {
-  if(!window.firebaseCreateUser) {
-      alert("Firebase is still loading! Please wait 2 seconds and click again.");
-      return;
-  }
+
 
   const role = document.getElementById('regRole').value;
   const n=document.getElementById('regAgName').value.trim();
@@ -2264,19 +2064,10 @@ async function doRegister() {
 function doLogout() {
   if(locationPingInterval) { clearInterval(locationPingInterval); locationPingInterval = null; }
   currentUser = null;
-  // Detach Firebase listeners by nulling references so they don't fire after logout
-  incidents = [
-    {id:1,title:'Major Flooding — Guwahati',type:'Flood',severity:'high',district:'Guwahati, Assam',area:'Zone 4',desc:'Severe flooding affecting residents. Immediate evacuation needed.',affected:3200,agency:'1st Battalion NDRF',status:'active',time:'2 hrs ago',reporter:'Admin', lat:26.1445, lng:91.7362},
-    {id:2,title:'Industrial Fire — Pune Industrial Area',type:'Fire',severity:'high',district:'Pune, Maharashtra',area:'Industrial Sector',desc:'Chemical fire at manufacturing unit. Toxic fumes spreading.',affected:800,agency:'5th Battalion NDRF',status:'active',time:'4 hrs ago',reporter:'Agency User', lat:18.5204, lng:73.8567},
-    {id:3,title:'Cyclone Damage — Odisha Coastal Belt',type:'Cyclone',severity:'medium',district:'Paradip, Odisha',area:'Coastal belt',desc:'Multiple fishing villages affected by cyclone.',affected:1000,agency:'Coast Guard District HQ – Odisha',status:'active',time:'Yesterday',reporter:'Admin', lat:20.3167, lng:86.6000},
-  ];
-  // ── BUG FIX 5: Re-load agencies from local data so sidebar is populated on re-login ──
+// Detach Firebase listeners by nulling references so they don't fire after logout
+  incidents = [];
   agencies = [];
-  loadAuthentic100Agencies();
   activitiesFeed = [];
-
-  // Destroy and reset Leaflet map so it initialises cleanly on next login
-  if(leafletMap) { leafletMap.remove(); leafletMap = null; markersLayer = null; heatLayer = null; isHeatmap = false; }
 
   document.getElementById('appScreen').classList.remove('active');
   document.getElementById('loginScreen').classList.add('active');
@@ -2311,8 +2102,6 @@ listenForIncomingRequests();
   listenForPendingApprovals();
   listenForDirectMessages();
   startLiveLocationPing();
-  // Feature 1 + 4: charts & weather
-  setTimeout(() => { renderCharts(); fetchWeather(); }, 800);
   if (!leafletMap) {
     leafletMap = L.map('mainMapSvg').setView([22.5937, 78.9629], 5);
     L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
@@ -2382,7 +2171,6 @@ renderSidebar();
     updateStats();
     renderResourcesTable();
     populateIncidentAgencySelect();
-    renderCharts(); // Feature 1: re-render charts when agencies change
     // Keep login screen stats in sync with live Firebase data
     document.getElementById('lsStat1').textContent = agencies.length || 100;
     document.getElementById('lsStat2').textContent = agencies.filter(a=>a.status==='active').length || 38;
@@ -2396,10 +2184,9 @@ window.firebaseOnValue(window.firebaseRef(window.db, 'incidents'), (snapshot) =>
     }
     // if no Firebase data, keep the default incidents array as-is
     renderIncidentsList(); updateStats(); renderRpIncidents();
-    renderCharts(); // Feature 1: re-render charts when incidents change
     const countEl = document.getElementById('incidentReportCount');
     if (countEl) countEl.textContent = incidents.length + ' total incidents';
-    if(isHeatmap) toggleHeatmap(true);
+    if(isHeatmap) toggleHeatmap(true); 
   });
 
   // Feature 4: Live Activity Feed Listener
@@ -2841,14 +2628,13 @@ function renderAgenciesGrid() {
     return match&&sm;
   });
   document.getElementById('agenciesCount').textContent=`${filtered.length} of ${agencies.length} agencies`;
-  document.getElementById('agenciesGrid').innerHTML = filtered.map(ag => {
-    const tm = TYPE_META[ag.type] || TYPE_META['Fire & Rescue'];
-    const isCompared = compareList.includes(String(ag.id));
-    return `<div class="ag-card">
-      <div class="ag-card-top" onclick="openAgencyDrawer('${ag.id}')" style="cursor:pointer">
+  document.getElementById('agenciesGrid').innerHTML=filtered.map(ag=>{
+    const tm=TYPE_META[ag.type]||TYPE_META['Fire & Rescue'];
+    return `<div class="ag-card" onclick="openAgencyDrawer('${ag.id}')">
+      <div class="ag-card-top">
         <div class="ag-icon" style="background:${tm.bg};color:${tm.color};font-size:22px">${tm.emoji}</div>
         <div class="ag-info">
-          <div class="ag-name">${sanitize(ag.name)}</div>
+<div class="ag-name">${sanitize(ag.name)}</div>
           <div class="ag-type">${sanitize(ag.type)}</div>
         </div>
       </div>
@@ -2859,24 +2645,8 @@ function renderAgenciesGrid() {
         <div class="ag-detail-item"><div class="ag-detail-lbl">Vehicles</div><div class="ag-detail-val">${ag.vehicles||'–'}</div></div>
         <div class="ag-detail-item"><div class="ag-detail-lbl">Registered</div><div class="ag-detail-val">${ag.registered}</div></div>
       </div>
-      <!-- Feature 8: Compare button -->
-      <button class="ag-compare-btn" data-id="${ag.id}" onclick="toggleCompare('${ag.id}')"
-        style="margin-top:10px;width:100%;padding:6px;border-radius:var(--radius-sm);border:1px solid var(--gray-200);font-size:11px;font-weight:600;cursor:pointer;transition:all .15s;background:${isCompared?'var(--navy)':'white'};color:${isCompared?'white':'var(--gray-700)'}">
-        ${isCompared ? '✓ Selected' : '⊕ Compare'}
-      </button>
     </div>`;
   }).join('');
-  // Feature 8: Show/hide compare FAB
-  let fab = document.getElementById('compareFab');
-  if (!fab) {
-    fab = document.createElement('button');
-    fab.id = 'compareFab';
-    fab.onclick = openCompareModal;
-    fab.style.cssText = 'position:fixed;bottom:24px;right:24px;background:var(--navy);color:white;border:none;border-radius:30px;padding:12px 22px;font-size:14px;font-weight:700;cursor:pointer;box-shadow:var(--shadow-lg);display:none;z-index:500';
-    fab.textContent = '🧮 Compare Selected';
-    document.body.appendChild(fab);
-  }
-  fab.style.display = compareList.length >= 2 ? 'block' : 'none';
 }
 
 function openAgencyDrawer(id) {
@@ -3061,51 +2831,31 @@ showToast('Live incident reported and pinned to map!','success');
   });
 }
 function renderIncidentsList() {
-  const el = document.getElementById('incidentsList');
-  // Feature 2: Apply search + filter
-  const q    = (document.getElementById('incSearch')?.value || '').toLowerCase();
-  const fSt  = document.getElementById('incFilterStatus')?.value || '';
-  const fSev = document.getElementById('incFilterSeverity')?.value || '';
-  const fTyp = document.getElementById('incFilterType')?.value || '';
-
-  const filtered = incidents.filter(inc => {
-    const matchQ   = !q || (inc.title + inc.district + inc.agency + inc.type).toLowerCase().includes(q);
-    const matchSt  = !fSt  || inc.status   === fSt;
-    const matchSev = !fSev || inc.severity  === fSev;
-    const matchTyp = !fTyp || inc.type      === fTyp;
-    return matchQ && matchSt && matchSev && matchTyp;
-  });
-
-  if (filtered.length === 0) {
-    el.innerHTML = '<div style="padding:30px;text-align:center;color:var(--gray-500);font-size:13px">No incidents match your filters.</div>';
-    return;
-  }
-
-  el.innerHTML = filtered.map(inc => `
-    <div class="incident-card ${inc.status==='pending' ? 'pending' : inc.severity}" onclick="openIncidentDetail('${inc.id}')" style="cursor:pointer">
+  const el=document.getElementById('incidentsList');
+  el.innerHTML=incidents.map(inc=>`
+    <div class="incident-card ${inc.status==='pending' ? 'pending' : inc.severity}">
       <div class="ic-top">
-        <div class="ic-title">${sanitize(inc.title)}</div>
+<div class="ic-title">${sanitize(inc.title)}</div>
         <span class="severity sev-${inc.severity==='high'?'high':inc.severity==='medium'?'med':'low'}">${inc.severity.toUpperCase()}</span>
       </div>
       <div class="ic-badges">
         <span class="ic-badge" style="background:#EDE7F6;color:#4527A0">${inc.type}</span>
         <span class="ic-badge" style="background:${inc.status==='active'?'#FADBD8':inc.status==='resolved'?'#D5F5E3':inc.status==='pending'?'#FDEBD0':'#FEF9E7'};color:${inc.status==='active'?'#922B21':inc.status==='resolved'?'#1E8449':inc.status==='pending'?'#E67E22':'#784212'}">${inc.status.toUpperCase()}</span>
       </div>
-      <div class="ic-desc">${sanitize(inc.desc)}</div>
-      <div class="ic-footer">
+     <div class="ic-desc">${sanitize(inc.desc)}</div>
+<div class="ic-footer">
         <div class="ic-meta">
           <span>📍 ${inc.district.split(',')[0]}</span>
           <span>👥 ${inc.affected} affected</span>
           <span>🕐 ${inc.time}</span>
         </div>
-        ${(currentUser && currentUser.role === 'civilian')
-          ? `<span style="font-size:11px;color:var(--gray-500);font-weight:600">${inc.status==='resolved'?'✅ Resolved':inc.status==='pending'?'⚠️ Pending':'Active Incident'}</span>`
-          : `<div style="display:flex;gap:6px" onclick="event.stopPropagation()">
-               ${inc.status==='pending' && currentUser.role==='admin' ? `<button class="ic-footer-btn" style="background:var(--gold);color:var(--navy);border:none;font-weight:bold" onclick="verifySOS(${inc.id})">✅ Verify SOS</button>` : ''}
-               <button class="ic-footer-btn" style="background:var(--navy);color:white;border:none" onclick="drawRouteToIncident('${inc.district}')">🗺️ Route</button>
-               <button class="ic-footer-btn" style="background:#4527A0;color:white;border:none" onclick="openEditIncident('${inc.id}')">✏️ Edit</button>
-               ${inc.status!=='pending' ? `<button class="ic-footer-btn" onclick="resolveIncident(${inc.id},this)">${inc.status==='resolved'?'✅ Resolved':'Mark Resolved'}</button>` : ''}
-             </div>`}
+${(currentUser && currentUser.role === 'civilian') 
+            ? `<span style="font-size:11px; color:var(--gray-500); font-weight:600;">${inc.status==='resolved'?'✅ Resolved':inc.status==='pending'?'⚠️ Pending':'Active Incident'}</span>` 
+            : `<div style="display:flex; gap:8px;">
+                 ${inc.status==='pending' && currentUser.role === 'admin' ? `<button class="ic-footer-btn" style="background:var(--gold); color:var(--navy); border:none; font-weight:bold;" onclick="verifySOS(${inc.id})">✅ Verify SOS</button>` : ''}
+<button class="ic-footer-btn" style="background:var(--navy); color:white; border:none; display:flex; align-items:center; justify-content:center; gap:6px;" onclick="drawRouteToIncident('${inc.district}')"><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"></polygon><line x1="9" y1="3" x2="9" y2="18"></line><line x1="15" y1="6" x2="15" y2="21"></line></svg> Route</button>
+                 ${inc.status!=='pending' ? `<button class="ic-footer-btn" onclick="resolveIncident(${inc.id},this)">${inc.status==='resolved'?'✅ Resolved':'Mark Resolved'}</button>`:''}
+               </div>`}
       </div>
     </div>`).join('');
 }
@@ -3462,30 +3212,31 @@ function listenForIncomingRequests() {
     badge.textContent = pending.length;
   });
 }
-function listenForAssignmentNotifications() {
+  function listenForAssignmentNotifications() {
   if(!currentUser || currentUser.role !== 'agency') return;
   window.firebaseOnValue(window.firebaseRef(window.db,'notifications'),(snapshot)=>{
     const data = snapshot.val();
     if(!data) return;
-    const mine = Object.values(data).filter(n =>
-      n.toAgencyName === currentUser.name && n.status === 'unread'
+    const mine = Object.values(data).filter(n=>
+      n.toAgencyName === currentUser.name && n.status==='unread'
     );
-    mine.forEach(n => {
-      // Feature 6: Push to notification panel instead of blocking confirm()
-      pushNotification('📋',
-        `New assignment: "${n.incidentTitle}" — ${n.district} (${n.severity.toUpperCase()})`,
-        null
+    mine.forEach(n=>{
+      const accept = confirm(
+        `📋 NEW INCIDENT ASSIGNED TO YOUR AGENCY\n\n`+
+        `Incident: ${n.incidentTitle}\n`+
+        `Location: ${n.district}\n`+
+        `Severity: ${n.severity.toUpperCase()}\n\n`+
+        `Do you ACCEPT this assignment?`
       );
-      showToast(`📋 New incident assigned: ${n.incidentTitle}`, 'success');
-      // Auto-accept and log to activity feed
-      n.status = 'accepted';
+      n.status = accept ? 'accepted' : 'declined';
       window.firebaseSet(window.firebaseRef(window.db,'notifications/'+n.id), n);
       const entry = {
         id: Date.now(),
         type: 'Assignment',
-        text: `✅ ${currentUser.name} received assignment: ${n.incidentTitle}`
+        text: `${accept?'✅':'❌'} ${currentUser.name} ${accept?'accepted':'declined'} assignment: ${n.incidentTitle}`
       };
       window.firebaseSet(window.firebaseRef(window.db,'activities/'+entry.id), entry);
+      showToast(`Assignment ${accept?'accepted':'declined'}!`, accept?'success':'error');
     });
   });
 }
@@ -3724,323 +3475,7 @@ function loadMessageThread() {
   });
 }
 
-// ═══════════════════════════════════════════════════
-// FEATURE 1 — DASHBOARD ANALYTICS CHARTS
-// ═══════════════════════════════════════════════════
-let chartSeverityInst = null, chartStatusInst = null, chartTypesInst = null;
 
-function renderCharts() {
-  if (typeof Chart === 'undefined') return;
-
-  // Destroy old instances to prevent canvas reuse errors
-  if (chartSeverityInst) { chartSeverityInst.destroy(); chartSeverityInst = null; }
-  if (chartStatusInst)   { chartStatusInst.destroy();   chartStatusInst = null; }
-  if (chartTypesInst)    { chartTypesInst.destroy();    chartTypesInst = null; }
-
-  const high   = incidents.filter(i => i.severity === 'high').length;
-  const medium = incidents.filter(i => i.severity === 'medium').length;
-  const low    = incidents.filter(i => i.severity === 'low').length;
-
-  const active   = agencies.filter(a => a.status === 'active').length;
-  const standby  = agencies.filter(a => a.status === 'standby').length;
-  const deployed = agencies.filter(a => a.status === 'deployed').length;
-
-  const typeCount = {};
-  incidents.forEach(i => { typeCount[i.type] = (typeCount[i.type] || 0) + 1; });
-  const typeLabels = Object.keys(typeCount);
-  const typeVals   = Object.values(typeCount);
-
-  const chartDefaults = { responsive: true, maintainAspectRatio: false,
-    plugins: { legend: { position: 'right', labels: { boxWidth: 10, font: { size: 10 }, padding: 6 } } } };
-
-  const ctxS = document.getElementById('chartSeverity');
-  const ctxT = document.getElementById('chartStatus');
-  const ctxTy = document.getElementById('chartTypes');
-  if (!ctxS || !ctxT || !ctxTy) return;
-
-  chartSeverityInst = new Chart(ctxS, {
-    type: 'doughnut',
-    data: { labels: ['High', 'Medium', 'Low'],
-            datasets: [{ data: [high, medium, low], backgroundColor: ['#C0392B', '#E67E22', '#1E8449'], borderWidth: 2 }] },
-    options: chartDefaults
-  });
-  chartStatusInst = new Chart(ctxT, {
-    type: 'doughnut',
-    data: { labels: ['Active', 'Standby', 'Deployed'],
-            datasets: [{ data: [active, standby, deployed], backgroundColor: ['#1E8449', '#E67E22', '#C0392B'], borderWidth: 2 }] },
-    options: chartDefaults
-  });
-  chartTypesInst = new Chart(ctxTy, {
-    type: 'bar',
-    data: { labels: typeLabels,
-            datasets: [{ data: typeVals, backgroundColor: '#1a2744', borderRadius: 4 }] },
-    options: { ...chartDefaults, plugins: { legend: { display: false } },
-      scales: { x: { ticks: { font: { size: 9 } }, grid: { display: false } }, y: { ticks: { stepSize: 1, font: { size: 9 } } } } }
-  });
-}
-
-// ═══════════════════════════════════════════════════
-// FEATURE 4 — LIVE WEATHER (Open-Meteo, no API key)
-// ═══════════════════════════════════════════════════
-async function fetchWeather() {
-  // Use the highest-severity active incident's coords, or fall back to India centre
-  const activeInc = incidents.filter(i => i.status === 'active' || i.status === 'pending')
-                             .sort((a, b) => (b.affected || 0) - (a.affected || 0))[0];
-  const lat = activeInc ? (activeInc.lat || 20.5) : 20.5;
-  const lon = activeInc ? (activeInc.lng || 78.9) : 78.9;
-  const district = activeInc ? activeInc.district.split(',')[0] : 'India';
-
-  const WMO = { 0:'Clear Sky ☀️', 1:'Mainly Clear 🌤️', 2:'Partly Cloudy ⛅', 3:'Overcast ☁️',
-    45:'Fog 🌫️', 48:'Icy Fog 🌫️', 51:'Light Drizzle 🌦️', 61:'Light Rain 🌧️', 63:'Moderate Rain 🌧️',
-    65:'Heavy Rain 🌧️', 71:'Light Snow 🌨️', 80:'Rain Showers 🌦️', 81:'Heavy Showers 🌧️',
-    95:'Thunderstorm ⛈️', 96:'Thunderstorm+Hail ⛈️' };
-
-  try {
-    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weathercode,windspeed_10m,precipitation&timezone=auto`;
-    const res  = await fetch(url);
-    const data = await res.json();
-    const c = data.current;
-    const isAlert = c.precipitation > 5 || c.weathercode >= 80;
-    const strip = document.getElementById('weatherStrip');
-    if (strip) strip.style.borderBottomColor = isAlert ? 'var(--red)' : 'var(--green)';
-    const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
-    set('wx-district', district);
-    set('wx-temp',     c.temperature_2m + '°C');
-    set('wx-cond',     WMO[c.weathercode] || 'Unknown');
-    set('wx-wind',     c.windspeed_10m + ' km/h');
-    set('wx-rain',     c.precipitation > 0 ? c.precipitation + ' mm ⚠️' : 'None ✅');
-    if (isAlert) showToast('⚠️ Weather Alert: Heavy rainfall / storm in incident zone!', 'error');
-  } catch (e) {
-    const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
-    set('wx-district', 'Offline'); set('wx-temp', '–'); set('wx-cond', 'Unavailable'); set('wx-wind', '–'); set('wx-rain', '–');
-  }
-}
-
-// ═══════════════════════════════════════════════════
-// FEATURE 3 — PRINT / PDF REPORT
-// ═══════════════════════════════════════════════════
-function printReport() {
-  const now = new Date().toLocaleString('en-IN');
-  const active   = agencies.filter(a => a.status === 'active').length;
-  const deployed = agencies.filter(a => a.status === 'deployed').length;
-  const openInc  = incidents.filter(i => i.status !== 'resolved').length;
-  const personnel = agencies.reduce((s, a) => s + (a.personnel || 0), 0);
-
-  const incRows = incidents.map(i =>
-    `<tr style="border-bottom:1px solid #eee">
-      <td style="padding:6px 8px">${sanitize(i.title)}</td>
-      <td style="padding:6px 8px">${sanitize(i.type)}</td>
-      <td style="padding:6px 8px;color:${i.severity==='high'?'#C0392B':i.severity==='medium'?'#E67E22':'#1E8449'};font-weight:700">${i.severity.toUpperCase()}</td>
-      <td style="padding:6px 8px">${sanitize(i.district.split(',')[0])}</td>
-      <td style="padding:6px 8px">${i.affected}</td>
-      <td style="padding:6px 8px">${sanitize(i.agency)}</td>
-      <td style="padding:6px 8px;color:${i.status==='resolved'?'#1E8449':'#C0392B'}">${i.status.toUpperCase()}</td>
-    </tr>`
-  ).join('');
-
-  const win = window.open('', '_blank', 'width=900,height=700');
-  win.document.write(`<!DOCTYPE html><html><head><title>RALCA Operations Report</title>
-    <style>body{font-family:Arial,sans-serif;margin:30px;color:#1a1a1a}h1{color:#1a2744;border-bottom:3px solid #C0392B;padding-bottom:10px}
-    .stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin:20px 0}.stat-box{background:#f8f9fa;border:1px solid #e0e0e0;border-radius:8px;padding:14px;text-align:center}
-    .stat-num{font-size:28px;font-weight:700;color:#1a2744}.stat-lbl{font-size:11px;color:#888;text-transform:uppercase;letter-spacing:1px;margin-top:4px}
-    table{width:100%;border-collapse:collapse;font-size:12px}th{background:#1a2744;color:white;padding:8px;text-align:left;font-size:11px}
-    @media print{body{margin:10px}}</style></head><body>
-    <h1>🚨 RALCA — Operations Report</h1>
-    <p style="color:#888;margin-bottom:20px">Generated: ${now} | Powered by RALCA v2.0</p>
-    <div class="stat-grid">
-      <div class="stat-box"><div class="stat-num">${agencies.length}</div><div class="stat-lbl">Total Agencies</div></div>
-      <div class="stat-box"><div class="stat-num" style="color:#1E8449">${active}</div><div class="stat-lbl">Active</div></div>
-      <div class="stat-box"><div class="stat-num" style="color:#C0392B">${deployed}</div><div class="stat-lbl">Deployed</div></div>
-      <div class="stat-box"><div class="stat-num" style="color:#E67E22">${openInc}</div><div class="stat-lbl">Open Incidents</div></div>
-      <div class="stat-box"><div class="stat-num">${personnel.toLocaleString()}</div><div class="stat-lbl">Total Personnel</div></div>
-      <div class="stat-box"><div class="stat-num">${incidents.filter(i=>i.severity==='high').length}</div><div class="stat-lbl">High Severity</div></div>
-      <div class="stat-box"><div class="stat-num">${incidents.filter(i=>i.severity==='medium').length}</div><div class="stat-lbl">Medium Severity</div></div>
-      <div class="stat-box"><div class="stat-num">${incidents.filter(i=>i.status==='resolved').length}</div><div class="stat-lbl">Resolved</div></div>
-    </div>
-    <h2 style="color:#1a2744;margin-top:24px">Incident Log</h2>
-    <table><thead><tr><th>Title</th><th>Type</th><th>Severity</th><th>District</th><th>Affected</th><th>Agency</th><th>Status</th></tr></thead>
-    <tbody>${incRows}</tbody></table>
-    <p style="margin-top:30px;color:#aaa;font-size:11px">© RALCA — Rescue Agency Locator and Coordination Application | Confidential</p>
-    <script>window.onload=()=>window.print()<\/script></body></html>`);
-  win.document.close();
-}
-
-// ═══════════════════════════════════════════════════
-// FEATURE 5 — EDIT INCIDENT
-// ═══════════════════════════════════════════════════
-function openEditIncident(id) {
-  const inc = incidents.find(i => String(i.id) === String(id));
-  if (!inc) return;
-  document.getElementById('editIncId').value      = inc.id;
-  document.getElementById('editIncTitle').value   = inc.title;
-  document.getElementById('editIncDesc').value    = inc.desc;
-  document.getElementById('editIncDistrict').value = inc.district;
-  document.getElementById('editIncAffected').value = inc.affected;
-  document.getElementById('editIncType').value    = inc.type;
-  document.getElementById('editIncSeverity').value = inc.severity;
-  document.getElementById('editIncStatus').value  = inc.status;
-  const agSel = document.getElementById('editIncAgency');
-  agSel.innerHTML = agencies.map(a => `<option${a.name===inc.agency?' selected':''}>${sanitize(a.name)}</option>`).join('');
-  closeModal('incDetailModal');
-  openModal('editIncidentModal');
-}
-function saveEditedIncident() {
-  const id = document.getElementById('editIncId').value;
-  const inc = incidents.find(i => String(i.id) === String(id));
-  if (!inc) return;
-  inc.title    = document.getElementById('editIncTitle').value.trim();
-  inc.type     = document.getElementById('editIncType').value;
-  inc.severity = document.getElementById('editIncSeverity').value;
-  inc.desc     = document.getElementById('editIncDesc').value.trim();
-  inc.district = document.getElementById('editIncDistrict').value.trim();
-  inc.affected = parseInt(document.getElementById('editIncAffected').value) || 0;
-  inc.agency   = document.getElementById('editIncAgency').value;
-  inc.status   = document.getElementById('editIncStatus').value;
-  window.firebaseSet(window.firebaseRef(window.db, 'incidents/' + id), inc).then(() => {
-    showToast('Incident updated successfully!', 'success');
-    closeModal('editIncidentModal');
-    const logEntry = { id: Date.now(), type: 'Edit', text: `✏️ ${currentUser?.name||'User'} edited incident: ${inc.title}` };
-    window.firebaseSet(window.firebaseRef(window.db, 'activities/' + logEntry.id), logEntry);
-  }).catch(e => showToast('Error: ' + e.message, 'error'));
-}
-
-// ═══════════════════════════════════════════════════
-// FEATURE 6 — NOTIFICATION PANEL
-// ═══════════════════════════════════════════════════
-let notifications = [];
-let notifPanelOpen = false;
-
-function pushNotification(icon, text, actionFn) {
-  const notif = { id: Date.now(), icon, text, time: Date.now(), read: false, action: actionFn };
-  notifications.unshift(notif);
-  renderNotifPanel();
-  const badge = document.getElementById('notifBadge');
-  const unread = notifications.filter(n => !n.read).length;
-  if (badge) { badge.textContent = unread; badge.style.display = unread > 0 ? 'flex' : 'none'; }
-}
-function toggleNotifPanel() {
-  notifPanelOpen = !notifPanelOpen;
-  const panel = document.getElementById('notifPanel');
-  if (panel) panel.classList.toggle('open', notifPanelOpen);
-  if (notifPanelOpen) renderNotifPanel();
-}
-function markAllNotifsRead() {
-  notifications.forEach(n => n.read = true);
-  renderNotifPanel();
-  const badge = document.getElementById('notifBadge');
-  if (badge) badge.style.display = 'none';
-}
-function renderNotifPanel() {
-  const body = document.getElementById('notifPanelBody');
-  if (!body) return;
-  if (notifications.length === 0) {
-    body.innerHTML = '<div style="padding:20px;text-align:center;color:var(--gray-500);font-size:13px">No notifications yet.</div>';
-    return;
-  }
-  body.innerHTML = notifications.map(n => `
-    <div class="notif-item ${n.read ? '' : 'unread'}" onclick="notifClick(${n.id})">
-      <div class="notif-icon">${n.icon}</div>
-      <div><div class="notif-text">${sanitize(n.text)}</div><div class="notif-time">${timeAgo(n.time)}</div></div>
-    </div>`).join('');
-}
-function notifClick(id) {
-  const n = notifications.find(x => x.id === id);
-  if (n) { n.read = true; renderNotifPanel(); }
-  const unread = notifications.filter(x => !x.read).length;
-  const badge = document.getElementById('notifBadge');
-  if (badge) { badge.textContent = unread; badge.style.display = unread > 0 ? 'flex' : 'none'; }
-}
-
-// ═══════════════════════════════════════════════════
-// FEATURE 7 — INCIDENT DETAIL MODAL
-// ═══════════════════════════════════════════════════
-function openIncidentDetail(id) {
-  const inc = incidents.find(i => String(i.id) === String(id));
-  if (!inc) return;
-  const sevColor = inc.severity === 'high' ? '#C0392B' : inc.severity === 'medium' ? '#E67E22' : '#1E8449';
-  const statusColor = inc.status === 'resolved' ? '#1E8449' : inc.status === 'pending' ? '#E67E22' : '#C0392B';
-  document.getElementById('incDetailTitle').textContent = inc.title;
-  document.getElementById('incDetailBody').innerHTML = `
-    <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px">
-      <span class="inc-detail-badge" style="background:${sevColor}20;color:${sevColor};border:1px solid ${sevColor}">${inc.severity.toUpperCase()} SEVERITY</span>
-      <span class="inc-detail-badge" style="background:${statusColor}20;color:${statusColor};border:1px solid ${statusColor}">${inc.status.toUpperCase()}</span>
-      <span class="inc-detail-badge" style="background:#EDE7F6;color:#4527A0">${inc.type}</span>
-    </div>
-    <div class="info-grid">
-      <div class="info-row"><span class="ir-label">District</span><span class="ir-val">📍 ${sanitize(inc.district)}</span></div>
-      <div class="info-row"><span class="ir-label">Area / Village</span><span class="ir-val">${sanitize(inc.area || '—')}</span></div>
-      <div class="info-row"><span class="ir-label">People Affected</span><span class="ir-val" style="color:${sevColor};font-size:15px;font-weight:800">👥 ${inc.affected.toLocaleString()}</span></div>
-      <div class="info-row"><span class="ir-label">Assigned Agency</span><span class="ir-val">${sanitize(inc.agency)}</span></div>
-      <div class="info-row"><span class="ir-label">Reported By</span><span class="ir-val">${sanitize(inc.reporter)}</span></div>
-      <div class="info-row"><span class="ir-label">Time</span><span class="ir-val">🕐 ${sanitize(inc.time)}</span></div>
-    </div>
-    <div style="margin-top:14px;padding:12px;background:var(--gray-50);border-radius:var(--radius-md);border-left:4px solid ${sevColor}">
-      <div style="font-size:11px;font-weight:700;color:var(--gray-500);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">Description</div>
-      <div style="font-size:13px;color:var(--gray-700);line-height:1.6">${sanitize(inc.desc)}</div>
-    </div>
-    ${inc.lat && inc.lng ? `<div style="margin-top:10px;font-size:11px;color:var(--gray-500)">📡 GPS: ${inc.lat.toFixed(5)}, ${inc.lng.toFixed(5)}</div>` : ''}`;
-
-  const locBtn = document.getElementById('incDetailLocateBtn');
-  if (locBtn) locBtn.onclick = () => { closeModal('incDetailModal'); drawRouteToIncident(inc.district); };
-  const editBtn = document.getElementById('incDetailEditBtn');
-  if (editBtn) {
-    editBtn.style.display = (currentUser && currentUser.role !== 'civilian') ? 'flex' : 'none';
-    editBtn.onclick = () => openEditIncident(id);
-  }
-  openModal('incDetailModal');
-}
-
-// ═══════════════════════════════════════════════════
-// FEATURE 8 — AGENCY COMPARISON TOOL
-// ═══════════════════════════════════════════════════
-let compareList = [];
-function toggleCompare(id) {
-  const idx = compareList.indexOf(String(id));
-  if (idx > -1) { compareList.splice(idx, 1); showToast('Removed from comparison', ''); }
-  else if (compareList.length >= 3) { showToast('You can compare up to 3 agencies at once', 'error'); return; }
-  else { compareList.push(String(id)); showToast('Added to comparison. Select up to 3 then click Compare.', 'success'); }
-  // Update button highlights in the agencies grid
-  document.querySelectorAll('.ag-compare-btn').forEach(btn => {
-    const agId = btn.dataset.id;
-    btn.style.background = compareList.includes(agId) ? 'var(--navy)' : 'white';
-    btn.style.color      = compareList.includes(agId) ? 'white' : 'var(--gray-700)';
-    btn.textContent      = compareList.includes(agId) ? '✓ Selected' : '⊕ Compare';
-  });
-  const fab = document.getElementById('compareFab');
-  if (fab) fab.style.display = compareList.length >= 2 ? 'block' : 'none';
-}
-function openCompareModal() {
-  if (compareList.length < 2) { showToast('Select at least 2 agencies to compare', 'error'); return; }
-  const cols = compareList.map(id => {
-    const ag = agencies.find(a => String(a.id) === id);
-    if (!ag) return '';
-    const tm = TYPE_META[ag.type] || TYPE_META['Fire & Rescue'];
-    const rows = [
-      ['Type', ag.type], ['District', ag.district.split(',')[0]],
-      ['Status', ag.status.toUpperCase()], ['Personnel', ag.personnel],
-      ['Vehicles', ag.vehicles || 0], ['Registered', ag.registered],
-      ['Contact', ag.contact]
-    ];
-    return `<div class="compare-col">
-      <div style="font-size:22px;text-align:center;margin-bottom:6px">${tm.emoji}</div>
-      <div class="compare-col-name">${sanitize(ag.name)}</div>
-      ${rows.map(([l, v]) => `<div class="compare-row"><span style="color:var(--gray-500);font-size:11px">${l}</span><span class="compare-val">${sanitize(String(v))}</span></div>`).join('')}
-      <div class="compare-row"><span style="color:var(--gray-500);font-size:11px">Equipment</span></div>
-      <div style="font-size:11px;color:var(--gray-700);line-height:1.5;margin-top:4px">${sanitize(ag.equipment || 'Standard kit')}</div>
-    </div>`;
-  }).join('');
-  document.getElementById('compareBody').innerHTML = cols;
-  openModal('compareModal');
-}
-function clearCompare() {
-  compareList = [];
-  document.querySelectorAll('.ag-compare-btn').forEach(btn => {
-    btn.style.background = 'white'; btn.style.color = 'var(--gray-700)'; btn.textContent = '⊕ Compare';
-  });
-  const fab = document.getElementById('compareFab');
-  if (fab) fab.style.display = 'none';
-  closeModal('compareModal');
-}
 
 </script>
 </body>
