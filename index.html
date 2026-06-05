@@ -449,8 +449,6 @@ body{font-family:var(--font-body);background:var(--gray-50);color:var(--gray-900
     </div>
     <div style="display:flex;align-items:center;gap:8px">
     <button class="broadcast-btn" id="appBroadcastBtn" onclick="openModal('broadcastModal')">📢 Broadcast</button>
-<button class="broadcast-btn" id="pendingApprovalPill" onclick="openModal('pendingModal')" style="background:var(--amber);color:var(--navy);display:none;">⏳ Pending</button>
-<button class="broadcast-btn" id="msgBtn" onclick="openMessageModal()" style="background:#8E44AD;color:white;display:none;">💬 Messages <span id="msgBadge" style="background:var(--red);color:white;border-radius:50%;padding:1px 5px;font-size:10px;display:none;">0</span></button>
 <button class="broadcast-btn" id="inboxBtn" style="background:var(--gold);color:var(--navy);display:none" onclick="openInbox()">📬 Inbox <span id="inboxBadge" style="background:var(--red);color:white;border-radius:50%;padding:1px 5px;font-size:10px;display:none">0</span></button>
       <div class="user-pill">
         <div class="user-avatar" id="userAvatar">AG</div>
@@ -468,14 +466,6 @@ body{font-family:var(--font-body);background:var(--gray-50);color:var(--gray-900
         <div class="chip" onclick="filterSidebar('Medical',this)">🏥 Medical</div>
         <div class="chip" onclick="filterSidebar('Disaster',this)">⚠️ Disaster Mgmt</div>
         <div class="chip" onclick="filterSidebar('Police',this)">🚔 Police/Security</div>
-      </div>
-      <div style="padding:4px 14px 8px;display:flex;align-items:center;gap:6px;">
-        <span style="font-size:10px;font-weight:700;color:var(--gray-500);text-transform:uppercase;letter-spacing:1px;">Sort:</span>
-        <select id="sidebarSort" onchange="renderSidebar()" style="font-size:11px;border:1px solid var(--gray-200);border-radius:6px;padding:3px 8px;color:var(--navy);background:white;cursor:pointer;">
-          <option value="name">Name</option>
-          <option value="lastActive">Recent Activity</option>
-          <option value="personnel">Personnel</option>
-        </select>
       </div>
       <div class="sidebar-section">
         <div class="sidebar-section-title">Agencies on Ground</div>
@@ -516,16 +506,6 @@ body{font-family:var(--font-body);background:var(--gray-50);color:var(--gray-900
         <div class="dashboard-body">
           <div class="map-wrap">
             <div class="map-overlay-top">
-              <select class="filter-select" id="advFilterDisaster" onchange="renderMapPins()">
-                <option value="all">All Disasters</option>
-                <option value="Flood">🌊 Flood</option>
-                <option value="Fire">🔥 Fire</option>
-                <option value="Earthquake">🏚 Earthquake</option>
-                <option value="Cyclone">🌀 Cyclone</option>
-                <option value="Medical Emergency">🏥 Medical</option>
-                <option value="Search & Rescue">🔍 SAR</option>
-                <option value="Industrial Accident">⚗️ Industrial</option>
-              </select>
               <select class="filter-select" id="advFilterResource" onchange="renderMapPins()">
                 <option value="all">All Resources</option>
                 <option value="boat">Has Boats/Marine</option>
@@ -547,12 +527,6 @@ body{font-family:var(--font-body);background:var(--gray-50);color:var(--gray-900
   <div class="ml-item"><div style="width:12px;height:12px;background:#C0392B;border-radius:50% 50% 50% 0;transform:rotate(-45deg);flex-shrink:0"></div>High</div>
   <div class="ml-item"><div style="width:12px;height:12px;background:#E67E22;border-radius:50% 50% 50% 0;transform:rotate(-45deg);flex-shrink:0"></div>Medium</div>
   <div class="ml-item"><div style="width:12px;height:12px;background:#1E8449;border-radius:50% 50% 50% 0;transform:rotate(-45deg);flex-shrink:0"></div>Low</div>
-  <div id="heatmapLegend" style="display:none;margin-top:8px;border-top:1px solid var(--gray-200);padding-top:8px;">
-    <div style="font-size:10px;font-weight:700;color:var(--gray-500);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">Heatmap Intensity</div>
-    <div style="width:90px;height:8px;border-radius:4px;background:linear-gradient(to right,blue,lime,yellow,red);margin-bottom:4px;"></div>
-    <div style="display:flex;justify-content:space-between;font-size:9px;color:var(--gray-500);"><span>Low</span><span>High</span></div>
-    <div style="font-size:9px;color:var(--gray-500);margin-top:3px;">Red=incidents · Blue=agencies</div>
-  </div>
 </div>
           </div>
           <div class="right-panel">
@@ -746,12 +720,6 @@ body{font-family:var(--font-body);background:var(--gray-50);color:var(--gray-900
               <button class="btn-download"><svg class="dl-icon" viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg> Download CSV</button>
             </div>
           </div>
-          <div class="report-card" onclick="openModal('auditLogModal')">
-            <div class="rc-icon" style="background:#E8F5E9"><svg viewBox="0 0 24 24" fill="#1B5E20" width="22" height="22"><path d="M9 11l3 3L22 4M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></div>
-            <div class="rc-title">Resource Transfer Audit Log</div>
-            <div class="rc-desc">Complete history of all resource additions and transfers between agencies with timestamps and officer names.</div>
-            <div class="rc-footer"><span class="rc-meta">Auto-updated</span><button class="btn-download" style="background:var(--green);">View Log</button></div>
-          </div>
           <div class="report-card" onclick="generateFullReport()">
             <div class="rc-icon" style="background:#EDE7F6"><svg viewBox="0 0 24 24" fill="#4527A0"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg></div>
             <div class="rc-title">Full Operations Report</div>
@@ -766,56 +734,6 @@ body{font-family:var(--font-body);background:var(--gray-50);color:var(--gray-900
 
     </div></div></div>
     
-
-<!-- PENDING APPROVAL MODAL -->
-<div class="modal-overlay" id="pendingModal">
-  <div class="modal-box" style="width:520px;">
-    <div class="modal-header">
-      <div class="modal-title">⏳ Pending Agency Approvals</div>
-      <button class="modal-close" onclick="closeModal('pendingModal')">✕</button>
-    </div>
-    <div id="pendingApprovalsList" style="max-height:420px;overflow-y:auto;"></div>
-    <div class="modal-footer"><button class="btn-cancel" onclick="closeModal('pendingModal')">Close</button></div>
-  </div>
-</div>
-
-<!-- AUDIT LOG MODAL -->
-<div class="modal-overlay" id="auditLogModal">
-  <div class="modal-box" style="width:600px;">
-    <div class="modal-header">
-      <div class="modal-title">📋 Resource Audit Log</div>
-      <button class="modal-close" onclick="closeModal('auditLogModal')">✕</button>
-    </div>
-    <div id="auditLogList" style="max-height:440px;overflow-y:auto;font-size:12px;"></div>
-    <div class="modal-footer">
-      <button class="btn-cancel" onclick="closeModal('auditLogModal')">Close</button>
-      <button class="btn-primary" onclick="exportAuditLog()">Export CSV</button>
-    </div>
-  </div>
-</div>
-
-<!-- DIRECT MESSAGE MODAL -->
-<div class="modal-overlay" id="messageModal">
-  <div class="modal-box" style="width:560px;">
-    <div class="modal-header">
-      <div class="modal-title">💬 Agency Direct Messages</div>
-      <button class="modal-close" onclick="closeModal('messageModal')">✕</button>
-    </div>
-    <div class="form-group">
-      <label class="form-label">Message To</label>
-      <select class="form-select" id="msgToAgency" onchange="loadMessageThread()"></select>
-    </div>
-    <div class="form-group">
-      <label class="form-label">Message</label>
-      <textarea class="form-textarea" id="msgText" placeholder="Type message..." style="min-height:70px;"></textarea>
-    </div>
-    <button class="btn-primary" style="width:100%;margin-bottom:14px;" onclick="sendDirectMessage()">Send Message</button>
-    <div style="font-size:11px;font-weight:700;color:var(--gray-500);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Conversation</div>
-    <div id="messageThread" style="max-height:260px;overflow-y:auto;background:var(--gray-50);border-radius:10px;padding:10px;"></div>
-    <div class="modal-footer"><button class="btn-cancel" onclick="closeModal('messageModal')">Close</button></div>
-  </div>
-</div>
-
 <div class="modal-overlay" id="registerModal">
   <div class="modal-box">
     <div class="modal-header">
@@ -1133,11 +1051,9 @@ body{font-family:var(--font-body);background:var(--gray-50);color:var(--gray-900
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-  <!-- Firebase Compat (non-module, loads synchronously) -->
-<script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-database-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-auth-compat.js"></script>
-<script>
+  import { getDatabase, ref, set, onValue, remove, get, child } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
+  import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+
   const firebaseConfig = {
     apiKey: "AIzaSyBTHohDW-10f7EolWpW8CUlfLCIJNDZmF8",
     authDomain: "ralca-59e0a.firebaseapp.com",
@@ -1148,25 +1064,24 @@ body{font-family:var(--font-body);background:var(--gray-50);color:var(--gray-900
     appId: "1:48983338103:web:56e63507811b1c0cca6a72"
   };
 
-  firebase.initializeApp(firebaseConfig);
-  const db   = firebase.database();
-  const auth = firebase.auth();
-
-  window.db   = db;
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
+  const auth = getAuth(app);
+  
+  window.db = db;
   window.auth = auth;
-  window.firebaseRef        = (db, path) => path ? db.ref(path) : db.ref();
-  window.firebaseSet        = (ref, val) => ref.set(val);
-  window.firebaseOnValue    = (ref, cb)  => ref.on('value', cb);
-  window.firebaseRemove     = (ref)      => ref.remove();
-  window.firebaseGet        = (ref)      => ref.once('value');
-  window.firebaseChild      = (ref, path)=> ref.child(path);
-  window.firebaseCreateUser = (auth, email, pass) => auth.createUserWithEmailAndPassword(email, pass);
-  window.firebaseSignIn     = (auth, email, pass) => auth.signInWithEmailAndPassword(email, pass);
+  window.firebaseRef = ref;
+  window.firebaseSet = set;
+  window.firebaseOnValue = onValue;
+  window.firebaseRemove = remove;
+  window.firebaseGet = get;
+  window.firebaseChild = child;
+  window.firebaseCreateUser = createUserWithEmailAndPassword;
+  window.firebaseSignIn = signInWithEmailAndPassword;
 </script>
-// Global Error Handler — RALCA v2.0 with all 10 patches
-let offlineQueue = [];
-let locationPingInterval = null;
 
+<script>
+// Global Error Handler
 window.onerror = function(message, source, lineno, colno, error) {
     console.error("Crash detected:", message);
     if(message.includes('firebaseSignIn')) {
@@ -1211,7 +1126,6 @@ const authenticAgencies = [
   {
     name: "4th Battalion NDRF", type: "Disaster Management",
     district: "Vellore, Tamil Nadu", lat: 12.9165, lng: 79.1325,
-    
     contact: "+91-9711077372", email: "4bn-ndrf@nic.in",
     equip: "CBRN Response, CSSR, Rope Rescue, Medical First Response"
   },
@@ -1846,17 +1760,7 @@ if(cachedIncidents && cachedIncidents.length > 0) {
 // Online/Offline detection
 window.addEventListener('online', () => {
   document.getElementById('offlineBanner').style.display = 'none';
-  showToast('Back online! Syncing queued data...', 'success');
-  const queue = loadFromLocal('offlineQueue') || [];
-  queue.forEach(item => {
-    if(item.type === 'incident' && window.firebaseSet) {
-      window.firebaseSet(window.firebaseRef(window.db, 'incidents/' + item.data.id), item.data)
-        .then(() => showToast('Queued incident synced: ' + item.data.title, 'success'))
-        .catch(e => console.error('Sync failed', e));
-    }
-  });
-  offlineQueue = [];
-  cacheToLocal('offlineQueue', []);
+  showToast('Back online! Syncing live data...', 'success');
 });
 window.addEventListener('offline', () => {
   document.getElementById('offlineBanner').style.display = 'block';
@@ -2047,12 +1951,11 @@ async function doRegister() {
       registered:new Date().toISOString().slice(0,10), lat: coords.lat, lng: coords.lng
     };
 
-    newAg.approvalStatus = 'pending';
-    await window.firebaseSet(window.firebaseRef(window.db, 'pendingAgencies/' + newAg.id), newAg);
+    await window.firebaseSet(window.firebaseRef(window.db, 'agencies/' + newAg.id), newAg);
     const newUser = { name: n, email: email, role: 'agency', agencyId: newAg.id };
     await window.firebaseSet(window.firebaseRef(window.db, 'users/' + userId), newUser);
 
-    showToast('Registration submitted! Awaiting Admin approval.','success');
+    showToast('Agency registered! You can now log in.','success');
     currentUser={role:'agency', email:email, name:newAg.name};
     document.getElementById('userName').textContent=newAg.name.slice(0,20);
     document.getElementById('userAvatar').textContent=getInitials(newAg.name);
@@ -2066,7 +1969,6 @@ async function doRegister() {
 }
 
 function doLogout() {
-  if(locationPingInterval) { clearInterval(locationPingInterval); locationPingInterval = null; }
   currentUser = null;
 // Detach Firebase listeners by nulling references so they don't fire after logout
   incidents = [];
@@ -2103,9 +2005,6 @@ function initApp() {
   
 listenForIncomingRequests();
   listenForAssignmentNotifications();
-  listenForPendingApprovals();
-  listenForDirectMessages();
-  startLiveLocationPing();
   if (!leafletMap) {
     leafletMap = L.map('mainMapSvg').setView([22.5937, 78.9629], 5);
     L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
@@ -2226,11 +2125,7 @@ function sanitize(str) {
   t.classList.add('show');
   setTimeout(()=>t.classList.remove('show'),3000);
 }
-function openModal(id){
-  document.getElementById(id).classList.add('open');
-  if(id==='auditLogModal') loadAuditLog();
-  if(id==='pendingModal') listenForPendingApprovals();
-}
+function openModal(id){document.getElementById(id).classList.add('open')}
 function closeModal(id){document.getElementById(id).classList.remove('open')}
 // --- AGENCY REGISTRATION FUNCTIONS ---
 let registrationCoordsTemp = null; // Holds temporary hardware coordinates if fetched via GPS
@@ -2313,8 +2208,7 @@ registered: new Date().toISOString().slice(0,10),
   };
 
   try {
-    newAg.approvalStatus = 'pending';
-    await window.firebaseSet(window.firebaseRef(window.db, 'pendingAgencies/' + newAg.id), newAg);
+    await window.firebaseSet(window.firebaseRef(window.db, 'agencies/' + newAg.id), newAg);
     if (window.firebaseCreateUser) {
       try {
         const userCredential = await window.firebaseCreateUser(window.auth, email, 'rescue123');
@@ -2324,7 +2218,7 @@ registered: new Date().toISOString().slice(0,10),
       } catch(authErr) { console.log('Auth registry complete sync', authErr); }
     }
     closeModal('registerModal');
-    showToast('Agency submitted for Admin approval! You will be listed once approved.','success');
+    showToast('Agency deployed and pinned natively on grid map!','success');
   } catch(err) {
     showToast('Error syncing agency node: ' + err.message, 'error');
     closeModal('registerModal');
@@ -2462,10 +2356,6 @@ function renderSidebar() {
   const list=document.getElementById('sidebarList');
   let filtered=agencies;
   if(sidebarFilter!=='all') filtered=agencies.filter(a=>a.type.includes(sidebarFilter));
-  const sortBy = document.getElementById('sidebarSort')?.value || 'name';
-  if(sortBy==='lastActive') filtered=[...filtered].sort((a,b)=>(b.lastActive||0)-(a.lastActive||0));
-  else if(sortBy==='personnel') filtered=[...filtered].sort((a,b)=>b.personnel-a.personnel);
-  else filtered=[...filtered].sort((a,b)=>a.name.localeCompare(b.name));
   list.innerHTML=filtered.map(ag=>{
     const tm=TYPE_META[ag.type]||TYPE_META['Fire & Rescue'];
     return `<div class="agency-card-mini" onclick="openAgencyDrawer('${ag.id}')">
@@ -2498,7 +2388,6 @@ function renderMapPins() {
   if (!markersLayer || isHeatmap) return;
   markersLayer.clearLayers();
   const filterVal = document.getElementById('advFilterResource')?.value || 'all';
-  const disasterFilter = document.getElementById('advFilterDisaster')?.value || 'all';
 
   agencies.forEach(ag => {
     let show = true;
@@ -2523,7 +2412,6 @@ function renderMapPins() {
   // --- PLOT INCIDENTS AS INTERACTIVE MARKERS ---
   incidents.forEach(inc => {
     if (!inc.lat || !inc.lng || inc.status === 'resolved') return;
-    if (disasterFilter !== 'all' && inc.type !== disasterFilter) return;
     const sevColor = inc.severity === 'high' ? '#C0392B' : inc.severity === 'medium' ? '#E67E22' : '#1E8449';
     const incIcon = L.divIcon({
       className: '',
@@ -2560,8 +2448,6 @@ function toggleHeatmap(forceRefresh = false) {
   const btn = document.getElementById('heatmapToggleBtn');
   btn.innerHTML = isHeatmap ? '🗺️ Map View' : '🔥 Thermal Heatmap';
   btn.style.background = isHeatmap ? 'var(--navy)' : '#FF9800';
-  const heatLegend = document.getElementById('heatmapLegend');
-  if(heatLegend) heatLegend.style.display = isHeatmap ? 'block' : 'none';
 
   if(isHeatmap) {
       markersLayer.clearLayers();
@@ -2663,18 +2549,16 @@ function openAgencyDrawer(id) {
     <div class="dd-sub">${sanitize(ag.type)} &nbsp;·&nbsp; <span style="color:${STATUS_COLOR[ag.status]};font-weight:600">${sanitize(ag.status)}</span></div>
     <div class="info-grid">
       <div class="info-row"><span class="ir-label">District</span><span class="ir-val">${sanitize(ag.district)}</span></div>
-      <div class="info-row"><span class="ir-label">Contact</span><span class="ir-val">${currentUser && currentUser.role !== 'civilian' ? sanitize(ag.contact) : '🔒 Restricted'}</span></div>
-      <div class="info-row"><span class="ir-label">Email</span><span class="ir-val" style="font-size:11px">${currentUser && currentUser.role !== 'civilian' ? sanitize(ag.email||'—') : '🔒 Restricted'}</span></div>
+      <div class="info-row"><span class="ir-label">Contact</span><span class="ir-val">${sanitize(ag.contact)}</span></div>
+      <div class="info-row"><span class="ir-label">Email</span><span class="ir-val" style="font-size:11px">${sanitize(ag.email||'—')}</span></div>
       <div class="info-row"><span class="ir-label">Personnel</span><span class="ir-val">${sanitize(String(ag.personnel))}</span></div>
       <div class="info-row"><span class="ir-label">Vehicles</span><span class="ir-val">${sanitize(String(ag.vehicles||0))}</span></div>
       <div class="info-row"><span class="ir-label">Equipment</span><span class="ir-val" style="font-size:11px;text-align:right;max-width:160px">${sanitize(ag.equipment||'Standard kit')}</span></div>
 <div class="info-row"><span class="ir-label">Registered</span><span class="ir-val">${sanitize(ag.registered)}</span></div>
       <div class="info-row"><span class="ir-label">Last Active</span><span class="ir-val">${ag.lastActive ? timeAgo(ag.lastActive) : 'Not recorded'}</span></div>
     </div>`;
-let actionButtons = currentUser && currentUser.role !== 'civilian' ? `
+let actionButtons = `
     <button class="dd-action-btn primary-action" onclick="callAgency('${ag.contact}')">📞 Contact Agency</button>
-    <button class="dd-action-btn" onclick="exportSingleAgency('${ag.id}')">📥 Export Details</button>`
-  : `<div style="padding:10px;text-align:center;font-size:12px;color:var(--gray-500);background:var(--gray-50);border-radius:8px;margin-bottom:8px;">🔒 Contact details restricted to agencies and admins only</div>
     <button class="dd-action-btn" onclick="exportSingleAgency('${ag.id}')">📥 Export Details</button>`;
 
   if (currentUser && currentUser.role !== 'civilian') {
@@ -2771,12 +2655,6 @@ async function submitIncident() {
     lat: finalCoords.lat, lng: finalCoords.lng 
   };
   
-  if(!navigator.onLine) {
-    offlineQueue.push({type:'incident',data:newInc});
-    cacheToLocal('offlineQueue', offlineQueue);
-    showToast('Offline! Incident saved. Will sync when reconnected.','error');
-    return;
-  }
   window.firebaseSet(window.firebaseRef(window.db, 'incidents/' + newInc.id), newInc).then(() => {
       ['incTitle','incDistrict','incArea','incDesc','incAffected'].forEach(id=>{document.getElementById(id).value='';});
       incidentCoordsTemp = null; 
@@ -3053,8 +2931,6 @@ function submitAddResource() {
   }
 
   window.firebaseSet(window.firebaseRef(window.db, 'agencies/' + agId), ag).then(() => {
-    const logAdd={id:Date.now(),action:'add',resource:readableName,qty:qty,from:'',to:ag.name,by:currentUser?.name||'Admin',time:Date.now()};
-    if(window.firebaseSet) window.firebaseSet(window.firebaseRef(window.db,'auditLog/'+logAdd.id),logAdd);
     showToast(`Successfully added ${qty} ${readableName} to ${ag.name}`, 'success');
     closeModal('addResourceModal');
   });
@@ -3090,8 +2966,6 @@ function submitTransfer() {
   window.firebaseSet(window.firebaseRef(window.db, 'agencies/' + toId), toAg);
   
   const readableName = type.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
-  const logEntry={id:Date.now(),action:'transfer',resource:readableName,qty:qty,from:fromAg.name,to:toAg.name,by:currentUser?.name||'Admin',time:Date.now()};
-  if(window.firebaseSet) window.firebaseSet(window.firebaseRef(window.db,'auditLog/'+logEntry.id),logEntry);
   closeModal('transferModal');
   showToast(`Successfully transferred ${qty} ${readableName} to ${toAg.name}`, 'success');
 }
@@ -3287,20 +3161,6 @@ function listenForIncomingRequests() {
         await window.firebaseSet(window.firebaseRef(window.db, 'incidents/' + sosInc.id), sosInc);
         await window.firebaseSet(window.firebaseRef(window.db, 'agencies/sos_' + sosInc.id), sosMarker);
         showToast('🚨 SOS Transmitted! Help is being notified.', 'success');
-        // Listen for assignment update on this SOS incident
-        const sosIdForTrack = sosInc.id;
-        window.firebaseOnValue(window.firebaseRef(window.db,'incidents/'+sosIdForTrack),(snap)=>{
-          if(!snap.exists()) return;
-          const upd=snap.val();
-          const pill=document.getElementById('globalAlertPill');
-          if(upd.status==='active'&&upd.agency&&pill){
-            pill.innerHTML=`<div class="alert-dot" style="background:#27AE60"></div> ✅ Your SOS assigned to: <strong>${upd.agency}</strong> — Help is en route!`;
-            pill.style.background='rgba(39,174,96,0.2)';pill.style.borderColor='#27AE60';pill.style.color='#1E8449';
-          }
-          if(upd.status==='resolved'&&pill){
-            pill.innerHTML=`<div class="alert-dot" style="background:#1E8449"></div> ✅ SOS Resolved — Your emergency has been attended.`;
-          }
-        });
         showPage('dashboard', document.querySelector('.nav-link'));
         setTimeout(() => {
           leafletMap.flyTo([lat, lng], 14, { animate: true });
@@ -3314,173 +3174,6 @@ function listenForIncomingRequests() {
     { enableHighAccuracy: true, timeout: 8000 }
   );
 }
-
-
-// ═══════════════════════════════════════════════════
-// PATCH 4 — ADMIN APPROVAL WORKFLOW
-// ═══════════════════════════════════════════════════
-function listenForPendingApprovals() {
-  if(!currentUser || currentUser.role !== 'admin') return;
-  window.firebaseOnValue(window.firebaseRef(window.db, 'pendingAgencies'), (snapshot) => {
-    const data = snapshot.val();
-    const count = data ? Object.keys(data).length : 0;
-    const pill = document.getElementById('pendingApprovalPill');
-    if(pill) { pill.textContent = count > 0 ? `⏳ ${count} Pending` : ''; pill.style.display = count > 0 ? 'inline-block' : 'none'; }
-    const list = document.getElementById('pendingApprovalsList');
-    if(!list || count === 0) { if(list) list.innerHTML='<div style="padding:20px;text-align:center;color:var(--gray-500)">No pending approvals.</div>'; return; }
-    list.innerHTML = Object.values(data).map(ag => `
-      <div style="border:1px solid var(--amber);border-radius:10px;padding:14px;margin-bottom:10px;background:#FFFCF5;">
-        <div style="font-weight:700;font-size:13px;color:var(--navy);margin-bottom:4px;">${sanitize(ag.name)}</div>
-        <div style="font-size:12px;color:var(--gray-500);margin-bottom:2px;">${sanitize(ag.type)} — ${sanitize(ag.district)}</div>
-        <div style="font-size:12px;color:var(--gray-500);margin-bottom:8px;">📞 ${sanitize(ag.contact)} | 📧 ${sanitize(ag.email||'—')}</div>
-        <div style="display:flex;gap:8px;">
-          <button onclick="approveAgency('${ag.id}')" style="flex:1;padding:7px;background:var(--green);color:white;border:none;border-radius:8px;font-weight:600;font-size:12px;cursor:pointer;">✅ Approve</button>
-          <button onclick="rejectAgency('${ag.id}')" style="flex:1;padding:7px;background:var(--red);color:white;border:none;border-radius:8px;font-weight:600;font-size:12px;cursor:pointer;">❌ Reject</button>
-        </div>
-      </div>`).join('');
-  });
-}
-
-async function approveAgency(id) {
-  const snap = await window.firebaseGet(window.firebaseChild(window.firebaseRef(window.db), 'pendingAgencies/' + id));
-  if(!snap.exists()) return;
-  const ag = snap.val();
-  ag.approvalStatus = 'approved';
-  await window.firebaseSet(window.firebaseRef(window.db, 'agencies/' + id), ag);
-  await window.firebaseRemove(window.firebaseRef(window.db, 'pendingAgencies/' + id));
-  closeModal('pendingModal');
-  showToast('Agency approved and added to live registry!', 'success');
-}
-
-async function rejectAgency(id) {
-  await window.firebaseRemove(window.firebaseRef(window.db, 'pendingAgencies/' + id));
-  showToast('Agency registration rejected.', 'error');
-}
-
-// ═══════════════════════════════════════════════════
-// PATCH 5 — REAL-TIME LIVE LOCATION TRACKING
-// ═══════════════════════════════════════════════════
-function startLiveLocationPing() {
-  if(!currentUser || currentUser.role !== 'agency') return;
-  if(locationPingInterval) clearInterval(locationPingInterval);
-  function ping() {
-    if(!navigator.geolocation || !window.firebaseSet) return;
-    navigator.geolocation.getCurrentPosition((pos) => {
-      const agencyId = currentUser.agencyId;
-      if(!agencyId) return;
-      const ag = agencies.find(a => String(a.id) === String(agencyId));
-      if(ag) { ag.lat = pos.coords.latitude; ag.lng = pos.coords.longitude; ag.lastActive = Date.now(); }
-      window.firebaseSet(window.firebaseRef(window.db,'agencies/'+agencyId+'/lat'), pos.coords.latitude);
-      window.firebaseSet(window.firebaseRef(window.db,'agencies/'+agencyId+'/lng'), pos.coords.longitude);
-      window.firebaseSet(window.firebaseRef(window.db,'agencies/'+agencyId+'/lastActive'), Date.now());
-    }, null, {enableHighAccuracy:true, timeout:5000});
-  }
-  ping();
-  locationPingInterval = setInterval(ping, 30000);
-}
-
-// ═══════════════════════════════════════════════════
-// PATCH 6 — AUDIT LOG VIEWER
-// ═══════════════════════════════════════════════════
-function loadAuditLog() {
-  const list = document.getElementById('auditLogList');
-  if(!list) return;
-  list.innerHTML = '<div style="padding:16px;text-align:center;color:var(--gray-500);">Loading...</div>';
-  window.firebaseOnValue(window.firebaseRef(window.db, 'auditLog'), (snapshot) => {
-    const data = snapshot.val();
-    if(!data) { list.innerHTML='<div style="padding:16px;text-align:center;color:var(--gray-500);">No transfers recorded yet.</div>'; return; }
-    const entries = Object.values(data).sort((a,b)=>b.time-a.time);
-    list.innerHTML = `<table style="width:100%;border-collapse:collapse;">
-      <thead><tr style="background:var(--gray-100);">
-        <th style="padding:8px;text-align:left;font-size:11px;font-weight:700;">Action</th>
-        <th style="padding:8px;text-align:left;font-size:11px;font-weight:700;">Resource</th>
-        <th style="padding:8px;text-align:left;font-size:11px;font-weight:700;">Qty</th>
-        <th style="padding:8px;text-align:left;font-size:11px;font-weight:700;">From → To</th>
-        <th style="padding:8px;text-align:left;font-size:11px;font-weight:700;">By</th>
-        <th style="padding:8px;text-align:left;font-size:11px;font-weight:700;">When</th>
-      </tr></thead>
-      <tbody>${entries.map(e=>`<tr style="border-bottom:1px solid var(--gray-100);">
-        <td style="padding:7px 8px;"><span style="padding:2px 7px;border-radius:20px;background:${e.action==='transfer'?'#D6EAF8':'#D5F5E3'};color:${e.action==='transfer'?'#1A5276':'#1E8449'};font-size:10px;font-weight:600;">${e.action}</span></td>
-        <td style="padding:7px 8px;font-size:12px;">${sanitize(e.resource||'')}</td>
-        <td style="padding:7px 8px;font-size:12px;font-weight:700;">${e.qty}</td>
-        <td style="padding:7px 8px;font-size:11px;color:var(--gray-500);">${e.action==='transfer'?sanitize(e.from||'')+' → '+sanitize(e.to||''):'→ '+sanitize(e.to||'')}</td>
-        <td style="padding:7px 8px;font-size:11px;">${sanitize(e.by||'')}</td>
-        <td style="padding:7px 8px;font-size:11px;color:var(--gray-500);">${timeAgo(e.time)}</td>
-      </tr>`).join('')}</tbody>
-    </table>`;
-  });
-}
-
-function exportAuditLog() {
-  window.firebaseGet(window.firebaseChild(window.firebaseRef(window.db),'auditLog')).then(snap=>{
-    if(!snap.exists()) return showToast('No audit log data','error');
-    const entries=Object.values(snap.val()).sort((a,b)=>b.time-a.time);
-    const csv='Action,Resource,Qty,From,To,By,Time
-'+
-      entries.map(e=>`${e.action},"${e.resource||''}",${e.qty},"${e.from||''}","${e.to||''}","${e.by||''}","${new Date(e.time).toLocaleString()}"`).join('
-');
-    downloadCSV(csv,`RALCA_AuditLog_${new Date().toISOString().slice(0,10)}.csv`);
-  });
-}
-
-// ═══════════════════════════════════════════════════
-// PATCH 7 — DIRECT AGENCY-TO-AGENCY MESSAGING
-// ═══════════════════════════════════════════════════
-function listenForDirectMessages() {
-  if(!currentUser) return;
-  const msgBtn=document.getElementById('msgBtn');
-  if(msgBtn) msgBtn.style.display='block';
-  window.firebaseOnValue(window.firebaseRef(window.db,'messages'),(snapshot)=>{
-    const data=snapshot.val();
-    const badge=document.getElementById('msgBadge');
-    if(!data||!badge) return;
-    const unread=Object.values(data).filter(m=>m.toEmail===currentUser.email&&!m.read);
-    badge.style.display=unread.length>0?'inline':'none';
-    badge.textContent=unread.length;
-  });
-}
-
-function openMessageModal() {
-  const sel=document.getElementById('msgToAgency');
-  if(sel) sel.innerHTML=agencies.filter(a=>a.email&&a.email!==currentUser?.email).map(a=>`<option value="${a.email}">${sanitize(a.name)}</option>`).join('');
-  openModal('messageModal');
-  loadMessageThread();
-}
-
-function sendDirectMessage() {
-  const toEmail=document.getElementById('msgToAgency').value;
-  const text=document.getElementById('msgText').value.trim();
-  if(!text) return showToast('Message cannot be empty','error');
-  const msg={id:Date.now(),fromEmail:currentUser.email,fromName:currentUser.name,toEmail,text,time:Date.now(),read:false};
-  window.firebaseSet(window.firebaseRef(window.db,'messages/'+msg.id),msg).then(()=>{
-    document.getElementById('msgText').value='';
-    showToast('Message sent!','success');
-    loadMessageThread();
-  });
-}
-
-function loadMessageThread() {
-  const thread=document.getElementById('messageThread');
-  const toEmail=document.getElementById('msgToAgency')?.value;
-  if(!thread||!toEmail) return;
-  window.firebaseOnValue(window.firebaseRef(window.db,'messages'),(snapshot)=>{
-    const data=snapshot.val();
-    if(!data){thread.innerHTML='<div style="text-align:center;color:var(--gray-500);font-size:12px;padding:10px;">No messages yet.</div>';return;}
-    const relevant=Object.values(data).filter(m=>(m.fromEmail===currentUser.email&&m.toEmail===toEmail)||(m.toEmail===currentUser.email&&m.fromEmail===toEmail)).sort((a,b)=>a.time-b.time);
-    thread.innerHTML=relevant.map(m=>{
-      const isMine=m.fromEmail===currentUser.email;
-      if(!isMine&&!m.read) window.firebaseSet(window.firebaseRef(window.db,'messages/'+m.id+'/read'),true);
-      return `<div style="display:flex;flex-direction:column;align-items:${isMine?'flex-end':'flex-start'};margin-bottom:8px;">
-        <div style="background:${isMine?'var(--navy)':'white'};color:${isMine?'white':'var(--gray-900)'};padding:8px 12px;border-radius:${isMine?'12px 12px 2px 12px':'12px 12px 12px 2px'};font-size:12px;max-width:80%;border:1px solid ${isMine?'var(--navy)':'var(--gray-200)'};">${sanitize(m.text)}</div>
-        <div style="font-size:10px;color:var(--gray-500);margin-top:2px;">${isMine?'You':sanitize(m.fromName)} · ${timeAgo(m.time)}</div>
-      </div>`;
-    }).join('');
-    thread.scrollTop=thread.scrollHeight;
-  });
-}
-
-
-
 </script>
 </body>
 </html>
