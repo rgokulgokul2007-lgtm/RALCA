@@ -29,11 +29,13 @@
   --font-display:'Syne',sans-serif;
   --font-body:'DM Sans',sans-serif;
 }
-body{font-family:var(--font-body);background:var(--gray-50);color:var(--gray-900);min-height:100vh;}
+body{font-family:var(--font-body);background:var(--gray-50);color:var(--gray-900);min-height:100vh;overflow-x:hidden;}
 
 /* ── SCREEN SYSTEM ── */
-.screen{display:none;width:100%;height:100vh;overflow:hidden}
-.screen.active{display:flex;overflow:hidden} #loginScreen.active{overflow-y:auto}
+.screen{display:none;width:100%;height:100vh;}
+.screen.active{display:flex;}
+#loginScreen.active{overflow-y:auto;}
+#appScreen.active{overflow:hidden;}
 
 /* ── LOGIN SCREEN ── */
 #loginScreen{background:var(--navy);align-items:stretch;overflow:hidden;position:relative}
